@@ -235,7 +235,7 @@ body.chat-open .chtab{right:min(78vw,320px)}
 </div>
 
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
-<script src="engine.js?v=20261015h"></script>
+<script src="engine.js?v=20261015i"></script>
 <script>
 'use strict';
 const $ = (s) => document.querySelector(s);
@@ -969,7 +969,7 @@ function renderGame(app, v) {
   const withPile = draw && v.discardTop && !v.pileLocked;
   const selInfo = sel.size >= (withPile ? 2 : 3) ? groupInfo(v, [...sel], withPile ? v.discardTop : null) : null;
   const allPts = gi.reduce((a, x) => a + x.pts, 0) + (selInfo ? selInfo.pts : 0);
-  const status = v.phase !== 'playing' ? '' : my ? (draw ? (v.drawn ? 'Agora toque no monte de novo para virar a 2ª carta.' : 'Sua vez! Escolha: toque no monte para virar a 1ª carta' + (v.discardCount && !v.pileLocked ? ' OU marque as cartas e toque em “Pegar o lixo”.' : '.')) : (v.tookPile ? 'Você pegou o lixo: todas as cartas foram para a sua mão. Baixe jogos se puder e deixe 1 carta no lixo (qualquer uma da mão).' : 'Baixe jogos se puder e depois descarte 1 carta.')) : `Vez de ${v.players[v.turn].name}…`;
+  const status = v.phase !== 'playing' ? '' : my ? (draw ? (v.owed ? 'Saiu um 3 vermelho! Ele foi para a mesa. Toque no monte para comprar a carta dele' + (v.owed > 1 ? ' (faltam ' + v.owed + ')' : '') + ', e depois as que faltam.' : v.drawn ? 'Agora toque no monte de novo para virar a 2ª carta.' : 'Sua vez! Escolha: toque no monte para virar a 1ª carta' + (v.discardCount && !v.pileLocked ? ' OU marque as cartas e toque em “Pegar o lixo”.' : '.')) : (v.tookPile ? 'Você pegou o lixo: todas as cartas foram para a sua mão. Baixe jogos se puder e deixe 1 carta no lixo (qualquer uma da mão).' : 'Baixe jogos se puder e depois descarte 1 carta.')) : `Vez de ${v.players[v.turn].name}…`;
   const durMs = ((v.opts && v.opts.msg) || 6) * 1000, nowT = Date.now();
   banners = banners.filter((b) => nowT - b.ts < durMs);
   const shownBanners = banners.slice(-4);
@@ -995,8 +995,8 @@ function renderGame(app, v) {
     <div class="mortos"><div class="mt ${v.mortoTaken[v.myTeam] ? 'gone' : ''}"><div class="card mini back"></div>Morto nós${v.mortoTaken[v.myTeam] ? ' (pego)' : ''}</div><div class="mt ${v.mortoTaken[1 - v.myTeam] ? 'gone' : ''}"><div class="card mini back"></div>Morto eles${v.mortoTaken[1 - v.myTeam] ? ' (pego)' : ''}</div></div>
     <div class="felt">
       ${seatZones(v, play && sel.size)}
-      <div class="centro"><div class="pile ${draw ? 'act' : ''}" id="stock"><div class="card back"></div>Monte ${v.stockCount}${draw ? `<br><small>${v.drawn ? 'vire a 2ª' : 'vire a 1ª'}</small>` : ''}</div>
-      <div class="pile ${draw && v.discardCount && !v.pileLocked && !v.drawn ? 'act' : ''}" id="pile">${v.discardTop ? cardHtml(v.discardTop) : '<div class="card empty"></div>'}Lixo ${v.discardCount}${v.pileLocked ? ' 🔒' : ''}</div></div>
+      <div class="centro"><div class="pile ${draw ? 'act' : ''}" id="stock"><div class="card back"></div>Monte ${v.stockCount}${draw ? `<br><small>${v.owed ? 'carta do 3 vermelho' : v.drawn ? 'vire a 2ª' : 'vire a 1ª'}</small>` : ''}</div>
+      <div class="pile ${draw && v.discardCount && !v.pileLocked && !v.drawn && !v.owed ? 'act' : ''}" id="pile">${v.discardTop ? cardHtml(v.discardTop) : '<div class="card empty"></div>'}Lixo ${v.discardCount}${v.pileLocked ? ' 🔒' : ''}</div></div>
       ${lockMsg ? `<div class="lockmsg">${lockMsg}</div>` : ''}
     </div></div>
   ${(() => { const lg = (v.log || []).slice(logOpen ? -30 : -5); return `<div class="log"><div class="lh"><b>O que cada um fez</b><button type="button" class="sec" id="logt">${logOpen ? 'Mostrar menos' : 'Ver tudo'}</button></div>${lg.map((t, i) => `<div class="ll ${i === lg.length - 1 ? 'new' : ''}"></div>`).join('')}</div>`; })()}
@@ -1019,7 +1019,7 @@ function renderGame(app, v) {
   const tryPile = () => {
     if (!draw || !v.discardCount) return;
     if (v.pileLocked) return toast('O lixo está trancado para você.');
-    if (v.drawn) return toast('Você já virou uma carta do monte. Vire também a segunda.');
+    if (v.drawn || v.owed) return toast('Você já escolheu o monte. Continue comprando do monte.');
     const groups = staged.map((g) => g.slice());
     if (sel.size) {
       // junta a carta de cima do lixo às marcadas e separa em jogos; o jogo da carta de cima pode vir com outros jogos da mão

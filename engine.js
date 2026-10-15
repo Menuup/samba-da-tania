@@ -103,7 +103,7 @@
     s.melds = [[], []];
     s.reds = [[], []];
     for (let i = 0; i < s.n; i++) layReds(s, i);
-    s.meldSeq = 0; s.pileTakes = 0; s.lock = null; s.turnNo = 0; s.drawn = 0;
+    s.meldSeq = 0; s.pileTakes = 0; s.lock = null; s.turnNo = 0; s.drawn = 0; s.owed = 0;
     s.dealer = (s.dealer + 1) % s.n;
     s.turn = (s.dealer + 1) % s.n; // direita de quem deu
     s.step = 'draw';
@@ -124,13 +124,15 @@
   }
 
   // 3 vermelhos saem da mão e ficam na mesa à vista de todos; cada um traz 1 carta do monte no lugar.
-  function layReds(s, seat) {
+  // deferred: a carta de reposição fica "devida" e o jogador compra tocando no monte (uma por toque).
+  function layReds(s, seat, deferred) {
     const t = teamOf(s, seat); const hand = s.hands[seat]; let n = 0;
     for (;;) {
       const i = hand.findIndex(isRed3);
       if (i < 0) break;
       s.reds[t].push(hand.splice(i, 1)[0]); n++;
-      if (s.stock.length) hand.push(s.stock.pop());
+      if (deferred) s.owed = (s.owed || 0) + 1;
+      else if (s.stock.length) hand.push(s.stock.pop());
     }
     return n;
   }
@@ -226,18 +228,19 @@
       case 'draw': {
         if (s.step !== 'draw') return E('Você já comprou. Agora baixe jogos e descarte.');
         if (!s.stock.length) { s.last = 'O monte acabou. Fim de jogo.'; endRound(s, null, true); return { state: s }; }
-        // uma carta por vez: o jogador vira a 1ª, depois a 2ª
+        // uma carta por toque: primeiro as de reposição dos 3 vermelhos que saíram, depois as 2 da vez
+        const repo = (s.owed || 0) > 0;
         hand.push(s.stock.pop());
-        s.drawn = (s.drawn || 0) + 1;
-        const nr = layReds(s, seat);
+        if (repo) s.owed--; else s.drawn = (s.drawn || 0) + 1;
         const nth = s.drawn;
-        if (s.drawn >= 2) { s.step = 'play'; s.drawn = 0; }
-        s.last = name + ' virou a ' + nth + 'ª carta do monte' + (nr ? ' e pôs ' + nr + ' três vermelho' + (nr > 1 ? 's' : '') + ' na mesa (comprou ' + nr + ' no lugar)' : '') + '.';
+        const nr = layReds(s, seat, true);
+        if (s.drawn >= 2 && !s.owed) { s.step = 'play'; s.drawn = 0; s.owed = 0; }
+        s.last = name + (repo ? ' virou a carta de reposição do 3 vermelho' : ' virou a ' + nth + 'ª carta do monte') + (nr ? ' e saiu ' + (nr > 1 ? nr + ' três vermelhos' : 'um 3 vermelho') + ': foi para a mesa e dá ' + (nr > 1 ? nr + ' cartas' : 'uma carta') + ' a mais' : '') + '.';
         return { state: s };
       }
       case 'takePile': {
         if (s.step !== 'draw') return E('Você já comprou nesta vez.');
-        if (s.drawn) return E('Você já virou uma carta do monte: vire também a segunda.');
+        if (s.drawn || s.owed) return E('Você já virou uma carta do monte: continue comprando do monte.');
         if (!s.discard.length) return E('O lixo está vazio.');
         if (lockedFor(s, seat)) return E('O lixo está trancado para você nesta vez.');
         const top = s.discard[s.discard.length - 1];
@@ -339,7 +342,7 @@
       players: s.players.map((p, i) => ({ name: p.name, bot: p.bot, team: teamOf(s, i), count: s.hands[i].length })),
       hand: s.hands[seat],
       stockCount: s.stock.length,
-      drawCount: 2, drawn: s.drawn || 0, tookPile: !!s.tookPile, reds: s.reds,
+      drawCount: 2, drawn: s.drawn || 0, owed: s.owed || 0, tookPile: !!s.tookPile, reds: s.reds,
       discardTop: s.discard.length ? s.discard[s.discard.length - 1] : null,
       discardCount: s.discard.length,
       pileLocked: lockedFor(s, seat) && s.discard.length > 0,
@@ -437,7 +440,7 @@
   // Jogada automática quando o tempo do jogador acaba: compra e descarta a carta menos útil.
   function timeoutMove(s0, seat) {
     let s = s0; const name = s.players[seat].name;
-    for (let i = 0; i < 3 && s.step === 'draw'; i++) {
+    for (let i = 0; i < 12 && s.step === 'draw'; i++) {
       const r = act(s, seat, { a: 'draw' });
       if (r.error) return r;
       s = r.state;
