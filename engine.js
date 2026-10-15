@@ -266,7 +266,7 @@
         hand.push(...pile); const nrp = layReds(s, seat);
         if (merged) { merged.id = existing.id; merged.zone = existing.zone; s.melds[t][s.melds[t].indexOf(existing)] = merged; }
         lay(chk.melds);
-        s.step = 'play'; s.lock = null; s.pileTakes++;
+        s.step = 'play'; s.lock = null; s.pileTakes++; s.tookPile = true;
         s.last = name + ' pegou o lixo (' + k + (k === 1 ? ' carta: ' : ' cartas: ') + [top].concat(pile).slice(0, 14).map(cardName).join(' ') + (k > 14 ? ' …' : '') + ') e baixou ' + newGroups[ti].map(cardName).join(' ') + (nrp ? ' e pôs ' + nrp + ' três vermelho' + (nrp > 1 ? 's' : '') + ' na mesa (comprou ' + nrp + ' no lugar)' : '') + '.';
         const er = afterHand(s, seat); if (er) return E(er);
         return { state: s };
@@ -311,7 +311,7 @@
           if (!s.mortoTaken[t]) { takeMorto(s, seat); s.last += ' e pegou o morto.'; }
           else { endRound(s, seat); s.last += ' e BATEU!'; return { state: s }; }
         }
-        s.turn = next; s.step = 'draw'; s.turnNo = (s.turnNo || 0) + 1;
+        s.turn = next; s.step = 'draw'; s.turnNo = (s.turnNo || 0) + 1; s.tookPile = false;
         return { state: s };
       }
       default: return E('Jogada desconhecida.');
@@ -339,7 +339,7 @@
       players: s.players.map((p, i) => ({ name: p.name, bot: p.bot, team: teamOf(s, i), count: s.hands[i].length })),
       hand: s.hands[seat],
       stockCount: s.stock.length,
-      drawCount: 2, drawn: s.drawn || 0, reds: s.reds,
+      drawCount: 2, drawn: s.drawn || 0, tookPile: !!s.tookPile, reds: s.reds,
       discardTop: s.discard.length ? s.discard[s.discard.length - 1] : null,
       discardCount: s.discard.length,
       pileLocked: lockedFor(s, seat) && s.discard.length > 0,

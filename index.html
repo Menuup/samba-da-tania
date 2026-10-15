@@ -235,7 +235,7 @@ body.chat-open .chtab{right:min(78vw,320px)}
 </div>
 
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
-<script src="engine.js?v=20261015f"></script>
+<script src="engine.js?v=20261015g"></script>
 <script>
 'use strict';
 const $ = (s) => document.querySelector(s);
@@ -969,7 +969,7 @@ function renderGame(app, v) {
   const withPile = draw && v.discardTop && !v.pileLocked;
   const selInfo = sel.size >= (withPile ? 2 : 3) ? groupInfo(v, [...sel], withPile ? v.discardTop : null) : null;
   const allPts = gi.reduce((a, x) => a + x.pts, 0) + (selInfo ? selInfo.pts : 0);
-  const status = v.phase !== 'playing' ? '' : my ? (draw ? (v.drawn ? 'Agora toque no monte de novo para virar a 2ª carta.' : 'Sua vez! Toque no monte para virar a 1ª carta' + (v.discardCount && !v.pileLocked ? ', ou pegue o lixo.' : '.')) : 'Baixe jogos se puder e depois descarte 1 carta.') : `Vez de ${v.players[v.turn].name}…`;
+  const status = v.phase !== 'playing' ? '' : my ? (draw ? (v.drawn ? 'Agora toque no monte de novo para virar a 2ª carta.' : 'Sua vez! Toque no monte para virar a 1ª carta' + (v.discardCount && !v.pileLocked ? ', ou pegue o lixo.' : '.')) : (v.tookPile ? 'Você pegou o lixo: todas as cartas foram para a sua mão. Baixe jogos se puder e deixe 1 carta no lixo (qualquer uma da mão).' : 'Baixe jogos se puder e depois descarte 1 carta.')) : `Vez de ${v.players[v.turn].name}…`;
   const durMs = ((v.opts && v.opts.msg) || 6) * 1000, nowT = Date.now();
   banners = banners.filter((b) => nowT - b.ts < durMs);
   const shownBanners = banners.slice(-4);
