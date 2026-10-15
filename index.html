@@ -196,6 +196,7 @@ table{width:100%;border-collapse:collapse}td,th{padding:5px 4px;text-align:right
 #app.wide .sz.opp{max-height:68%}
 #app.wide .zg.col{max-height:100%}
 @media(max-width:600px){#app.wide .centro{top:32%}#app.wide .felt .lockmsg{top:calc(32% + 40px)}#app.wide .sz.mine{max-height:36%}#app.wide .sz.mine .zl{display:none}#app.wide .sz.mine .zg{gap:3px;padding:2px 3px}}
+.rd3{display:flex;align-items:center;gap:4px;padding:2px 5px;border-radius:8px;background:#c6283940;border:1px solid #c6283988;flex:none}.rd3 .card+.card{margin-left:-12px}.rd3 .tag{background:#c62839;color:#fff;font-size:9px;padding:1px 4px;border-radius:6px;white-space:nowrap}
 </style>
 </head>
 <body>
@@ -891,9 +892,11 @@ function zoneHtml(v, team, mine, tap, emptyTxt) {
 // Jogos baixados ficam na frente de quem os baixou (ou do parceiro), vistos de cima: eu embaixo.
 function seatZones(v, tap) {
   const mine = v.melds[v.myTeam], opp = v.melds[1 - v.myTeam];
+  const rm = (v.reds && v.reds[v.myTeam]) || [], ro = (v.reds && v.reds[1 - v.myTeam]) || [];
+  const redHtml = (rs) => (rs.length ? `<div class="rd3" title="3 vermelhos">${rs.map((c) => cardHtml(c, 'mini')).join('')}<span class="tag">3♥ ×${rs.length}</span></div>` : '');
   let h = '';
-  if (mine.length) h += `<div class="sz mine" style="left:50%;bottom:28px;top:auto;transform:translateX(-50%);max-width:94%"><div class="zg"><div class="zl">Jogos do seu time</div>${mine.map((m) => meldHtml(m, true, tap)).join('')}</div></div>`;
-  if (opp.length) h += `<div class="sz opp" style="left:19%;top:47%;max-width:27%"><div class="zg col"><div class="zl">Jogos dos adversários</div>${opp.map((m) => meldHtml(m, false)).join('')}</div></div>`;
+  if (mine.length || rm.length) h += `<div class="sz mine" style="left:50%;bottom:28px;top:auto;transform:translateX(-50%);max-width:94%"><div class="zg"><div class="zl">Jogos do seu time</div>${redHtml(rm)}${mine.map((m) => meldHtml(m, true, tap)).join('')}</div></div>`;
+  if (opp.length || ro.length) h += `<div class="sz opp" style="left:19%;top:47%;max-width:27%"><div class="zg col"><div class="zl">Jogos dos adversários</div>${redHtml(ro)}${opp.map((m) => meldHtml(m, false)).join('')}</div></div>`;
   return h;
 }
 let zoneSeat = -1; let logOpen = false;
@@ -953,7 +956,6 @@ function renderGame(app, v) {
   <div class="tw">
 
     ${v.players.map((p, i) => { const r = (i - v.seat + v.n) % v.n; const th = 2 * Math.PI * r / v.n; const x = 50 - 47 * Math.sin(th), y = 50 + 47 * Math.cos(th); return `<div class="seat ${v.turn === i && v.phase === 'playing' ? 'turn' : ''} ${p.team === v.myTeam ? 'mine' : ''}" style="left:${x}%;top:${y}%">${avHtml(avatars[i], 34)}<b>${i === v.seat ? 'Você' : p.name}</b><br>🂠 ${p.count}${v.online && !v.online[i] ? ' · ⚪ saiu' : ''}</div>`; }).join('')}
-    <div class="reds">${[v.myTeam, 1 - v.myTeam].map((t) => `<div class="rd"><div class="rdc">${(v.reds && v.reds[t] || []).map((c) => cardHtml(c, 'mini')).join('') || '<span class="hint">–</span>'}</div>3 verm. ${t === v.myTeam ? 'nós' : 'eles'}${v.reds && v.reds[t].length ? ' · ' + v.reds[t].length : ''}</div>`).join('')}</div>
     <div class="mortos"><div class="mt ${v.mortoTaken[v.myTeam] ? 'gone' : ''}"><div class="card mini back"></div>Morto nós${v.mortoTaken[v.myTeam] ? ' (pego)' : ''}</div><div class="mt ${v.mortoTaken[1 - v.myTeam] ? 'gone' : ''}"><div class="card mini back"></div>Morto eles${v.mortoTaken[1 - v.myTeam] ? ' (pego)' : ''}</div></div>
     <div class="felt">
       ${seatZones(v, play && sel.size)}
