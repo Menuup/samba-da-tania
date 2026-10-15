@@ -186,6 +186,16 @@ table{width:100%;border-collapse:collapse}td,th{padding:5px 4px;text-align:right
 @media(max-width:600px){#app.wide .sc .l{display:none}#app.wide .sc .s{display:inline}}
 .warn{background:#7a1020;border-radius:10px;padding:8px 10px;margin:8px 0;font-size:14px}
 .steps{margin:8px 0 0;padding-left:20px;font-size:14px}.steps li{margin:4px 0}
+#app.wide .sz.mine .zg{max-height:calc(100% - 20px);overflow-y:auto}
+#app.wide .bns{position:static;pointer-events:auto;height:38px;margin:2px 0;display:flex;flex-direction:column;justify-content:flex-end;gap:2px;overflow:hidden;cursor:pointer}
+#app.wide .bns .banner{font-size:12px;padding:2px 8px;min-height:0;height:18px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;flex:none;border-radius:8px}
+#app.wide .bns .banner .bt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+#app.wide .bns .banner .av{width:15px!important;height:15px!important;font-size:10px!important;border-width:1px}
+#app.wide .sz.mine{max-height:42%;width:max-content}
+#app.wide .sz.mine .zg{max-height:100%;overflow-y:auto;justify-content:center}
+#app.wide .sz.opp{max-height:68%}
+#app.wide .zg.col{max-height:100%}
+@media(max-width:600px){#app.wide .centro{top:32%}#app.wide .felt .lockmsg{top:calc(32% + 40px)}#app.wide .sz.mine{max-height:36%}#app.wide .sz.mine .zl{display:none}#app.wide .sz.mine .zg{gap:3px;padding:2px 3px}}
 </style>
 </head>
 <body>
@@ -882,7 +892,7 @@ function zoneHtml(v, team, mine, tap, emptyTxt) {
 function seatZones(v, tap) {
   const mine = v.melds[v.myTeam], opp = v.melds[1 - v.myTeam];
   let h = '';
-  if (mine.length) h += `<div class="sz mine" style="left:50%;top:79%;max-width:68%"><div class="zg"><div class="zl">Jogos do seu time</div>${mine.map((m) => meldHtml(m, true, tap)).join('')}</div></div>`;
+  if (mine.length) h += `<div class="sz mine" style="left:50%;bottom:28px;top:auto;transform:translateX(-50%);max-width:94%"><div class="zg"><div class="zl">Jogos do seu time</div>${mine.map((m) => meldHtml(m, true, tap)).join('')}</div></div>`;
   if (opp.length) h += `<div class="sz opp" style="left:19%;top:47%;max-width:27%"><div class="zg col"><div class="zl">Jogos dos adversários</div>${opp.map((m) => meldHtml(m, false)).join('')}</div></div>`;
   return h;
 }
@@ -932,7 +942,6 @@ function renderGame(app, v) {
   <div class="need ${desc ? 'ok' : ''}">${needTxt}</div>
   ${scoreTable(v)}
   <div class="tw">
-<div class="bns">${shownBanners.map((b) => `<div class="banner">${b.s != null ? avHtml(avatars[b.s], 30) : ''}<span class="bt"></span></div>`).join('')}</div>
 
     ${v.players.map((p, i) => { const r = (i - v.seat + v.n) % v.n; const th = 2 * Math.PI * r / v.n; const x = 50 - 47 * Math.sin(th), y = 50 + 47 * Math.cos(th); return `<div class="seat ${v.turn === i && v.phase === 'playing' ? 'turn' : ''} ${p.team === v.myTeam ? 'mine' : ''}" style="left:${x}%;top:${y}%">${avHtml(avatars[i], 34)}<b>${i === v.seat ? 'Você' : p.name}</b><br>🂠 ${p.count}${v.online && !v.online[i] ? ' · ⚪ saiu' : ''}</div>`; }).join('')}
     <div class="reds">${[v.myTeam, 1 - v.myTeam].map((t) => `<div class="rd"><div class="rdc">${(v.reds && v.reds[t] || []).map((c) => cardHtml(c, 'mini')).join('') || '<span class="hint">–</span>'}</div>3 verm. ${t === v.myTeam ? 'nós' : 'eles'}${v.reds && v.reds[t].length ? ' · ' + v.reds[t].length : ''}</div>`).join('')}</div>
@@ -944,7 +953,8 @@ function renderGame(app, v) {
       ${lockMsg ? `<div class="lockmsg">${lockMsg}</div>` : ''}
     </div></div>
   ${(() => { const lg = (v.log || []).slice(logOpen ? -30 : -5); return `<div class="log"><div class="lh"><b>O que cada um fez</b><button type="button" class="sec" id="logt">${logOpen ? 'Mostrar menos' : 'Ver tudo'}</button></div>${lg.map((t, i) => `<div class="ll ${i === lg.length - 1 ? 'new' : ''}"></div>`).join('')}</div>`; })()}
-  <div class="dock"><div class="status ${my ? 'me' : ''}">${status}${cdHtml(v)}</div>
+  <div class="dock"><div class="bns">${shownBanners.map((b) => `<div class="banner">${b.s != null ? avHtml(avatars[b.s], 30) : ''}<span class="bt"></span></div>`).join('')}</div>
+  <div class="status ${my ? 'me' : ''}">${status}${cdHtml(v)}</div>
   ${staged.length || selInfo ? `<div class="stg">${gi.map((x, k) => `<span class="gp ${x.ok ? 'ok' : 'bad'}" data-g="${k}">Jogo ${k + 1}: ${x.ok ? x.pts + ' pts' : 'não vale'} ✕</span>`).join('')}${selInfo ? `<span class="gp ${selInfo.ok ? 'ok' : 'bad'}">Marcadas: ${selInfo.ok ? selInfo.pts + ' pts' : 'não vale'}</span>` : ''}<span class="gp tot">Total ${allPts}${desc || need.canastra ? '' : ' / ' + need.min}</span></div>` : ''}
   ${false ? `<div class="zsel">Baixar na frente de: ${mySeats.map((i) => `<button type="button" class="${zoneSel === i ? 'on' : ''}" data-z="${i}"></button>`).join('')}</div>` : ''}
   <div class="bar"><button id="baixar" ${play && (staged.length || sel.size >= 3) ? '' : 'disabled'}>Baixar</button><button class="sec" id="grupo" ${canGroup ? '' : 'disabled'}>+ Outro jogo</button><button id="desc" ${play && sel.size === 1 && !staged.length ? '' : 'disabled'}>Descartar</button><button class="sec" id="sug" ${draw || play ? '' : 'disabled'}>💡 Sugerir jogos</button><button class="sec" id="ord">Agrupar iguais</button></div>
@@ -953,6 +963,7 @@ function renderGame(app, v) {
   document.querySelectorAll('.banner .bt').forEach((el, i) => (el.textContent = shownBanners[i].t));
   { const lg = (v.log || []).slice(logOpen ? -30 : -5); document.querySelectorAll('.log .ll').forEach((el, i) => (el.textContent = lg[i].t)); }
   $('#logbtn').onclick = () => logModal(v);
+  { const bn = document.querySelector('.bns'); if (bn) bn.onclick = () => logModal(v); }
   $('#ord').onclick = () => { order = []; render(v); };
   document.querySelectorAll('.zsel button').forEach((b) => { const i = +b.dataset.z; b.textContent = i === v.seat ? 'Mim' : v.players[i].name; b.onclick = () => { zoneSeat = i; render(v); }; });
   $('#sug').onclick = () => { staged = S.suggestGroups(v.hand, mineMelds, need, desc); sel.clear(); if (!staged.length) toast('Não achei jogos na sua mão agora.'); render(v); };
