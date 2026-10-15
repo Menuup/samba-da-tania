@@ -220,6 +220,9 @@ table{width:100%;border-collapse:collapse}td,th{padding:5px 4px;text-align:right
 .chtab .ic{font-size:20px}
 body.chat-open .chtab{right:min(78vw,320px)}
 @media(prefers-reduced-motion:reduce){#chatd,.chtab{transition:none}}
+.cnt{font-size:11px;font-weight:800;background:#ffffff2e;border-radius:8px;padding:0 6px;white-space:nowrap;flex:none;font-variant-numeric:tabular-nums}.cnt.ok{background:#f2c14e;color:#3b0f26}
+#app.wide .cnt{font-size:9px;padding:0 4px}
+#app.wide .sz.opp{max-height:31%}
 </style>
 </head>
 <body>
@@ -235,7 +238,7 @@ body.chat-open .chtab{right:min(78vw,320px)}
 </div>
 
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
-<script src="engine.js?v=20261015i"></script>
+<script src="engine.js?v=20261015m"></script>
 <script>
 'use strict';
 const $ = (s) => document.querySelector(s);
@@ -883,9 +886,10 @@ function renderLobby(app, v) {
   if (host) { $('#bot').onclick = () => send({ a: 'addBot' }); $('#rbot').onclick = () => send({ a: 'removeBot' }); $('#start').onclick = () => send({ a: 'start' }); if ($('#swap')) $('#swap').onclick = () => send({ a: 'swap' }); }
 }
 
+const byRank = (a, b) => (a.rank === 1 ? 14 : a.rank) - (b.rank === 1 ? 14 : b.rank);
 function meldHtml(m, mine, tap) {
   const tag = m.canastra ? (m.black ? 'PRETA' : m.clean ? 'LIMPA' : 'SUJA') : '';
-  return `<div class="meld ${mine ? 'mine' : ''} ${tap ? 'tap' : ''}" data-m="${m.id}"><b class="rk">${S.RN[m.rank]}</b><div class="cards">${m.cards.map((c) => cardHtml(c, 'mini ' + (m.wildIds.includes(c.id) ? 'w' : ''))).join('')}</div>${tag ? `<span class="tag">${tag}</span>` : ''}</div>`;
+  return `<div class="meld ${mine ? 'mine' : ''} ${tap ? 'tap' : ''}" data-m="${m.id}"><b class="rk">${S.RN[m.rank]}</b><span class="cnt ${m.canastra ? 'ok' : ''}" title="${m.canastra ? 'canastra' : 'faltam ' + (7 - m.cards.length) + ' para a canastra'}">${m.cards.length}${m.canastra ? '' : '/7'}</span><div class="cards">${m.cards.map((c) => cardHtml(c, 'mini ' + (m.wildIds.includes(c.id) ? 'w' : ''))).join('')}</div>${tag ? `<span class="tag">${tag}</span>` : ''}</div>`;
 }
 
 // Tabela fixa de contagem: pontos do jogo, jogos baixados, canastras e cartas na mão de cada time.
@@ -920,12 +924,12 @@ function zoneHtml(v, team, mine, tap, emptyTxt) {
 }
 // Jogos baixados ficam na frente de quem os baixou (ou do parceiro), vistos de cima: eu embaixo.
 function seatZones(v, tap) {
-  const mine = v.melds[v.myTeam], opp = v.melds[1 - v.myTeam];
+  const mine = v.melds[v.myTeam].slice().sort(byRank), opp = v.melds[1 - v.myTeam].slice().sort(byRank);
   const rm = (v.reds && v.reds[v.myTeam]) || [], ro = (v.reds && v.reds[1 - v.myTeam]) || [];
   const redHtml = (rs) => (rs.length ? `<div class="rd3" title="3 vermelhos">${rs.map((c) => cardHtml(c, 'mini')).join('')}<span class="tag">3♥ ×${rs.length}</span></div>` : '');
   let h = '';
-  if (mine.length || rm.length) h += `<div class="sz mine" style="left:50%;bottom:28px;top:auto;transform:translateX(-50%);max-width:94%"><div class="zg"><div class="zl">Jogos do seu time</div>${redHtml(rm)}${mine.map((m) => meldHtml(m, true, tap)).join('')}</div></div>`;
-  if (opp.length || ro.length) h += `<div class="sz opp" style="left:19%;top:47%;max-width:27%"><div class="zg col"><div class="zl">Jogos dos adversários</div>${redHtml(ro)}${opp.map((m) => meldHtml(m, false)).join('')}</div></div>`;
+  if (mine.length || rm.length) h += `<div class="sz mine" style="left:50%;bottom:28px;top:auto;transform:translateX(-50%);max-width:66%"><div class="zg"><div class="zl">Jogos do seu time</div>${redHtml(rm)}${mine.map((m) => meldHtml(m, true, tap)).join('')}</div></div>`;
+  if (opp.length || ro.length) h += `<div class="sz opp" style="left:19%;top:8%;transform:translateX(-50%);max-width:27%"><div class="zg col"><div class="zl">Jogos dos adversários</div>${redHtml(ro)}${opp.map((m) => meldHtml(m, false)).join('')}</div></div>`;
   return h;
 }
 let zoneSeat = -1; let logOpen = false;
