@@ -185,10 +185,7 @@
     for (const g of groups) {
       const m = classify(g);
       if (!m) return { error: 'Esse jogo não vale: precisa de 3 ou mais cartas iguais (pelo menos 2 naturais, o resto pode ser coringa).' };
-      if (seen.has(m.rank) || s.melds[t].some((x) => x.rank === m.rank && x.rank !== ignoreRank)) {
-        return { error: 'Seu time já tem jogo de ' + RN[m.rank] + ': acrescente nele.' };
-      }
-      seen.add(m.rank); out.push(m);
+      out.push(m);
     }
     if (!s.descended[t] && out.length) {
       const need = needFor(s.scores[t]);
@@ -253,8 +250,9 @@
         if (ti < 0) return E('Nenhum dos jogos marcados combina com a carta de cima do lixo: precisa de 2 cartas da sua mão iguais a ela (um coringa vale).');
         const newGroups = groups.map((g, i) => (i === ti ? g.concat([top]) : g));
         const first = classify(newGroups[ti]);
-        // se o time já tem jogo dessa carta, as cartas entram nele
-        const existing = s.melds[t].find((x) => x.rank === first.rank);
+        // joinId: encaixa no jogo que o time já tem; sem joinId, faz um jogo novo
+        const existing = a.joinId != null ? s.melds[t].find((x) => x.id === a.joinId && x.rank === first.rank) : null;
+        if (a.joinId != null && !existing) return E('Esse jogo não é do seu time ou não é da mesma figura.');
         let merged = null;
         if (existing) {
           merged = classify(existing.cards.concat(newGroups[ti]));
@@ -403,7 +401,8 @@
       if (top && !s.drawn && !lockedFor(s, seat) && s.pileTakes < 25 && !isWild(top) && !isBlack3(top)) {
         if (desc) {
           const same = hand.filter((c) => c.r === top.r);
-          if (same.length >= 2) return { a: 'takePile', groups: [same.map((c) => c.id)] };
+          const jm = melds.find((x) => x.rank === top.r);
+          if (same.length >= 2) return { a: 'takePile', groups: [same.map((c) => c.id)], joinId: jm ? jm.id : undefined };
         } else {
           const gs = planGroups(hand.concat([top]), used, need, false);
           const gi = gs.findIndex((g) => g.some((c) => c.id === top.id));

@@ -231,7 +231,7 @@ body.chat-open .chtab{right:min(78vw,320px)}
 #app.wide .sz .zg{overflow:hidden;max-height:100%}
 #app.wide .sz .card.mini{width:calc(20 * var(--u) * var(--ms));height:calc(30 * var(--u) * var(--ms));border-radius:calc(4 * var(--u) * var(--ms))}
 #app.wide .sz .card.mini b,#app.wide .sz .card.mini i{font-size:calc(11 * var(--u) * var(--ms))}
-#app.wide .sz .meld .cards .card+.card,#app.wide .sz .rd3 .card+.card{margin-left:calc(-12 * var(--u) * var(--ms))}
+#app.wide .sz .meld .cards .card+.card,#app.wide .sz .rd3 .card+.card{margin-left:calc(-14 * var(--u) * var(--ms))}
 #app.wide .sz .meld{padding:calc(2 * var(--u) * var(--ms)) calc(4 * var(--u) * var(--ms));gap:calc(3 * var(--u) * var(--ms))}
 #app.wide .sz .meld .rk{font-size:calc(12 * var(--u) * var(--ms));min-width:calc(12 * var(--u) * var(--ms))}
 #app.wide .sz .cnt{font-size:calc(9 * var(--u) * var(--ms));padding:0 calc(4 * var(--u) * var(--ms))}
@@ -254,6 +254,19 @@ body.chat-open .chtab{right:min(78vw,320px)}
 }
 #app.wide .sz{width:max-content}
 .sz.opp{padding:0;min-width:0;background:none;border-radius:0;font-size:inherit;flex:none;display:flex}
+@media(max-width:600px){
+#app.wide .seat{display:flex;align-items:center;gap:4px;padding:2px 7px;min-width:0;font-size:11px;white-space:nowrap;line-height:1.2}
+#app.wide .seat br{display:none}
+#app.wide .seat .av{width:15px!important;height:15px!important;font-size:10px!important;margin:0!important;border-width:1px}
+#app.wide .bns{height:20px}
+#app.wide .bns .banner:not(:last-child){display:none}
+#app.wide .bns .banner{height:18px;font-size:11px}
+#app.wide .status{font-size:12px;padding:3px 8px;margin:1px 0}
+#app.wide .pile .card{width:24px;height:36px}
+#app.wide .pile .card b,#app.wide .pile .card i{font-size:12px}
+#app.wide .felt.n2 .centro{top:50%}
+#app.wide .felt.n2 .lockmsg{top:calc(50% + 28px)}
+}
 </style>
 </head>
 <body>
@@ -269,7 +282,7 @@ body.chat-open .chtab{right:min(78vw,320px)}
 </div>
 
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
-<script src="engine.js?v=20261015w"></script>
+<script src="engine.js?v=20261015y"></script>
 <script>
 'use strict';
 const $ = (s) => document.querySelector(s);
@@ -976,15 +989,23 @@ function seatZones(v, tap) {
   const redHtml = (rs) => (rs.length ? `<div class="rd3" title="3 vermelhos">${rs.map((c) => cardHtml(c, 'mini')).join('')}<span class="tag">3♥ ×${rs.length}</span></div>` : '');
   const two = true; // faixa larga do adversário logo abaixo dele, em qualquer tamanho de mesa
   let h = '';
-  if (mine.length || rm.length) h += `<div class="sz mine" data-mh="${two ? 0.2 : 0.38}" data-mw="0.7" style="left:50%;bottom:28px;top:auto;transform:translateX(-50%);max-width:70%"><div class="zg"><div class="zl">Jogos do seu time</div>${redHtml(rm)}${mine.map((m) => meldHtml(m, true, tap)).join('')}</div></div>`;
+  if (mine.length || rm.length) h += `<div class="sz mine" data-mh="0.3" data-mw="0.72" style="left:50%;bottom:28px;top:auto;transform:translateX(-50%);max-width:72%"><div class="zg"><div class="zl">Jogos do seu time</div>${redHtml(rm)}${mine.map((m) => meldHtml(m, true, tap)).join('')}</div></div>`;
   if (opp.length || ro.length) {
     h += two
-      ? `<div class="sz opp" data-mh="0.17" data-mw="0.78" style="left:50%;top:20%;transform:translateX(-50%);max-width:78%"><div class="zg"><div class="zl">Jogos dos adversários</div>${redHtml(ro)}${opp.map((m) => meldHtml(m, false)).join('')}</div></div>`
+      ? `<div class="sz opp" data-mh="0.24" data-mw="0.8" style="left:50%;top:17%;transform:translateX(-50%);max-width:80%"><div class="zg"><div class="zl">Jogos dos adversários</div>${redHtml(ro)}${opp.map((m) => meldHtml(m, false)).join('')}</div></div>`
       : `<div class="sz opp" data-mh="0.33" data-mw="0.28" style="left:19%;top:8%;transform:translateX(-50%);max-width:27%"><div class="zg col"><div class="zl">Jogos dos adversários</div>${redHtml(ro)}${opp.map((m) => meldHtml(m, false)).join('')}</div></div>`;
   }
   return h;
 }
 let zoneSeat = -1; let logOpen = false;
+function choiceModal(title, opts) {
+  const m = document.createElement('div'); m.className = 'modal';
+  m.innerHTML = '<div><h2></h2><div id="chs" style="display:grid;gap:10px;margin-top:12px"></div><button class="sec" id="chc" style="width:100%;margin-top:10px">Cancelar</button></div>';
+  m.querySelector('h2').textContent = title;
+  opts.forEach((o) => { const b = document.createElement('button'); b.textContent = o.label; b.onclick = () => { m.remove(); o.fn(); }; m.querySelector('#chs').appendChild(b); });
+  m.querySelector('#chc').onclick = () => m.remove();
+  document.body.appendChild(m);
+}
 let newRound = -1, prevHand = new Set(), newCards = new Map(), newTimer = null;
 function logModal(v) {
   const m = document.createElement('div'); m.className = 'modal';
@@ -1025,7 +1046,7 @@ function renderGame(app, v) {
   const withPile = draw && v.discardTop && !v.pileLocked;
   const selInfo = sel.size >= (withPile ? 2 : 3) ? groupInfo(v, [...sel], withPile ? v.discardTop : null) : null;
   const allPts = gi.reduce((a, x) => a + x.pts, 0) + (selInfo ? selInfo.pts : 0);
-  const status = v.phase !== 'playing' ? '' : my ? (draw ? (v.owed ? 'Saiu um 3 vermelho! Ele foi para a mesa. Toque no monte para comprar a carta dele' + (v.owed > 1 ? ' (faltam ' + v.owed + ')' : '') + ', e depois as que faltam.' : v.drawn ? 'Agora toque no monte de novo para virar a 2ª carta.' : 'Sua vez! Escolha: toque no monte para virar a 1ª carta' + (v.discardCount && !v.pileLocked ? ' OU marque as cartas e toque em “Pegar o lixo”.' : '.')) : (v.tookPile ? 'Você pegou o lixo: todas as cartas foram para a sua mão. Baixe jogos se puder e deixe 1 carta no lixo (qualquer uma da mão).' : 'Baixe jogos se puder e depois descarte 1 carta.')) : `Vez de ${v.players[v.turn].name}…`;
+  const status = v.phase !== 'playing' ? '' : my ? (draw ? (v.owed ? 'Saiu um 3 vermelho! Ele foi para a mesa. Toque no monte para comprar a carta dele' + (v.owed > 1 ? ' (faltam ' + v.owed + ')' : '') + ', e depois as que faltam.' : v.drawn ? 'Agora toque no monte de novo para virar a 2ª carta.' : 'Sua vez! Toque no monte (vira a 1ª carta)' + (v.discardCount && !v.pileLocked ? ' OU marque cartas e “Pegar o lixo”.' : '.')) : (v.tookPile ? 'Você pegou o lixo: todas as cartas foram para a sua mão. Baixe jogos se puder e deixe 1 carta no lixo (qualquer uma da mão).' : 'Baixe jogos se puder e depois descarte 1 carta.')) : `Vez de ${v.players[v.turn].name}…`;
   const durMs = ((v.opts && v.opts.msg) || 6) * 1000, nowT = Date.now();
   banners = banners.filter((b) => nowT - b.ts < durMs);
   const shownBanners = banners.slice(-4);
@@ -1086,7 +1107,14 @@ function renderGame(app, v) {
     }
     if (!groups.length) return toast(desc ? 'Marque na mão 2 cartas iguais à carta de cima do lixo (coringa vale). Só esse jogo desce.' : 'Marque na mão as cartas que formam um jogo com a carta de cima do lixo.');
     if (desc && groups.length > 1) return toast('Com seu time já descido, desça só o jogo que usa a carta de cima do lixo.');
-    send({ a: 'takePile', groups, zone: zoneSel }); sel.clear(); staged = [];
+    // qual jogo usa a carta de cima? se o time já tem jogo dessa figura, deixa escolher entre juntar e fazer um novo
+    const top = v.discardTop; const byId = (i) => v.hand.find((c) => c.id === i);
+    let topRank = null;
+    for (const g of groups) { const m = S.classify(g.map(byId).filter(Boolean).concat([top])); if (m) { topRank = m.rank; break; } }
+    const go = (joinId) => { send({ a: 'takePile', groups, zone: zoneSel, joinId }); sel.clear(); staged = []; };
+    const joinable = topRank == null ? [] : v.melds[v.myTeam].filter((m) => m.rank === topRank);
+    if (!joinable.length) return go();
+    choiceModal('Onde colocar essas cartas?', joinable.map((m) => ({ label: 'Juntar ao jogo de ' + S.RN[m.rank] + ' (' + m.cards.length + ' cartas)', fn: () => go(m.id) })).concat([{ label: 'Fazer um jogo novo', fn: () => go() }]));
   };
   $('#pile').onclick = tryPile;
   document.querySelectorAll('.hand .card').forEach((el) => (el.onclick = () => {
