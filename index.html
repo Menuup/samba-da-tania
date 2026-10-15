@@ -184,6 +184,8 @@ table{width:100%;border-collapse:collapse}td,th{padding:5px 4px;text-align:right
 @media(max-width:600px){#app.wide .sc .rk2{display:none}#app.wide .sc th:first-child,#app.wide .sc td:first-child{width:28px}#app.wide .sc table{font-size:9px}#app.wide .sc th{font-size:8px}}
 .sc .s{display:none}
 @media(max-width:600px){#app.wide .sc .l{display:none}#app.wide .sc .s{display:inline}}
+.warn{background:#7a1020;border-radius:10px;padding:8px 10px;margin:8px 0;font-size:14px}
+.steps{margin:8px 0 0;padding-left:20px;font-size:14px}.steps li{margin:4px 0}
 </style>
 </head>
 <body>
@@ -750,6 +752,26 @@ function soloModal() {
   document.body.appendChild(m);
 }
 
+function platformInfo() {
+  const ua = navigator.userAgent || '';
+  const ios = /iPhone|iPad|iPod/i.test(ua) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  return {
+    ios, android: /Android/i.test(ua),
+    inApp: /FBAN|FBAV|Instagram|WhatsApp|Line\/|MicroMessenger|Snapchat|TikTok|; wv\)/i.test(ua),
+    safari: ios && /Safari/i.test(ua) && !/CriOS|FxiOS|EdgiOS|OPiOS/i.test(ua),
+  };
+}
+// Passo a passo de instalação conforme o aparelho de quem abriu.
+function installSteps() {
+  const p = platformInfo(); let h = '';
+  if (p.inApp) h += '<p class="warn">⚠️ Você abriu por dentro de outro app (WhatsApp, Instagram…). Toque nos três pontinhos ⋮ e escolha <b>Abrir no navegador</b> (Chrome ou Safari). Só assim dá para instalar.</p>';
+  if (p.ios) h += p.safari
+    ? '<ol class="steps"><li>Toque no botão <b>Compartilhar</b> (o quadrado com uma seta para cima, na barra de baixo)</li><li>Role a lista e toque em <b>Adicionar à Tela de Início</b></li><li>Toque em <b>Adicionar</b>. O ícone do jogo aparece na tela do celular</li></ol>'
+    : '<p class="hint">No iPhone, abra este mesmo link no <b>Safari</b> e toque em Compartilhar → Adicionar à Tela de Início.</p>';
+  else if (p.android) h += '<ol class="steps"><li>Toque nos três pontinhos <b>⋮</b> do Chrome (canto de cima da tela)</li><li>Toque em <b>Instalar app</b> (ou <b>Adicionar à tela inicial</b>)</li><li>Confirme em <b>Instalar</b>. O ícone do jogo aparece na tela do celular</li></ol>';
+  else h += '<p class="hint">No computador (Chrome ou Edge): clique no ícone de instalar que aparece na barra de endereço.</p>';
+  return h;
+}
 let deferredInstall = null;
 window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredInstall = e; if (Net.view === null && $('#instb')) { $('#instb').hidden = false; $('#insth').hidden = true; $('#instb').onclick = () => { deferredInstall.prompt(); deferredInstall = null; $('#inst').hidden = true; }; } });
 const isStandalone = () => (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
@@ -789,7 +811,7 @@ function renderHome(app) {
    ${saved && saved.g ? `<button class="sec" id="retomar" style="width:100%">Retomar a mesa ${saved.code}</button>` : ''}</div>
   <div class="card-box"><label>Entrar numa mesa que já existe</label><div class="row"><input id="cod" placeholder="CÓDIGO" maxlength="4" style="text-transform:uppercase;letter-spacing:4px;font-weight:800" value="${new URLSearchParams(location.search).get('sala') || sala || ''}"><button id="entrar" style="flex:none">Entrar</button></div></div>
   <div class="card-box"><button class="sec" id="treino" style="width:100%">Jogar com robôs (2, 4 ou 6 jogadores)</button> <button class="sec" id="regras" style="width:100%;margin-top:8px">Como se joga</button></div>
-  <div class="card-box" id="inst" ${isStandalone() ? 'hidden' : ''}><b>📲 Instalar no celular</b><p class="hint" style="margin:6px 0">Vira um ícone na tela inicial, abre em tela cheia e carrega mais rápido.</p><button id="instb" style="width:100%" hidden>Instalar o app</button><p class="hint" id="insth" style="margin:6px 0 0">Android (Chrome): menu ⋮ → Instalar app. iPhone (Safari): botão Compartilhar → Adicionar à Tela de Início.</p></div>`;
+  <div class="card-box" id="inst" ${isStandalone() ? 'hidden' : ''}><b>📲 Instalar no celular</b><p class="hint" style="margin:6px 0">Vira um ícone na tela inicial e abre em tela cheia, como um app normal. Funciona em qualquer celular.</p><button id="instb" style="width:100%" hidden>Instalar o app</button><div id="insth">${installSteps()}</div></div>`;
   if (deferredInstall) { $('#instb').hidden = false; $('#insth').hidden = true; $('#instb').onclick = () => { deferredInstall.prompt(); deferredInstall = null; $('#inst').hidden = true; }; }
   const setAv = (a) => { myAvatar = a; ls.set('avatar', a); $('#avnow').innerHTML = avHtml(a, 64); document.querySelectorAll('.avs button').forEach((b) => b.classList.toggle('on', b.dataset.e === a)); };
   document.querySelectorAll('.avs button').forEach((b) => (b.onclick = () => setAv(b.dataset.e)));
