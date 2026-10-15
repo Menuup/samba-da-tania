@@ -197,6 +197,16 @@ table{width:100%;border-collapse:collapse}td,th{padding:5px 4px;text-align:right
 #app.wide .zg.col{max-height:100%}
 @media(max-width:600px){#app.wide .centro{top:32%}#app.wide .felt .lockmsg{top:calc(32% + 40px)}#app.wide .sz.mine{max-height:36%}#app.wide .sz.mine .zl{display:none}#app.wide .sz.mine .zg{gap:3px;padding:2px 3px}}
 .rd3{display:flex;align-items:center;gap:4px;padding:2px 5px;border-radius:8px;background:#c6283940;border:1px solid #c6283988;flex:none}.rd3 .card+.card{margin-left:-12px}.rd3 .tag{background:#c62839;color:#fff;font-size:9px;padding:1px 4px;border-radius:6px;white-space:nowrap}
+.card.newh{box-shadow:0 0 0 3px #f2c14e,0 0 16px #f2c14eaa}
+.card.newc{animation:flipin .65s ease-out}
+@keyframes flipin{0%{transform:rotateY(90deg) translateY(-50px) scale(.4);opacity:0}55%{transform:rotateY(0) translateY(-18px) scale(1.18);opacity:1}100%{transform:none}}
+@media(prefers-reduced-motion:reduce){.card.newc{animation:none}}
+.tn{display:inline-block;font-weight:800;padding:1px 9px;border-radius:99px;font-size:14px;line-height:1.35}
+.tn.n{background:#1f8f5f;color:#fff}.tn.e{background:#f2c14e;color:#3b0f26}
+.pt{font-size:17px;font-variant-numeric:tabular-nums}.vs{opacity:.7;margin:0 2px}
+.sc .tn{font-size:12px;padding:1px 7px}
+#app.wide .top .score{font-size:13px}
+@media(max-width:600px){#app.wide .sc th:first-child,#app.wide .sc td:first-child{width:46px}#app.wide .sc td{font-size:10px}#app.wide .sc .tn{font-size:11px;padding:1px 6px}}
 </style>
 </head>
 <body>
@@ -212,7 +222,7 @@ table{width:100%;border-collapse:collapse}td,th{padding:5px 4px;text-align:right
 </div>
 
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
-<script src="engine.js?v=20261015e"></script>
+<script src="engine.js?v=20261015f"></script>
 <script>
 'use strict';
 const $ = (s) => document.querySelector(s);
@@ -861,7 +871,7 @@ function meldHtml(m, mine, tap) {
 
 // Tabela fixa de contagem: pontos do jogo, jogos baixados, canastras e cartas na mão de cada time.
 function scoreTable(v) {
-  const rows = [0, 1].map((t) => {
+  const rows = [v.myTeam, 1 - v.myTeam].map((t) => {
     const ms = v.melds[t];
     const mp = ms.reduce((a, m) => a + S.meldPts(m), 0);
     const bonus = ms.reduce((a, m) => a + S.canastraBonus(m), 0);
@@ -872,7 +882,7 @@ function scoreTable(v) {
     const morto = v.mortoTaken[t] ? 'pego' : '−100';
     const rn = (v.reds && v.reds[t] ? v.reds[t].length : 0); const semCan = !ms.some((m) => m.canastra); const redPts = rn * 100;
     const proj = mp + bonus + redPts - (v.mortoTaken[t] ? 0 : 100);
-    return `<tr class="${t === v.myTeam ? 'me' : ''}"><td>${t === v.myTeam ? 'Nós' : 'Eles'}</td><td><b>${v.scores[t]}</b></td><td>${ms.length} <span class="l">(${cards} cartas)</span><span class="s">(${cards})</span><br><small>${mp} pts</small></td><td>${limpas}L + ${sujas}S<br><small>+${bonus}</small></td><td>${rn}${rn ? `<br><small>+${redPts}${semCan ? '<span class="rk2"><br>−' + redPts + ' se baterem sem canastra</span>' : ''}</small>` : ''}</td><td>${inHand}${handPts != null ? `<br><small>−${handPts}<span class="l"> (sua mão)</span></small>` : ''}</td><td>${morto}</td><td><b>${proj}</b></td></tr>`;
+    return `<tr class="${t === v.myTeam ? 'me' : ''}"><td><span class="tn ${t === v.myTeam ? 'n' : 'e'}">${t === v.myTeam ? 'Nós' : 'Eles'}</span></td><td><b>${v.scores[t]}</b></td><td>${ms.length} <span class="l">(${cards} cartas)</span><span class="s">(${cards})</span><br><small>${mp} pts</small></td><td>${limpas}L + ${sujas}S<br><small>+${bonus}</small></td><td>${rn}${rn ? `<br><small>+${redPts}${semCan ? '<span class="rk2"><br>−' + redPts + ' se baterem sem canastra</span>' : ''}</small>` : ''}</td><td>${inHand}${handPts != null ? `<br><small>−${handPts}<span class="l"> (sua mão)</span></small>` : ''}</td><td>${morto}</td><td><b>${proj}</b></td></tr>`;
   }).join('');
   return `<div class="sc"><table><tr><th></th><th>Total</th><th><span class="l">Jogos na mesa</span><span class="s">Jogos</span></th><th><span class="l">Canastras</span><span class="s">Canast.</span></th><th><span class="l">3 vermelhos</span><span class="s">3♥</span></th><th><span class="l">Cartas na mão</span><span class="s">Mão</span></th><th>Morto</th><th><span class="l">Rodada agora</span><span class="s">Agora</span></th></tr>${rows}</table></div>`;
 }
@@ -900,6 +910,7 @@ function seatZones(v, tap) {
   return h;
 }
 let zoneSeat = -1; let logOpen = false;
+let newRound = -1, prevHand = new Set(), newCards = new Map(), newTimer = null;
 function logModal(v) {
   const m = document.createElement('div'); m.className = 'modal';
   m.innerHTML = '<div><div style="display:flex;justify-content:space-between;align-items:center"><h2>O que cada um fez</h2><button class="sec" id="lgx" style="padding:6px 14px">Fechar</button></div><div id="lgl" style="margin-top:8px"></div></div>';
@@ -939,28 +950,34 @@ function renderGame(app, v) {
   const withPile = draw && v.discardTop && !v.pileLocked;
   const selInfo = sel.size >= (withPile ? 2 : 3) ? groupInfo(v, [...sel], withPile ? v.discardTop : null) : null;
   const allPts = gi.reduce((a, x) => a + x.pts, 0) + (selInfo ? selInfo.pts : 0);
-  const status = v.phase !== 'playing' ? '' : my ? (draw ? 'Sua vez! Compre ' + v.drawCount + ' cartas do monte' + (v.discardCount && !v.pileLocked ? ' ou pegue o lixo.' : '.') : 'Baixe jogos se puder e depois descarte 1 carta.') : `Vez de ${v.players[v.turn].name}…`;
+  const status = v.phase !== 'playing' ? '' : my ? (draw ? (v.drawn ? 'Agora toque no monte de novo para virar a 2ª carta.' : 'Sua vez! Toque no monte para virar a 1ª carta' + (v.discardCount && !v.pileLocked ? ', ou pegue o lixo.' : '.')) : 'Baixe jogos se puder e depois descarte 1 carta.') : `Vez de ${v.players[v.turn].name}…`;
   const durMs = ((v.opts && v.opts.msg) || 6) * 1000, nowT = Date.now();
   banners = banners.filter((b) => nowT - b.ts < durMs);
   const shownBanners = banners.slice(-4);
   clearTimeout(bnTimer);
   if (banners.length) bnTimer = setTimeout(() => { if (Net.view && Net.view.phase === 'playing') render(Net.view); }, Math.max(150, durMs - (nowT - banners[0].ts) + 60));
+  const nowN = Date.now();
+  if (v.round !== newRound) { newRound = v.round; prevHand = new Set(v.hand.map((c) => c.id)); newCards = new Map(); }
+  else { v.hand.forEach((c) => { if (!prevHand.has(c.id)) newCards.set(c.id, nowN); }); prevHand = new Set(v.hand.map((c) => c.id)); }
+  const ageOf = (id) => (newCards.has(id) ? nowN - newCards.get(id) : 1e9);
+  clearTimeout(newTimer);
+  { const ages = v.hand.map((c) => ageOf(c.id)).filter((a) => a < 5000); if (ages.length) newTimer = setTimeout(() => { if (Net.view && Net.view.phase === 'playing') render(Net.view); }, Math.max(150, 5100 - Math.min(...ages))); }
   const hand = sortedHand(v.hand, v.round);
   const mySeats = v.players.map((p, i) => i).filter((i) => v.players[i].team === v.myTeam);
   const zoneSel = mySeats.includes(zoneSeat) ? zoneSeat : v.seat;
   const lockMsg = v.pileLocked ? (v.lockType === 'black' ? '🔒 3 preto: você não pode pegar o lixo' : '🔒 Coringa: lixo trancado até voltar a quem jogou') : '';
   const canGroup = (draw || play) && sel.size >= 3;
-  app.innerHTML = `<div class="top"><div class="score">Rodada ${v.round} · meta ${v.target}</div><div class="score">${v.scores.map((x, t) => `${t === v.myTeam ? '<b>' : ''}${t === v.myTeam ? 'Nós' : 'Eles'} ${x}${t === v.myTeam ? '</b>' : ''}`).join(' × ')}</div><span style="display:flex;gap:6px">${chromeBtns}<button class="sec" id="logbtn" title="Histórico">📜</button><button class="sec" id="regras" style="padding:6px 12px">?</button></span></div>
+  app.innerHTML = `<div class="top"><div class="score">Rodada ${v.round} · meta ${v.target}</div><div class="score">${[v.myTeam, 1 - v.myTeam].map((t) => `<span class="tn ${t === v.myTeam ? 'n' : 'e'}">${t === v.myTeam ? 'Nós' : 'Eles'}</span> <b class="pt">${v.scores[t]}</b>`).join(' <span class="vs">×</span> ')}</div><span style="display:flex;gap:6px">${chromeBtns}<button class="sec" id="logbtn" title="Histórico">📜</button><button class="sec" id="regras" style="padding:6px 12px">?</button></span></div>
   <div class="need ${desc ? 'ok' : ''}">${needTxt}</div>
   ${scoreTable(v)}
   <div class="tw">
 
-    ${v.players.map((p, i) => { const r = (i - v.seat + v.n) % v.n; const th = 2 * Math.PI * r / v.n; const x = 50 - 47 * Math.sin(th), y = 50 + 47 * Math.cos(th); return `<div class="seat ${v.turn === i && v.phase === 'playing' ? 'turn' : ''} ${p.team === v.myTeam ? 'mine' : ''}" style="left:${x}%;top:${y}%">${avHtml(avatars[i], 34)}<b>${i === v.seat ? 'Você' : p.name}</b><br>🂠 ${p.count}${v.online && !v.online[i] ? ' · ⚪ saiu' : ''}</div>`; }).join('')}
+    ${v.players.map((p, i) => { const r = (i - v.seat + v.n) % v.n; const th = 2 * Math.PI * r / v.n; const x = 50 - 47 * Math.sin(th), y = 53 + 41 * Math.cos(th); return `<div class="seat ${v.turn === i && v.phase === 'playing' ? 'turn' : ''} ${p.team === v.myTeam ? 'mine' : ''}" style="left:${x}%;top:${y}%">${avHtml(avatars[i], 34)}<b>${i === v.seat ? 'Você' : p.name}</b><br>🂠 ${p.count}${v.online && !v.online[i] ? ' · ⚪ saiu' : ''}</div>`; }).join('')}
     <div class="mortos"><div class="mt ${v.mortoTaken[v.myTeam] ? 'gone' : ''}"><div class="card mini back"></div>Morto nós${v.mortoTaken[v.myTeam] ? ' (pego)' : ''}</div><div class="mt ${v.mortoTaken[1 - v.myTeam] ? 'gone' : ''}"><div class="card mini back"></div>Morto eles${v.mortoTaken[1 - v.myTeam] ? ' (pego)' : ''}</div></div>
     <div class="felt">
       ${seatZones(v, play && sel.size)}
-      <div class="centro"><div class="pile ${draw ? 'act' : ''}" id="stock"><div class="card back"></div>Monte ${v.stockCount}</div>
-      <div class="pile ${draw && v.discardCount && !v.pileLocked ? 'act' : ''}" id="pile">${v.discardTop ? cardHtml(v.discardTop) : '<div class="card empty"></div>'}Lixo ${v.discardCount}${v.pileLocked ? ' 🔒' : ''}</div></div>
+      <div class="centro"><div class="pile ${draw ? 'act' : ''}" id="stock"><div class="card back"></div>Monte ${v.stockCount}${draw ? `<br><small>${v.drawn ? 'vire a 2ª' : 'vire a 1ª'}</small>` : ''}</div>
+      <div class="pile ${draw && v.discardCount && !v.pileLocked && !v.drawn ? 'act' : ''}" id="pile">${v.discardTop ? cardHtml(v.discardTop) : '<div class="card empty"></div>'}Lixo ${v.discardCount}${v.pileLocked ? ' 🔒' : ''}</div></div>
       ${lockMsg ? `<div class="lockmsg">${lockMsg}</div>` : ''}
     </div></div>
   ${(() => { const lg = (v.log || []).slice(logOpen ? -30 : -5); return `<div class="log"><div class="lh"><b>O que cada um fez</b><button type="button" class="sec" id="logt">${logOpen ? 'Mostrar menos' : 'Ver tudo'}</button></div>${lg.map((t, i) => `<div class="ll ${i === lg.length - 1 ? 'new' : ''}"></div>`).join('')}</div>`; })()}
@@ -969,7 +986,7 @@ function renderGame(app, v) {
   ${staged.length || selInfo ? `<div class="stg">${gi.map((x, k) => `<span class="gp ${x.ok ? 'ok' : 'bad'}" data-g="${k}">Jogo ${k + 1}: ${x.ok ? x.pts + ' pts' : 'não vale'} ✕</span>`).join('')}${selInfo ? `<span class="gp ${selInfo.ok ? 'ok' : 'bad'}">Marcadas${withPile ? ' + lixo' : ''}${selInfo.ok && selInfo.n > 1 ? ' (' + selInfo.n + ' jogos)' : ''}: ${selInfo.ok ? selInfo.pts + ' pts' : 'não vale'}</span>` : ''}<span class="gp tot">Total ${allPts}${desc || need.canastra ? '' : ' / ' + need.min}</span></div>` : ''}
   ${false ? `<div class="zsel">Baixar na frente de: ${mySeats.map((i) => `<button type="button" class="${zoneSel === i ? 'on' : ''}" data-z="${i}"></button>`).join('')}</div>` : ''}
   <div class="bar"><button id="baixar" ${(draw || play) && (staged.length || sel.size >= 3) ? '' : 'disabled'}>Baixar</button><button class="sec" id="grupo" ${canGroup ? '' : 'disabled'}>+ Outro jogo</button><button id="desc" ${play && sel.size === 1 && !staged.length ? '' : 'disabled'}>Descartar</button><button class="sec" id="sug" ${draw || play ? '' : 'disabled'}>💡 Sugerir jogos</button><button class="sec" id="ord">Agrupar iguais</button></div>
-  <div class="hand">${hand.map((c) => { const g = stagedIds.get(c.id); return cardHtml(c, g ? 'stg' + ((g - 1) % 4) : sel.has(c.id) ? 'sel' : '', `data-id="${c.id}"`); }).join('')}</div></div>`;
+  <div class="hand">${hand.map((c) => { const g = stagedIds.get(c.id); return cardHtml(c, (g ? 'stg' + ((g - 1) % 4) : sel.has(c.id) ? 'sel' : '') + (ageOf(c.id) < 5000 ? ' newh' + (ageOf(c.id) < 900 ? ' newc' : '') : ''), `data-id="${c.id}"`); }).join('')}</div></div>`;
   $('#regras').onclick = () => { showRules = true; rulesModal(); };
   document.querySelectorAll('.banner .bt').forEach((el, i) => (el.textContent = shownBanners[i].t));
   { const lg = (v.log || []).slice(logOpen ? -30 : -5); document.querySelectorAll('.log .ll').forEach((el, i) => (el.textContent = lg[i].t)); }
@@ -983,6 +1000,7 @@ function renderGame(app, v) {
   $('#pile').onclick = () => {
     if (!draw || !v.discardCount) return;
     if (v.pileLocked) return toast('O lixo está trancado para você.');
+    if (v.drawn) return toast('Você já virou uma carta do monte. Vire também a segunda.');
     const groups = staged.map((g) => g.slice());
     if (sel.size) {
       // junta a carta de cima do lixo às marcadas e separa em jogos; o jogo da carta de cima pode vir com outros jogos da mão
@@ -1034,7 +1052,7 @@ function rulesModal() {
   m.innerHTML = `<div><h2>Como se joga</h2><ul>
   <li><b>Mesa:</b> 2 (um contra um), 4 ou 6 jogadores, em dois times que se alternam. 4 baralhos com todos os coringas.</li>
   <li><b>Coringas:</b> os jokers e todos os 2.</li>
-  <li><b>Sua vez:</b> compre 2 cartas <i>ou</i> pegue o lixo. Depois baixe jogos e descarte 1 carta.</li>
+  <li><b>Sua vez:</b> vire 2 cartas do monte, uma de cada vez (toque no monte duas vezes), <i>ou</i> pegue o lixo. Depois baixe jogos e descarte 1 carta.</li>
   <li><b>3 vermelhos:</b> saem da mão sozinhos e ficam na mesa, à vista de todos, cada um trazendo 1 carta do monte no lugar. Valem +100 cada. Se alguém bater e o seu time não tiver nenhuma canastra, cada um vale −100.</li>
   <li><b>Jogos:</b> só lavadeiras: 3 ou mais cartas iguais, com pelo menos 2 naturais; o resto pode ser coringa. Jogo com coringa é sujo e não limpa mais.</li>
   <li><b>Descer:</b> a primeira vez do time na rodada precisa de pontos mínimos: 75 (0 a 1999), 90 (2000 a 3999), 120 (4000 a 5999), uma canastra qualquer (6000 a 7999) e 200 (8000 em diante). Monte vários jogos com "+ Outro jogo" e baixe todos juntos.</li>
