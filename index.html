@@ -235,7 +235,7 @@ body.chat-open .chtab{right:min(78vw,320px)}
 </div>
 
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
-<script src="engine.js?v=20261015g"></script>
+<script src="engine.js?v=20261015h"></script>
 <script>
 'use strict';
 const $ = (s) => document.querySelector(s);
@@ -969,7 +969,7 @@ function renderGame(app, v) {
   const withPile = draw && v.discardTop && !v.pileLocked;
   const selInfo = sel.size >= (withPile ? 2 : 3) ? groupInfo(v, [...sel], withPile ? v.discardTop : null) : null;
   const allPts = gi.reduce((a, x) => a + x.pts, 0) + (selInfo ? selInfo.pts : 0);
-  const status = v.phase !== 'playing' ? '' : my ? (draw ? (v.drawn ? 'Agora toque no monte de novo para virar a 2ª carta.' : 'Sua vez! Toque no monte para virar a 1ª carta' + (v.discardCount && !v.pileLocked ? ', ou pegue o lixo.' : '.')) : (v.tookPile ? 'Você pegou o lixo: todas as cartas foram para a sua mão. Baixe jogos se puder e deixe 1 carta no lixo (qualquer uma da mão).' : 'Baixe jogos se puder e depois descarte 1 carta.')) : `Vez de ${v.players[v.turn].name}…`;
+  const status = v.phase !== 'playing' ? '' : my ? (draw ? (v.drawn ? 'Agora toque no monte de novo para virar a 2ª carta.' : 'Sua vez! Escolha: toque no monte para virar a 1ª carta' + (v.discardCount && !v.pileLocked ? ' OU marque as cartas e toque em “Pegar o lixo”.' : '.')) : (v.tookPile ? 'Você pegou o lixo: todas as cartas foram para a sua mão. Baixe jogos se puder e deixe 1 carta no lixo (qualquer uma da mão).' : 'Baixe jogos se puder e depois descarte 1 carta.')) : `Vez de ${v.players[v.turn].name}…`;
   const durMs = ((v.opts && v.opts.msg) || 6) * 1000, nowT = Date.now();
   banners = banners.filter((b) => nowT - b.ts < durMs);
   const shownBanners = banners.slice(-4);
@@ -1004,7 +1004,7 @@ function renderGame(app, v) {
   <div class="status ${my ? 'me' : ''}">${status}${cdHtml(v)}</div>
   ${staged.length || selInfo ? `<div class="stg">${gi.map((x, k) => `<span class="gp ${x.ok ? 'ok' : 'bad'}" data-g="${k}">Jogo ${k + 1}: ${x.ok ? x.pts + ' pts' : 'não vale'} ✕</span>`).join('')}${selInfo ? `<span class="gp ${selInfo.ok ? 'ok' : 'bad'}">Marcadas${withPile ? ' + lixo' : ''}${selInfo.ok && selInfo.n > 1 ? ' (' + selInfo.n + ' jogos)' : ''}: ${selInfo.ok ? selInfo.pts + ' pts' : 'não vale'}</span>` : ''}<span class="gp tot">Total ${allPts}${desc || need.canastra ? '' : ' / ' + need.min}</span></div>` : ''}
   ${false ? `<div class="zsel">Baixar na frente de: ${mySeats.map((i) => `<button type="button" class="${zoneSel === i ? 'on' : ''}" data-z="${i}"></button>`).join('')}</div>` : ''}
-  <div class="bar"><button id="baixar" ${(draw || play) && (staged.length || sel.size >= 3) ? '' : 'disabled'}>Baixar</button><button class="sec" id="grupo" ${canGroup ? '' : 'disabled'}>+ Outro jogo</button><button id="desc" ${play && sel.size === 1 && !staged.length ? '' : 'disabled'}>Descartar</button><button class="sec" id="sug" ${draw || play ? '' : 'disabled'}>💡 Sugerir jogos</button><button class="sec" id="ord">Agrupar iguais</button></div>
+  <div class="bar"><button id="baixar" ${draw && !v.drawn ? (v.discardCount && !v.pileLocked ? '' : 'disabled') : play && (staged.length || sel.size >= 3) ? '' : 'disabled'}>${draw && !v.drawn ? 'Pegar o lixo' : 'Baixar'}</button><button class="sec" id="grupo" ${canGroup ? '' : 'disabled'}>+ Outro jogo</button><button id="desc" ${play && sel.size === 1 && !staged.length ? '' : 'disabled'}>Descartar</button><button class="sec" id="sug" ${draw || play ? '' : 'disabled'}>💡 Sugerir jogos</button><button class="sec" id="ord">Agrupar iguais</button></div>
   <div class="hand">${hand.map((c) => { const g = stagedIds.get(c.id); return cardHtml(c, (g ? 'stg' + ((g - 1) % 4) : sel.has(c.id) ? 'sel' : '') + (ageOf(c.id) < 5000 ? ' newh' + (ageOf(c.id) < 900 ? ' newc' : '') : ''), `data-id="${c.id}"`); }).join('')}</div></div>`;
   $('#regras').onclick = () => { showRules = true; rulesModal(); };
   document.querySelectorAll('.banner .bt').forEach((el, i) => (el.textContent = shownBanners[i].t));
@@ -1016,7 +1016,7 @@ function renderGame(app, v) {
   $('#sug').onclick = () => { staged = S.suggestGroups(v.hand, mineMelds, need, desc); sel.clear(); if (!staged.length) toast('Não achei jogos na sua mão agora.'); render(v); };
   enableDrag(v);
   $('#stock').onclick = () => draw && send({ a: 'draw' });
-  $('#pile').onclick = () => {
+  const tryPile = () => {
     if (!draw || !v.discardCount) return;
     if (v.pileLocked) return toast('O lixo está trancado para você.');
     if (v.drawn) return toast('Você já virou uma carta do monte. Vire também a segunda.');
@@ -1033,6 +1033,7 @@ function renderGame(app, v) {
     if (v.discardCount >= 4 && !confirm('Pegar o lixo inteiro (' + v.discardCount + ' cartas)?')) return;
     send({ a: 'takePile', groups, zone: zoneSel }); sel.clear(); staged = [];
   };
+  $('#pile').onclick = tryPile;
   document.querySelectorAll('.hand .card').forEach((el) => (el.onclick = () => {
     if (Date.now() - dragEnd < 300) return;
     const id = +el.dataset.id;
@@ -1044,7 +1045,8 @@ function renderGame(app, v) {
   $('#grupo').onclick = () => { staged.push(...splitSel(v)); sel.clear(); render(v); };
   document.querySelectorAll('.meld.mine').forEach((el) => (el.onclick = () => { if (!play || !sel.size) return; send({ a: 'addTo', meldId: +el.dataset.m, ids: [...sel] }); sel.clear(); }));
   $('#baixar').onclick = () => {
-    if (!play) return toast('Primeiro compre do monte (ou pegue o lixo). Depois baixe os seus jogos.');
+    if (draw && !v.drawn) return tryPile();
+    if (!play) return toast('Vire também a 2ª carta do monte. Depois baixe os seus jogos.');
     const groups = staged.map((g) => g.slice()); if (sel.size) groups.push(...splitSel(v));
     send({ a: 'meld', groups, zone: zoneSel }); sel.clear(); staged = [];
   };
