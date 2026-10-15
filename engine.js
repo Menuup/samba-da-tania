@@ -445,12 +445,27 @@
     return { error: 'sem jogada possível' };
   }
 
+  // Se as cartas marcadas não formam um jogo só, tenta separar em vários jogos (uma figura por jogo).
+  // Devolve a lista de grupos de cartas, ou null se não der.
+  function autoGroups(cards) {
+    if (cards.length < 3) return null;
+    if (classify(cards)) return [cards];
+    const nat = cards.filter((c) => !isWild(c)); const wild = cards.filter(isWild);
+    const by = {}; nat.forEach((c) => (by[c.r] = by[c.r] || []).push(c));
+    const gs = Object.values(by).map((g) => g.slice());
+    if (!gs.length || gs.some((g) => g.length < 2)) return null;
+    const w = wild.slice();
+    for (const g of gs) if (g.length < 3) { if (!w.length) return null; g.push(w.pop()); }
+    while (w.length) gs[0].push(w.pop());
+    return gs.every((g) => classify(g)) ? gs : null;
+  }
+
   // Sugestão para o jogador: todos os jogos que dá para montar com a mão (mesmo que ainda não cheguem nos pontos).
   const suggestGroups = (hand, melds, need, descended) => planGroups(hand, new Set(melds.map((m) => m.rank)), need, descended, true).map((g) => g.map((c) => c.id));
 
   const api = {
     SUITS, SYM, RN, TARGET, isWild, isBlack3, isRed3, pts, cardName, makeDeck, classify, meldPts, canastraBonus, needFor,
-    newGame, nextRound, act, viewFor, botPlan, botMove, timeoutMove, suggestGroups, teamOf, teamSeats, canBater, mulberry, clone,
+    newGame, nextRound, act, viewFor, botPlan, botMove, timeoutMove, suggestGroups, autoGroups, teamOf, teamSeats, canBater, mulberry, clone,
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.Samba = api;
