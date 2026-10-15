@@ -207,6 +207,19 @@ table{width:100%;border-collapse:collapse}td,th{padding:5px 4px;text-align:right
 .sc .tn{font-size:12px;padding:1px 7px}
 #app.wide .top .score{font-size:13px}
 @media(max-width:600px){#app.wide .sc th:first-child,#app.wide .sc td:first-child{width:46px}#app.wide .sc td{font-size:10px}#app.wide .sc .tn{font-size:11px;padding:1px 6px}}
+
+/* conversa como painel lateral transparente, com aba na borda */
+#chatd{display:flex;position:fixed;left:auto;right:0;top:142px;bottom:150px;width:min(78vw,320px);max-width:none;height:auto;margin:0;border-radius:16px 0 0 16px;background:rgba(42,12,28,.72);-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px);box-shadow:-6px 0 22px #0006;padding:8px 10px;transform:translateX(105%);transition:transform .25s ease;pointer-events:none;z-index:35}
+#chatd.open{transform:none;pointer-events:auto}
+#chatd .hd h2{font-size:15px}#chatd .hd button{padding:3px 10px;font-size:12px}
+#chatd .note{font-size:11px;margin:0 0 4px}
+#chatd .msg .bub{font-size:13px;padding:4px 9px;background:#ffffff26}#chatd .msg.me .bub{background:#0f5a43cc}
+#chatd .quick button{font-size:17px;padding:2px}
+#chatd #chatf input{padding:7px 10px;font-size:14px;min-width:0}#chatd #chatf button{padding:7px 12px}
+.chtab{position:fixed;right:0;top:44%;z-index:36;border-radius:12px 0 0 12px!important;padding:12px 7px!important;background:rgba(42,12,28,.78)!important;color:#fff;border:1px solid #ffffff44;border-right:0;transition:right .25s ease;box-shadow:-3px 0 12px #0005}
+.chtab .ic{font-size:20px}
+body.chat-open .chtab{right:min(78vw,320px)}
+@media(prefers-reduced-motion:reduce){#chatd,.chtab{transition:none}}
 </style>
 </head>
 <body>
@@ -334,7 +347,13 @@ function renderChat() {
   [...l.children].forEach((el, i) => { el.querySelector('.bub b').textContent = chatLog[i].n; el.querySelector('.bub span').textContent = chatLog[i].text; });
   l.scrollTop = l.scrollHeight;
 }
-function setChat(open) { chatOpen = open; chatd.classList.toggle('open', open); if (open) { unread = 0; updateBadges(); renderChat(); setTimeout(() => $('#chati').focus(), 50); } }
+function setChat(open) {
+  chatOpen = open; chatd.classList.toggle('open', open); document.body.classList.toggle('chat-open', open); ls.set('chatopen', open);
+  if (open) { unread = 0; updateBadges(); renderChat(); pv.style.display = 'none'; if (!(window.matchMedia && matchMedia('(pointer:coarse)').matches)) setTimeout(() => $('#chati').focus(), 50); }
+}
+// aba na borda da tela: abre e fecha a conversa
+const chtab = document.createElement('button'); chtab.className = 'chatbtn chtab'; chtab.type = 'button'; chtab.title = 'Conversa';
+chtab.innerHTML = '<span class="ic">💬</span><span class="bdg"></span>'; chtab.onclick = () => setChat(!chatOpen); document.body.appendChild(chtab);
 $('#chx').onclick = () => setChat(false);
 chatd.querySelectorAll('.quick button').forEach((b) => (b.onclick = () => chatSend(b.textContent)));
 $('#chatf').onsubmit = (e) => { e.preventDefault(); chatSend($('#chati').value); $('#chati').value = ''; };
