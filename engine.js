@@ -240,19 +240,20 @@
         const groups = pickGroups(a.groups || []);
         if (!groups) return E('Cartas inválidas.');
         if (!groups.length) return E('Marque na mão 2 cartas iguais à carta de cima do lixo (coringa vale como a carta).');
-        if (groups[0].length < 2) return E('Precisa da carta de cima do lixo mais 2 cartas iguais da sua mão.');
         if (s.descended[t] && groups.length !== 1) return E('Com seu time já descido, baixe só o jogo que usa a carta de cima: ela mais 2 cartas iguais da sua mão.');
-        const newGroups = groups.map((g, i) => (i === 0 ? g.concat([top]) : g));
-        const first = classify(newGroups[0]);
-        if (!first) return E('Esse jogo não vale: a carta de cima e as suas cartas precisam ser iguais (coringa vale).');
+        // o jogo que usa a carta de cima pode vir em qualquer posição; os outros jogos marcados descem junto (na 1ª descida somam pontos)
+        const ti = groups.findIndex((g) => g.length >= 2 && classify(g.concat([top])));
+        if (ti < 0) return E('Nenhum dos jogos marcados combina com a carta de cima do lixo: precisa de 2 cartas da sua mão iguais a ela (um coringa vale).');
+        const newGroups = groups.map((g, i) => (i === ti ? g.concat([top]) : g));
+        const first = classify(newGroups[ti]);
         // se o time já tem jogo dessa carta, as cartas entram nele
         const existing = s.melds[t].find((x) => x.rank === first.rank);
         let merged = null;
         if (existing) {
-          merged = classify(existing.cards.concat(newGroups[0]));
+          merged = classify(existing.cards.concat(newGroups[ti]));
           if (!merged || merged.rank !== existing.rank) return E('Essas cartas não encaixam no seu jogo de ' + RN[existing.rank] + '.');
         }
-        const chk = checkNewMelds(s, t, merged ? newGroups.slice(1) : newGroups, null);
+        const chk = checkNewMelds(s, t, merged ? newGroups.filter((_, i) => i !== ti) : newGroups, null);
         if (chk.error) return E(chk.error);
         s.discard.pop();
         const k = s.discard.length + 1;
@@ -262,7 +263,7 @@
         if (merged) { merged.id = existing.id; merged.zone = existing.zone; s.melds[t][s.melds[t].indexOf(existing)] = merged; }
         lay(chk.melds);
         s.step = 'play'; s.lock = null; s.pileTakes++;
-        s.last = name + ' pegou o lixo (' + k + (k === 1 ? ' carta: ' : ' cartas: ') + [top].concat(pile).slice(0, 14).map(cardName).join(' ') + (k > 14 ? ' …' : '') + ') e baixou ' + newGroups[0].map(cardName).join(' ') + (nrp ? ' e pôs ' + nrp + ' três vermelho' + (nrp > 1 ? 's' : '') + ' na mesa (comprou ' + nrp + ' no lugar)' : '') + '.';
+        s.last = name + ' pegou o lixo (' + k + (k === 1 ? ' carta: ' : ' cartas: ') + [top].concat(pile).slice(0, 14).map(cardName).join(' ') + (k > 14 ? ' …' : '') + ') e baixou ' + newGroups[ti].map(cardName).join(' ') + (nrp ? ' e pôs ' + nrp + ' três vermelho' + (nrp > 1 ? 's' : '') + ' na mesa (comprou ' + nrp + ' no lugar)' : '') + '.';
         const er = afterHand(s, seat); if (er) return E(er);
         return { state: s };
       }

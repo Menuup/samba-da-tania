@@ -211,7 +211,7 @@ table{width:100%;border-collapse:collapse}td,th{padding:5px 4px;text-align:right
 </div>
 
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
-<script src="engine.js?v=20261015c"></script>
+<script src="engine.js?v=20261015e"></script>
 <script>
 'use strict';
 const $ = (s) => document.querySelector(s);
@@ -912,9 +912,9 @@ function splitSel(v) {
   const ag = S.autoGroups(cs);
   return ag ? ag.map((g) => g.map((c) => c.id)) : [ids];
 }
-function groupInfo(v, ids) {
+function groupInfo(v, ids, extra) {
   const cs = ids.map((i) => v.hand.find((c) => c.id === i)).filter(Boolean);
-  const ag = S.autoGroups(cs);
+  const ag = S.autoGroups(extra ? cs.concat([extra]) : cs);
   if (!ag) return { ok: false, pts: 0, cards: cs, n: 0 };
   const pts = ag.reduce((a, g) => a + S.meldPts(S.classify(g)), 0);
   return { ok: true, pts, cards: cs, n: ag.length };
@@ -933,7 +933,8 @@ function renderGame(app, v) {
   const need = v.need[v.myTeam], desc = v.descended[v.myTeam];
   const needTxt = desc ? 'Seu time já desceu' : need.canastra ? 'Para descer: uma canastra' : 'Para descer: ' + need.min + ' pontos';
   const gi = staged.map((g) => groupInfo(v, g));
-  const selInfo = sel.size >= 3 ? groupInfo(v, [...sel]) : null;
+  const withPile = draw && v.discardTop && !v.pileLocked;
+  const selInfo = sel.size >= (withPile ? 2 : 3) ? groupInfo(v, [...sel], withPile ? v.discardTop : null) : null;
   const allPts = gi.reduce((a, x) => a + x.pts, 0) + (selInfo ? selInfo.pts : 0);
   const status = v.phase !== 'playing' ? '' : my ? (draw ? 'Sua vez! Compre ' + v.drawCount + ' cartas do monte' + (v.discardCount && !v.pileLocked ? ' ou pegue o lixo.' : '.') : 'Baixe jogos se puder e depois descarte 1 carta.') : `Vez de ${v.players[v.turn].name}…`;
   const durMs = ((v.opts && v.opts.msg) || 6) * 1000, nowT = Date.now();
@@ -963,7 +964,7 @@ function renderGame(app, v) {
   ${(() => { const lg = (v.log || []).slice(logOpen ? -30 : -5); return `<div class="log"><div class="lh"><b>O que cada um fez</b><button type="button" class="sec" id="logt">${logOpen ? 'Mostrar menos' : 'Ver tudo'}</button></div>${lg.map((t, i) => `<div class="ll ${i === lg.length - 1 ? 'new' : ''}"></div>`).join('')}</div>`; })()}
   <div class="dock"><div class="bns">${shownBanners.map((b) => `<div class="banner">${b.s != null ? avHtml(avatars[b.s], 30) : ''}<span class="bt"></span></div>`).join('')}</div>
   <div class="status ${my ? 'me' : ''}">${status}${cdHtml(v)}</div>
-  ${staged.length || selInfo ? `<div class="stg">${gi.map((x, k) => `<span class="gp ${x.ok ? 'ok' : 'bad'}" data-g="${k}">Jogo ${k + 1}: ${x.ok ? x.pts + ' pts' : 'não vale'} ✕</span>`).join('')}${selInfo ? `<span class="gp ${selInfo.ok ? 'ok' : 'bad'}">Marcadas${selInfo.ok && selInfo.n > 1 ? ' (' + selInfo.n + ' jogos)' : ''}: ${selInfo.ok ? selInfo.pts + ' pts' : 'não vale'}</span>` : ''}<span class="gp tot">Total ${allPts}${desc || need.canastra ? '' : ' / ' + need.min}</span></div>` : ''}
+  ${staged.length || selInfo ? `<div class="stg">${gi.map((x, k) => `<span class="gp ${x.ok ? 'ok' : 'bad'}" data-g="${k}">Jogo ${k + 1}: ${x.ok ? x.pts + ' pts' : 'não vale'} ✕</span>`).join('')}${selInfo ? `<span class="gp ${selInfo.ok ? 'ok' : 'bad'}">Marcadas${withPile ? ' + lixo' : ''}${selInfo.ok && selInfo.n > 1 ? ' (' + selInfo.n + ' jogos)' : ''}: ${selInfo.ok ? selInfo.pts + ' pts' : 'não vale'}</span>` : ''}<span class="gp tot">Total ${allPts}${desc || need.canastra ? '' : ' / ' + need.min}</span></div>` : ''}
   ${false ? `<div class="zsel">Baixar na frente de: ${mySeats.map((i) => `<button type="button" class="${zoneSel === i ? 'on' : ''}" data-z="${i}"></button>`).join('')}</div>` : ''}
   <div class="bar"><button id="baixar" ${(draw || play) && (staged.length || sel.size >= 3) ? '' : 'disabled'}>Baixar</button><button class="sec" id="grupo" ${canGroup ? '' : 'disabled'}>+ Outro jogo</button><button id="desc" ${play && sel.size === 1 && !staged.length ? '' : 'disabled'}>Descartar</button><button class="sec" id="sug" ${draw || play ? '' : 'disabled'}>💡 Sugerir jogos</button><button class="sec" id="ord">Agrupar iguais</button></div>
   <div class="hand">${hand.map((c) => { const g = stagedIds.get(c.id); return cardHtml(c, g ? 'stg' + ((g - 1) % 4) : sel.has(c.id) ? 'sel' : '', `data-id="${c.id}"`); }).join('')}</div></div>`;
@@ -980,7 +981,14 @@ function renderGame(app, v) {
   $('#pile').onclick = () => {
     if (!draw || !v.discardCount) return;
     if (v.pileLocked) return toast('O lixo está trancado para você.');
-    const groups = staged.map((g) => g.slice()); if (sel.size) groups.push([...sel]);
+    const groups = staged.map((g) => g.slice());
+    if (sel.size) {
+      // junta a carta de cima do lixo às marcadas e separa em jogos; o jogo da carta de cima pode vir com outros jogos da mão
+      const top = v.discardTop; const cs = [...sel].map((i) => v.hand.find((c) => c.id === i)).filter(Boolean);
+      const ag = S.autoGroups(cs.concat([top]));
+      if (ag) ag.forEach((g) => groups.push(g.filter((c) => c.id !== top.id).map((c) => c.id)));
+      else groups.push([...sel]);
+    }
     if (!groups.length) return toast(desc ? 'Marque na mão 2 cartas iguais à carta de cima do lixo (coringa vale). Só esse jogo desce.' : 'Marque na mão as cartas que formam um jogo com a carta de cima do lixo.');
     if (desc && groups.length > 1) return toast('Com seu time já descido, desça só o jogo que usa a carta de cima do lixo.');
     if (v.discardCount >= 4 && !confirm('Pegar o lixo inteiro (' + v.discardCount + ' cartas)?')) return;
