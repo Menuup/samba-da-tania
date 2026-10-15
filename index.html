@@ -223,6 +223,37 @@ body.chat-open .chtab{right:min(78vw,320px)}
 .cnt{font-size:11px;font-weight:800;background:#ffffff2e;border-radius:8px;padding:0 6px;white-space:nowrap;flex:none;font-variant-numeric:tabular-nums}.cnt.ok{background:#f2c14e;color:#3b0f26}
 #app.wide .cnt{font-size:9px;padding:0 4px}
 #app.wide .sz.opp{max-height:31%}
+
+/* cartas da mesa encolhem sozinhas até caberem todos os jogos, sem rolar */
+#app.wide{--u:1px}
+@media(min-width:700px){#app.wide{--u:1.4px}}
+#app.wide .sz{--ms:1}
+#app.wide .sz .zg{overflow:hidden;max-height:100%}
+#app.wide .sz .card.mini{width:calc(20 * var(--u) * var(--ms));height:calc(30 * var(--u) * var(--ms));border-radius:calc(4 * var(--u) * var(--ms))}
+#app.wide .sz .card.mini b,#app.wide .sz .card.mini i{font-size:calc(11 * var(--u) * var(--ms))}
+#app.wide .sz .meld .cards .card+.card,#app.wide .sz .rd3 .card+.card{margin-left:calc(-12 * var(--u) * var(--ms))}
+#app.wide .sz .meld{padding:calc(2 * var(--u) * var(--ms)) calc(4 * var(--u) * var(--ms));gap:calc(3 * var(--u) * var(--ms))}
+#app.wide .sz .meld .rk{font-size:calc(12 * var(--u) * var(--ms));min-width:calc(12 * var(--u) * var(--ms))}
+#app.wide .sz .cnt{font-size:calc(9 * var(--u) * var(--ms));padding:0 calc(4 * var(--u) * var(--ms))}
+#app.wide .sz .meld .tag,#app.wide .sz .rd3 .tag{font-size:calc(8 * var(--u) * var(--ms));padding:0 calc(3 * var(--u) * var(--ms))}
+#app.wide .sz .zl{font-size:calc(9 * var(--u) * var(--ms))}
+#app.wide .sz .zg{gap:calc(3 * var(--u) * var(--ms))}
+@media(max-width:600px){
+#app.wide .pile .card{width:28px;height:42px}
+#app.wide .pile .card b,#app.wide .pile .card i{font-size:14px}
+#app.wide .pile{font-size:10px;line-height:1.1}
+#app.wide .felt.n2 .centro{top:52%}
+#app.wide .felt.n2 .lockmsg{top:calc(52% + 34px)}
+#app.wide .felt.n2 .sz .zl{display:none}
+}
+@media(max-width:600px){
+#app.wide .need{display:none}
+#app.wide .pile small{display:none}
+#app.wide .felt.n2 .centro{top:51%}
+#app.wide .felt.n2 .lockmsg{top:calc(51% + 30px)}
+}
+#app.wide .sz{width:max-content}
+.sz.opp{padding:0;min-width:0;background:none;border-radius:0;font-size:inherit;flex:none;display:flex}
 </style>
 </head>
 <body>
@@ -238,7 +269,7 @@ body.chat-open .chtab{right:min(78vw,320px)}
 </div>
 
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
-<script src="engine.js?v=20261015m"></script>
+<script src="engine.js?v=20261015w"></script>
 <script>
 'use strict';
 const $ = (s) => document.querySelector(s);
@@ -923,13 +954,34 @@ function zoneHtml(v, team, mine, tap, emptyTxt) {
   }).join('');
 }
 // Jogos baixados ficam na frente de quem os baixou (ou do parceiro), vistos de cima: eu embaixo.
+// Encolhe as cartas da mesa até todos os jogos aparecerem sem rolar (como numa mesa de baralho).
+function fitZones() {
+  document.querySelectorAll('#app.wide .sz').forEach((z) => {
+    const felt = z.closest('.felt'); if (!felt) return;
+    const g = z.querySelector('.zg'); if (!g) return;
+    const opp = z.classList.contains('opp');
+    const maxH = felt.clientHeight * (+z.dataset.mh || (opp ? 0.33 : 0.38)), maxW = felt.clientWidth * (+z.dataset.mw || (opp ? 0.28 : 0.68));
+    // mede o tamanho natural e vai encolhendo as cartas até caber na área
+    z.style.maxHeight = 'none'; z.style.maxWidth = maxW + 'px'; g.style.maxHeight = 'none'; g.style.overflow = 'visible';
+    let k = 1; z.style.setProperty('--ms', k);
+    const over = () => z.getBoundingClientRect().height > maxH + 1 || g.scrollWidth > maxW + 1;
+    while (over() && k > 0.3) { k = Math.round((k - 0.04) * 100) / 100; z.style.setProperty('--ms', k); }
+    if (over()) { z.style.maxHeight = maxH + 'px'; g.style.maxHeight = maxH + 'px'; g.style.overflowY = 'auto'; }
+  });
+}
+window.addEventListener('resize', () => { if (Net.view && Net.view.phase === 'playing') fitZones(); });
 function seatZones(v, tap) {
   const mine = v.melds[v.myTeam].slice().sort(byRank), opp = v.melds[1 - v.myTeam].slice().sort(byRank);
   const rm = (v.reds && v.reds[v.myTeam]) || [], ro = (v.reds && v.reds[1 - v.myTeam]) || [];
   const redHtml = (rs) => (rs.length ? `<div class="rd3" title="3 vermelhos">${rs.map((c) => cardHtml(c, 'mini')).join('')}<span class="tag">3♥ ×${rs.length}</span></div>` : '');
+  const two = true; // faixa larga do adversário logo abaixo dele, em qualquer tamanho de mesa
   let h = '';
-  if (mine.length || rm.length) h += `<div class="sz mine" style="left:50%;bottom:28px;top:auto;transform:translateX(-50%);max-width:66%"><div class="zg"><div class="zl">Jogos do seu time</div>${redHtml(rm)}${mine.map((m) => meldHtml(m, true, tap)).join('')}</div></div>`;
-  if (opp.length || ro.length) h += `<div class="sz opp" style="left:19%;top:8%;transform:translateX(-50%);max-width:27%"><div class="zg col"><div class="zl">Jogos dos adversários</div>${redHtml(ro)}${opp.map((m) => meldHtml(m, false)).join('')}</div></div>`;
+  if (mine.length || rm.length) h += `<div class="sz mine" data-mh="${two ? 0.2 : 0.38}" data-mw="0.7" style="left:50%;bottom:28px;top:auto;transform:translateX(-50%);max-width:70%"><div class="zg"><div class="zl">Jogos do seu time</div>${redHtml(rm)}${mine.map((m) => meldHtml(m, true, tap)).join('')}</div></div>`;
+  if (opp.length || ro.length) {
+    h += two
+      ? `<div class="sz opp" data-mh="0.17" data-mw="0.78" style="left:50%;top:20%;transform:translateX(-50%);max-width:78%"><div class="zg"><div class="zl">Jogos dos adversários</div>${redHtml(ro)}${opp.map((m) => meldHtml(m, false)).join('')}</div></div>`
+      : `<div class="sz opp" data-mh="0.33" data-mw="0.28" style="left:19%;top:8%;transform:translateX(-50%);max-width:27%"><div class="zg col"><div class="zl">Jogos dos adversários</div>${redHtml(ro)}${opp.map((m) => meldHtml(m, false)).join('')}</div></div>`;
+  }
   return h;
 }
 let zoneSeat = -1; let logOpen = false;
@@ -990,14 +1042,14 @@ function renderGame(app, v) {
   const zoneSel = mySeats.includes(zoneSeat) ? zoneSeat : v.seat;
   const lockMsg = v.pileLocked ? (v.lockType === 'black' ? '🔒 3 preto: você não pode pegar o lixo' : '🔒 Coringa: lixo trancado até voltar a quem jogou') : '';
   const canGroup = (draw || play) && sel.size >= 3;
-  app.innerHTML = `<div class="top"><div class="score">Rodada ${v.round} · meta ${v.target}</div><div class="score">${[v.myTeam, 1 - v.myTeam].map((t) => `<span class="tn ${t === v.myTeam ? 'n' : 'e'}">${t === v.myTeam ? 'Nós' : 'Eles'}</span> <b class="pt">${v.scores[t]}</b>`).join(' <span class="vs">×</span> ')}</div><span style="display:flex;gap:6px">${chromeBtns}<button class="sec" id="logbtn" title="Histórico">📜</button><button class="sec" id="regras" style="padding:6px 12px">?</button></span></div>
+  app.innerHTML = `<div class="top"><div class="score">Rodada ${v.round} · ${desc ? 'já desceu' : need.canastra ? 'descer: canastra' : 'descer: ' + need.min + ' pts'}</div><div class="score">${[v.myTeam, 1 - v.myTeam].map((t) => `<span class="tn ${t === v.myTeam ? 'n' : 'e'}">${t === v.myTeam ? 'Nós' : 'Eles'}</span> <b class="pt">${v.scores[t]}</b>`).join(' <span class="vs">×</span> ')}</div><span style="display:flex;gap:6px">${chromeBtns}<button class="sec" id="logbtn" title="Histórico">📜</button><button class="sec" id="regras" style="padding:6px 12px">?</button></span></div>
   <div class="need ${desc ? 'ok' : ''}">${needTxt}</div>
   ${scoreTable(v)}
   <div class="tw">
 
     ${v.players.map((p, i) => { const r = (i - v.seat + v.n) % v.n; const th = 2 * Math.PI * r / v.n; const x = 50 - 47 * Math.sin(th), y = 53 + 41 * Math.cos(th); return `<div class="seat ${v.turn === i && v.phase === 'playing' ? 'turn' : ''} ${p.team === v.myTeam ? 'mine' : ''}" style="left:${x}%;top:${y}%">${avHtml(avatars[i], 34)}<b>${i === v.seat ? 'Você' : p.name}</b><br>🂠 ${p.count}${v.online && !v.online[i] ? ' · ⚪ saiu' : ''}</div>`; }).join('')}
     <div class="mortos"><div class="mt ${v.mortoTaken[v.myTeam] ? 'gone' : ''}"><div class="card mini back"></div>Morto nós${v.mortoTaken[v.myTeam] ? ' (pego)' : ''}</div><div class="mt ${v.mortoTaken[1 - v.myTeam] ? 'gone' : ''}"><div class="card mini back"></div>Morto eles${v.mortoTaken[1 - v.myTeam] ? ' (pego)' : ''}</div></div>
-    <div class="felt">
+    <div class="felt n2">
       ${seatZones(v, play && sel.size)}
       <div class="centro"><div class="pile ${draw ? 'act' : ''}" id="stock"><div class="card back"></div>Monte ${v.stockCount}${draw ? `<br><small>${v.owed ? 'carta do 3 vermelho' : v.drawn ? 'vire a 2ª' : 'vire a 1ª'}</small>` : ''}</div>
       <div class="pile ${draw && v.discardCount && !v.pileLocked && !v.drawn && !v.owed ? 'act' : ''}" id="pile">${v.discardTop ? cardHtml(v.discardTop) : '<div class="card empty"></div>'}Lixo ${v.discardCount}${v.pileLocked ? ' 🔒' : ''}</div></div>
@@ -1034,7 +1086,6 @@ function renderGame(app, v) {
     }
     if (!groups.length) return toast(desc ? 'Marque na mão 2 cartas iguais à carta de cima do lixo (coringa vale). Só esse jogo desce.' : 'Marque na mão as cartas que formam um jogo com a carta de cima do lixo.');
     if (desc && groups.length > 1) return toast('Com seu time já descido, desça só o jogo que usa a carta de cima do lixo.');
-    if (v.discardCount >= 4 && !confirm('Pegar o lixo inteiro (' + v.discardCount + ' cartas)?')) return;
     send({ a: 'takePile', groups, zone: zoneSel }); sel.clear(); staged = [];
   };
   $('#pile').onclick = tryPile;
@@ -1055,6 +1106,7 @@ function renderGame(app, v) {
     send({ a: 'meld', groups, zone: zoneSel }); sel.clear(); staged = [];
   };
   $('#desc').onclick = () => { send({ a: 'discard', id: [...sel][0] }); sel.clear(); };
+  fitZones();
   if (v.phase === 'roundEnd' || v.phase === 'gameEnd') endModal(v);
 }
 
