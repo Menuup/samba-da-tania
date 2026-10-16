@@ -392,17 +392,20 @@
       return { id: c.id, k };
     }).sort((a, b) => a.k - b.k).map((x) => x.id);
   }
-  function botPlan(s, seat) {
+  function botPlan(s, seat, level) {
+    level = level || 'normal';
     const hand = s.hands[seat]; const t = teamOf(s, seat); const melds = s.melds[t];
     const need = needFor(s.scores[t]); const desc = s.descended[t];
     const used = new Set(melds.map((m) => m.rank));
     if (s.step === 'draw') {
       const top = s.discard[s.discard.length - 1];
-      if (top && !s.drawn && !lockedFor(s, seat) && s.pileTakes < 25 && !isWild(top) && !isBlack3(top)) {
+      if (level !== 'facil' && top && !s.drawn && !lockedFor(s, seat) && s.pileTakes < 25 && !isWild(top) && !isBlack3(top)) {
         if (desc) {
           const same = hand.filter((c) => c.r === top.r);
           const jm = melds.find((x) => x.rank === top.r);
           if (same.length >= 2) return { a: 'takePile', groups: [same.map((c) => c.id)], joinId: jm ? jm.id : undefined };
+          // difícil: uma igual + coringa também serve, se o lixo valer a pena
+          if (level === 'dificil' && same.length === 1 && s.discard.length >= 3) { const w = hand.find(isWild); if (w) return { a: 'takePile', groups: [[same[0].id, w.id]], joinId: jm ? jm.id : undefined }; }
         } else {
           const gs = planGroups(hand.concat([top]), used, need, false);
           const gi = gs.findIndex((g) => g.some((c) => c.id === top.id));
@@ -425,11 +428,19 @@
       const gs = planGroups(hand, used, need, false);
       if (gs.length) return { a: 'meld', groups: gs.map((g) => g.map((c) => c.id)) };
     }
-    return { a: 'discard', id: discardOrder(hand)[0] };
+    const order = discardOrder(hand);
+    if (level === 'facil') { const pick = order.slice(0, 3); return { a: 'discard', id: pick[Math.floor(Math.random() * pick.length)] }; }
+    if (level === 'dificil') {
+      // não entrega carta que o outro time já tem jogo na mesa
+      const oppRanks = new Set(s.melds[1 - t].map((m) => m.rank));
+      const safe = order.filter((id) => { const c = hand.find((x) => x.id === id); return c && !isWild(c) && !oppRanks.has(c.r); });
+      if (safe.length) return { a: 'discard', id: safe[0] };
+    }
+    return { a: 'discard', id: order[0] };
   }
   // Jogada do robô já com plano B se a regra recusar a primeira ideia.
-  function botMove(s, seat) {
-    let r = act(s, seat, botPlan(s, seat));
+  function botMove(s, seat, level) {
+    let r = act(s, seat, botPlan(s, seat, level));
     if (!r.error) return r;
     if (s.step === 'draw') return act(s, seat, { a: 'draw' });
     for (const id of discardOrder(s.hands[seat])) { r = act(s, seat, { a: 'discard', id }); if (!r.error) return r; }

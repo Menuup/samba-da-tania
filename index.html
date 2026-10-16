@@ -267,6 +267,46 @@ body.chat-open .chtab{right:min(78vw,320px)}
 #app.wide .felt.n2 .centro{top:50%}
 #app.wide .felt.n2 .lockmsg{top:calc(50% + 28px)}
 }
+
+/* ---- efeitos ---- */
+.hand .card.fxhide,#pile .card.fxhide{visibility:hidden}
+.flyc .card{box-shadow:0 6px 18px #0009}
+.flyc.red3 .card{box-shadow:0 0 34px 12px #ff3355aa,0 6px 18px #0009}
+.fxlabel{position:fixed;left:50%;top:38%;transform:translate(-50%,-50%);font:800 clamp(22px,6.5vw,44px) Georgia,serif;color:var(--gold);text-shadow:0 4px 22px #000,0 0 30px #f2c14e88;z-index:66;pointer-events:none;white-space:nowrap;letter-spacing:.5px}
+.fxlabel.red{color:#ff5d7a;text-shadow:0 4px 22px #000,0 0 30px #ff3355aa}
+#tb{position:fixed;z-index:60;left:50%;transform:translate(-50%,-50%);display:flex;align-items:center;gap:10px;background:#2a0c1cf2;border:2px solid var(--gold);border-radius:999px;padding:7px 18px 7px 8px;font-weight:800;font-size:17px;box-shadow:0 8px 30px #000a;pointer-events:none;white-space:nowrap;color:#fff}
+#tb.me{background:var(--gold);color:#3b0f26;border-color:#fff;font-size:20px}
+.bigs{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:65;pointer-events:none;background:#00000055}
+.bigs b{font:800 min(18vw,96px)/1 Georgia,serif;color:#fff;text-shadow:0 8px 30px #000}
+.bigs.win b{color:var(--gold)}
+.bigs span{margin-top:10px;font-size:min(6vw,28px);font-weight:700;text-shadow:0 2px 10px #000}
+.seat{--p:100%}
+.seat.turn{animation:seatpulse 1.2s ease-in-out infinite;border-color:var(--gold)}
+.seat.turn::after{content:"";position:absolute;inset:-5px;border-radius:16px;padding:3px;background:conic-gradient(var(--gold) var(--p),#ffffff22 0);-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none}
+@keyframes seatpulse{0%,100%{box-shadow:0 0 0 0 #f2c14e88}50%{box-shadow:0 0 16px 5px #f2c14e66}}
+.meld.cflash{animation:cflash 1.3s ease-out}
+@keyframes cflash{0%{box-shadow:0 0 0 0 #f2c14e,0 0 34px 12px #f2c14e}100%{box-shadow:0 0 0 14px #f2c14e00,0 0 0 0 #f2c14e00}}
+@media(prefers-reduced-motion:reduce){.seat.turn{animation:none}.meld.cflash{animation:none}}
+/* montes legíveis (celular) */
+.meld.pk{position:relative;display:flex;flex-direction:column;align-items:center;gap:2px;padding:5px 7px 3px;min-width:0;cursor:pointer}
+.meld.pk .pkc{position:relative;width:calc(32 * var(--u,1px) * var(--ms,1));height:calc(46 * var(--u,1px) * var(--ms,1));margin-right:calc(6 * var(--u,1px) * var(--ms,1));margin-top:calc(6 * var(--u,1px) * var(--ms,1))}
+#app.wide .sz .meld.pk .pkc .card{position:absolute;left:0;top:0;width:100%;height:100%;margin:0;border-radius:calc(5 * var(--u,1px) * var(--ms,1))}
+.meld.pk .pkc .o2{transform:translate(28%,-18%) rotate(8deg);opacity:.75}
+.meld.pk .pkc .o1{transform:translate(14%,-9%) rotate(4deg);opacity:.9}
+#app.wide .sz .meld.pk .pkc .card b{font-size:calc(19 * var(--u,1px) * var(--ms,1))}
+#app.wide .sz .meld.pk .pkc .card i{font-size:calc(15 * var(--u,1px) * var(--ms,1))}
+#app.wide .sz .meld.pk .pkc .card.jk i{font-size:calc(6 * var(--u,1px) * var(--ms,1))}
+#app.wide .sz .meld.pk .cnt{position:absolute;right:calc(-9 * var(--u,1px) * var(--ms,1));bottom:calc(-5 * var(--u,1px) * var(--ms,1));font-size:calc(10 * var(--u,1px) * var(--ms,1));padding:0 calc(5 * var(--u,1px) * var(--ms,1));background:#2a0c1c;border:1px solid #ffffff66;color:#fff}
+#app.wide .sz .meld.pk .cnt.ok{background:var(--gold);color:#3b0f26;border-color:var(--gold)}
+.meld.pk .wd{font-size:calc(10 * var(--u,1px) * var(--ms,1));color:#d9b3ff;font-weight:800;line-height:1}
+.modal .hand.big{display:flex;flex-wrap:wrap;gap:6px;padding:8px 0;min-height:0}
+/* perfil e XP */
+.prof{display:grid;gap:8px}
+.prof .pt1{display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}.prof .pt1 b{font-family:Georgia,serif;font-size:22px;color:var(--gold)}.prof .ttl{font-weight:700}.prof small{opacity:.8}
+.xpbar{height:8px;border-radius:99px;background:#ffffff22;overflow:hidden}.xpbar i{display:block;height:100%;background:linear-gradient(90deg,#f2c14e,#ffdd88);width:0;transition:width .6s}
+.pst{display:flex;gap:10px;flex-wrap:wrap;font-size:12px;opacity:.9}.pst span{display:flex;flex-direction:column;align-items:center;min-width:52px}.pst b{font-size:16px}
+.xp{margin:8px 0;padding:8px 10px;border-radius:12px;background:#ffffff14}.xp.gain{background:#0f5a4366;border:1px solid #80ed9966}.xp.gain>b{font-size:20px;color:var(--gold)}.xp small{opacity:.85;display:block;margin:2px 0 6px}.lvup{font-weight:800;color:var(--gold);margin:4px 0}
+@media(max-width:600px){#endm table{font-size:11px}#endm td,#endm th{padding:3px 2px}#endm h2{font-size:22px}}
 </style>
 </head>
 <body>
@@ -282,7 +322,8 @@ body.chat-open .chtab{right:min(78vw,320px)}
 </div>
 
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
-<script src="engine.js?v=20261015y"></script>
+<script src="engine.js?v=20261016a"></script>
+<script src="fx.js?v=20261016a"></script>
 <script>
 'use strict';
 const $ = (s) => document.querySelector(s);
@@ -428,12 +469,13 @@ function hostChat(seat, text) {
 function bindChrome() {
   document.querySelectorAll('.chatbtn').forEach((b) => (b.onclick = () => setChat(!chatOpen)));
   document.querySelectorAll('.themebtn').forEach((b) => (b.onclick = themeModal));
+  document.querySelectorAll('.mutebtn').forEach((b) => { b.textContent = window.FX && FX.muted ? '🔇' : '🔊'; b.onclick = () => { if (!window.FX) return; FX.toggleMute(); document.querySelectorAll('.mutebtn').forEach((x) => (x.textContent = FX.muted ? '🔇' : '🔊')); }; });
   document.querySelectorAll('.frbtn').forEach((b) => (b.onclick = friendsModal));
   updateBadges();
   if (typeof refreshFriendsUI === 'function') refreshFriendsUI();
 }
 const friendsBtn = '<button class="sec frbtn">👥 Amigos<span class="on"></span><span class="bdg"></span></button>';
-const chromeBtns = '<button class="sec chatbtn" title="Conversa">💬<span class="bdg"></span></button><button class="sec themebtn" title="Cor da mesa">🎨</button>';
+const chromeBtns = '<button class="sec chatbtn" title="Conversa">💬<span class="bdg"></span></button><button class="sec themebtn" title="Cor da mesa">🎨</button><button class="sec mutebtn" title="Som">🔊</button>';
 
 /* ---------- amigos, presença (quem está online) e convites ---------- */
 const CODE_AL = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
@@ -586,7 +628,7 @@ function refreshFriendsUI() {
 })();
 
 /* ---------- rede: anfitrião (jogador 0) e convidados ---------- */
-const Net = { opts: { timer: 60, bot: 'rapido', msg: 6 }, deadline: null, timerId: null, turnTimer: null, viewAt: 0, chat: [], lastAv: null, host: false, code: null, peer: null, conn: null, conns: {}, lobby: [], g: null, botTimer: null, view: null, retry: 0 };
+const Net = { opts: { timer: 60, bot: 'rapido', msg: 6, lvl: 'normal' }, deadline: null, timerId: null, turnTimer: null, viewAt: 0, chat: [], lastAv: null, host: false, code: null, peer: null, conn: null, conns: {}, lobby: [], g: null, botTimer: null, view: null, retry: 0 };
 
 function randCode() { const a = 'ABCDEFGHJKLMNPQRSTUVWXYZ'; let c = ''; for (let i = 0; i < 4; i++) c += a[(Math.random() * a.length) | 0]; return c; }
 
@@ -654,6 +696,7 @@ function hostAct(seat, a) {
     if ([0, 20, 30, 45, 60, 90, 120].includes(a.timer)) Net.opts.timer = a.timer;
     if (['rapido', 'normal', 'lento', 'muito'].includes(a.bot)) Net.opts.bot = a.bot;
     if ([3, 5, 8, 12, 20].includes(a.msg)) Net.opts.msg = a.msg;
+    if (['facil', 'normal', 'dificil'].includes(a.lvl)) Net.opts.lvl = a.lvl;
   } else if (Net.g && ['draw', 'takePile', 'meld', 'addTo', 'discard'].includes(a.a)) {
     const r = S.act(Net.g, seat, a);
     if (r.error) { if (seat === 0) toast(r.error); else sendTo(seat, { t: 'err', msg: r.error }); return; }
@@ -702,7 +745,7 @@ function scheduleBot() {
   const g = Net.g;
   if (!g || g.phase !== 'playing' || !g.players[g.turn].bot) return;
   Net.botTimer = setTimeout(() => {
-    const r = S.botMove(Net.g, Net.g.turn);
+    const r = S.botMove(Net.g, Net.g.turn, Net.opts.lvl);
     if (!r.error) { Net.g = r.state; persist(); broadcast(); armTimer(); }
     scheduleBot();
   }, { rapido: 700, normal: 1600, lento: 3000, muito: 5000 }[Net.opts.bot] || 700);
@@ -745,15 +788,13 @@ function trackBanners(v) {
 }
 function onView(v) {
   Net.view = v; Net.viewAt = Date.now();
-  if (v.phase === 'playing' || v.phase === 'roundEnd' || v.phase === 'gameEnd') trackBanners(v);
-  if (v.phase === 'playing' || v.phase === 'roundEnd' || v.phase === 'gameEnd') {
-    const mine = v.phase === 'playing' && v.turn === v.seat;
-    if (mine && !lastTurnMine && navigator.vibrate) navigator.vibrate(250);
-    lastTurnMine = mine;
-    const ids = new Set(v.hand.map((c) => c.id)); sel = new Set([...sel].filter((i) => ids.has(i)));
-    if (v.phase === 'gameEnd' && v.winner === v.myTeam) confetti(6000);
-  }
+  const inGame = v.phase === 'playing' || v.phase === 'roundEnd' || v.phase === 'gameEnd';
+  if (inGame) trackBanners(v);
+  if (inGame) { const ids = new Set(v.hand.map((c) => c.id)); sel = new Set([...sel].filter((i) => ids.has(i))); }
+  else if (window.FX) { FX.prevView = null; FX.lastGain = null; }
+  const before = inGame && window.FX ? FX.snapshot() : null;
   render(v);
+  if (inGame && window.FX) FX.after(v, before);
 }
 
 function cardHtml(c, cls, extra) {
@@ -865,12 +906,14 @@ const isStandalone = () => (window.matchMedia && matchMedia('(display-mode: stan
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(() => {});
 const cdHtml = (v) => (v.timeLeft != null && v.phase === 'playing' ? ` <span id="cd" class="cd ${v.timeLeft <= 10 ? 'low' : ''}">⏱ ${v.timeLeft}s</span>` : '');
 function optsHtml(v, host) {
-  const o = Object.assign({ timer: 60, bot: 'rapido', msg: 6 }, v.opts || {});
+  const o = Object.assign({ timer: 60, bot: 'rapido', msg: 6, lvl: 'normal' }, v.opts || {});
+  const LV = [['facil', 'Fácil'], ['normal', 'Normal'], ['dificil', 'Difícil']];
   const T = [[0, 'Sem limite'], [20, '20 s'], [30, '30 s'], [45, '45 s'], [60, '60 s'], [90, '90 s'], [120, '2 min']];
   const B = [['rapido', 'Rápido'], ['normal', 'Normal'], ['lento', 'Lento'], ['muito', 'Bem lento']];
   const M = [3, 5, 8, 12, 20];
-  if (!host) return `<div class="card-box"><b>Tempo por jogada:</b> ${(T.find((x) => x[0] === o.timer) || T[0])[1]} · <b>Ritmo dos robôs:</b> ${(B.find((x) => x[0] === o.bot) || B[0])[1]} · <b>Avisos na tela:</b> ${o.msg} s</div>`;
+  if (!host) return `<div class="card-box"><b>Tempo por jogada:</b> ${(T.find((x) => x[0] === o.timer) || T[0])[1]} · <b>Robôs:</b> ${(LV.find((x) => x[0] === o.lvl) || LV[1])[1]}, ${(B.find((x) => x[0] === o.bot) || B[0])[1].toLowerCase()} · <b>Avisos na tela:</b> ${o.msg} s</div>`;
   return `<div class="card-box"><b>Tempo por jogada</b><div class="avs t">${T.map(([t, n]) => `<button type="button" class="${o.timer === t ? 'on' : ''}" data-timer="${t}">${n}</button>`).join('')}</div>
+   <b>Nível dos robôs</b><div class="avs t">${LV.map(([k, n]) => `<button type="button" class="${o.lvl === k ? 'on' : ''}" data-lvl="${k}">${n}</button>`).join('')}</div>
    <b>Ritmo dos robôs</b> <span class="hint">(velocidade da jogada deles)</span><div class="avs t">${B.map(([k, n]) => `<button type="button" class="${o.bot === k ? 'on' : ''}" data-bot="${k}">${n}</button>`).join('')}</div>
    <b>Avisos das jogadas ficam na tela por</b><div class="avs t">${M.map((m) => `<button type="button" class="${o.msg === m ? 'on' : ''}" data-msg="${m}">${m} s</button>`).join('')}</div>
    <p class="hint" style="margin:6px 0 0">Os robôs podem jogar rápido: cada jogada aparece num aviso amarelo e some sozinha depois desse tempo. O histórico completo fica no painel de baixo.</p>
@@ -878,6 +921,7 @@ function optsHtml(v, host) {
 }
 function bindOpts(root) {
   root.querySelectorAll('[data-timer]').forEach((b) => (b.onclick = () => send({ a: 'setopts', timer: +b.dataset.timer })));
+  root.querySelectorAll('[data-lvl]').forEach((b) => (b.onclick = () => send({ a: 'setopts', lvl: b.dataset.lvl })));
   root.querySelectorAll('[data-msg]').forEach((b) => (b.onclick = () => send({ a: 'setopts', msg: +b.dataset.msg })));
   root.querySelectorAll('[data-bot]').forEach((b) => (b.onclick = () => send({ a: 'setopts', bot: b.dataset.bot })));
 }
@@ -886,14 +930,16 @@ setInterval(() => {
   if (!el || !v || v.timeLeft == null) return;
   const left = Math.max(0, v.timeLeft - Math.floor((Date.now() - Net.viewAt) / 1000));
   el.textContent = '⏱ ' + left + 's'; el.classList.toggle('low', left <= 10);
+  const st = document.querySelector('.seat.turn'); if (st && v.opts && v.opts.timer) st.style.setProperty('--p', Math.max(0, Math.min(100, 100 * left / v.opts.timer)) + '%');
 }, 500);
 function renderHome(app) {
   const saved = ls.get('host', null), sala = ls.get('sala', '');
-  app.innerHTML = `<div class="center" style="padding-top:24px"><div style="font-size:54px">🃏</div><h1 style="font-size:38px;color:var(--gold)">Samba da Tânia</h1><p class="hint">Jogo de cartas online para jogar com a turma</p><div style="margin-top:8px">${friendsBtn}</div></div>
+  app.innerHTML = `<div class="center" style="padding-top:24px"><div style="font-size:54px">🃏</div><h1 style="font-size:38px;color:var(--gold)">Samba da Tânia</h1><p class="hint">Jogo de cartas online para jogar com a turma</p><div style="margin-top:8px;display:flex;gap:8px;justify-content:center">${friendsBtn}<button class="sec mutebtn" title="Som">🔊</button></div></div>
   <div class="card-box"><label>Seu nome</label><input id="nome" value="${myName.replace(/"/g, '')}" placeholder="Como a turma te chama?" maxlength="14">
    <div class="me-av" style="margin-top:12px"><span id="avnow">${avHtml(myAvatar, 64)}</span><div><label for="foto" style="display:inline-block"><span class="sec" style="display:inline-block;padding:10px 14px;border-radius:14px;background:#ffffff22;cursor:pointer;font-weight:700">📷 Usar minha foto</span></label><input id="foto" type="file" accept="image/*" style="display:none"></div></div>
    <div class="avs">${EMOJIS.map((e) => `<button type="button" data-e="${e}" class="${e === myAvatar ? 'on' : ''}">${e}</button>`).join('')}</div>
    <button class="sec themebtn" style="width:100%">🎨 Escolher a cor da mesa</button></div>
+  ${window.FX ? FX.profileHtml() : ''}
   <div class="card-box"><button id="criar" style="width:100%">Criar uma mesa</button><p class="hint">Quem cria é o anfitrião: deixe esta tela aberta durante o jogo.</p>
    ${saved && saved.g ? `<button class="sec" id="retomar" style="width:100%">Retomar a mesa ${saved.code}</button>` : ''}</div>
   <div class="card-box"><label>Entrar numa mesa que já existe</label><div class="row"><input id="cod" placeholder="CÓDIGO" maxlength="4" style="text-transform:uppercase;letter-spacing:4px;font-weight:800" value="${new URLSearchParams(location.search).get('sala') || sala || ''}"><button id="entrar" style="flex:none">Entrar</button></div></div>
@@ -931,8 +977,13 @@ function renderLobby(app, v) {
 }
 
 const byRank = (a, b) => (a.rank === 1 ? 14 : a.rank) - (b.rank === 1 ? 14 : b.rank);
+const compactMelds = () => innerWidth <= 760;
 function meldHtml(m, mine, tap) {
   const tag = m.canastra ? (m.black ? 'PRETA' : m.clean ? 'LIMPA' : 'SUJA') : '';
+  if (compactMelds()) {
+    const wn = m.wildIds.length; const face = m.cards.find((c) => !m.wildIds.includes(c.id)) || m.cards[0];
+    return `<div class="meld pk ${mine ? 'mine' : ''} ${tap ? 'tap' : ''}" data-m="${m.id}"><div class="pkc">${m.cards.length > 2 ? '<div class="card mini back o2"></div>' : ''}${m.cards.length > 1 ? '<div class="card mini back o1"></div>' : ''}${cardHtml(face, 'mini')}<span class="cnt ${m.canastra ? 'ok' : ''}">${m.cards.length}${m.canastra ? '' : '/7'}</span></div>${wn ? `<span class="wd">★${wn > 1 ? '×' + wn : ''}</span>` : ''}${tag ? `<span class="tag">${tag}</span>` : ''}</div>`;
+  }
   return `<div class="meld ${mine ? 'mine' : ''} ${tap ? 'tap' : ''}" data-m="${m.id}"><b class="rk">${S.RN[m.rank]}</b><span class="cnt ${m.canastra ? 'ok' : ''}" title="${m.canastra ? 'canastra' : 'faltam ' + (7 - m.cards.length) + ' para a canastra'}">${m.cards.length}${m.canastra ? '' : '/7'}</span><div class="cards">${m.cards.map((c) => cardHtml(c, 'mini ' + (m.wildIds.includes(c.id) ? 'w' : ''))).join('')}</div>${tag ? `<span class="tag">${tag}</span>` : ''}</div>`;
 }
 
@@ -982,7 +1033,7 @@ function fitZones() {
     if (over()) { z.style.maxHeight = maxH + 'px'; g.style.maxHeight = maxH + 'px'; g.style.overflowY = 'auto'; }
   });
 }
-window.addEventListener('resize', () => { if (Net.view && Net.view.phase === 'playing') fitZones(); });
+window.addEventListener('resize', () => { if (Net.view && Net.view.phase === 'playing') render(Net.view); });
 function seatZones(v, tap) {
   const mine = v.melds[v.myTeam].slice().sort(byRank), opp = v.melds[1 - v.myTeam].slice().sort(byRank);
   const rm = (v.reds && v.reds[v.myTeam]) || [], ro = (v.reds && v.reds[1 - v.myTeam]) || [];
@@ -998,6 +1049,13 @@ function seatZones(v, tap) {
   return h;
 }
 let zoneSeat = -1; let logOpen = false;
+// Toque num jogo da mesa: mostra as cartas em tamanho grande.
+function meldModal(m, mine) {
+  const tag = m.canastra ? (m.black ? 'preta' : m.clean ? 'limpa' : 'suja') : '';
+  const md = document.createElement('div'); md.className = 'modal';
+  md.innerHTML = `<div><h2>Jogo de ${S.RN[m.rank]} · ${m.cards.length} cartas</h2><p class="hint">${m.canastra ? 'Canastra ' + tag + ' (+' + S.canastraBonus(m) + ')' : 'Faltam ' + (7 - m.cards.length) + ' para a canastra'} · ${S.meldPts(m)} pontos em cartas · ${mine ? 'seu time' : 'adversários'}</p><div class="hand big">${m.cards.map((c) => cardHtml(c, m.wildIds.includes(c.id) ? 'w' : '')).join('')}</div>${mine ? '<p class="hint">Para acrescentar: marque cartas na sua mão e toque neste jogo na mesa.</p>' : ''}<button style="width:100%;margin-top:10px">Fechar</button></div>`;
+  md.querySelector('button').onclick = () => md.remove(); document.body.appendChild(md);
+}
 function choiceModal(title, opts) {
   const m = document.createElement('div'); m.className = 'modal';
   m.innerHTML = '<div><h2></h2><div id="chs" style="display:grid;gap:10px;margin-top:12px"></div><button class="sec" id="chc" style="width:100%;margin-top:10px">Cancelar</button></div>';
@@ -1068,7 +1126,7 @@ function renderGame(app, v) {
   ${scoreTable(v)}
   <div class="tw">
 
-    ${v.players.map((p, i) => { const r = (i - v.seat + v.n) % v.n; const th = 2 * Math.PI * r / v.n; const x = 50 - 47 * Math.sin(th), y = 53 + 41 * Math.cos(th); return `<div class="seat ${v.turn === i && v.phase === 'playing' ? 'turn' : ''} ${p.team === v.myTeam ? 'mine' : ''}" style="left:${x}%;top:${y}%">${avHtml(avatars[i], 34)}<b>${i === v.seat ? 'Você' : p.name}</b><br>🂠 ${p.count}${v.online && !v.online[i] ? ' · ⚪ saiu' : ''}</div>`; }).join('')}
+    ${v.players.map((p, i) => { const r = (i - v.seat + v.n) % v.n; const th = 2 * Math.PI * r / v.n; const x = 50 - 47 * Math.sin(th), y = 53 + 41 * Math.cos(th); return `<div class="seat ${v.turn === i && v.phase === 'playing' ? 'turn' : ''} ${p.team === v.myTeam ? 'mine' : ''}" data-seat="${i}" style="left:${x}%;top:${y}%">${avHtml(avatars[i], 34)}<b>${i === v.seat ? 'Você' : p.name}</b><br>🂠 ${p.count}${v.online && !v.online[i] ? ' · ⚪ saiu' : ''}</div>`; }).join('')}
     <div class="mortos"><div class="mt ${v.mortoTaken[v.myTeam] ? 'gone' : ''}"><div class="card mini back"></div>Morto nós${v.mortoTaken[v.myTeam] ? ' (pego)' : ''}</div><div class="mt ${v.mortoTaken[1 - v.myTeam] ? 'gone' : ''}"><div class="card mini back"></div>Morto eles${v.mortoTaken[1 - v.myTeam] ? ' (pego)' : ''}</div></div>
     <div class="felt n2">
       ${seatZones(v, play && sel.size)}
@@ -1126,7 +1184,11 @@ function renderGame(app, v) {
   }));
   document.querySelectorAll('.gp[data-g]').forEach((el) => (el.onclick = () => { staged.splice(+el.dataset.g, 1); render(v); }));
   $('#grupo').onclick = () => { staged.push(...splitSel(v)); sel.clear(); render(v); };
-  document.querySelectorAll('.meld.mine').forEach((el) => (el.onclick = () => { if (!play || !sel.size) return; send({ a: 'addTo', meldId: +el.dataset.m, ids: [...sel] }); sel.clear(); }));
+  document.querySelectorAll('.meld[data-m]').forEach((el) => (el.onclick = () => {
+    const id = +el.dataset.m; const mine = el.classList.contains('mine');
+    if (mine && play && sel.size) { send({ a: 'addTo', meldId: id, ids: [...sel] }); sel.clear(); return; }
+    const m = v.melds[mine ? v.myTeam : 1 - v.myTeam].find((x) => x.id === id); if (m) meldModal(m, mine);
+  }));
   $('#baixar').onclick = () => {
     if (draw && !v.drawn) return tryPile();
     if (!play) return toast('Vire também a 2ª carta do monte. Depois baixe os seus jogos.');
@@ -1135,7 +1197,7 @@ function renderGame(app, v) {
   };
   $('#desc').onclick = () => { send({ a: 'discard', id: [...sel][0] }); sel.clear(); };
   fitZones();
-  if (v.phase === 'roundEnd' || v.phase === 'gameEnd') endModal(v);
+  if (v.phase === 'roundEnd' || v.phase === 'gameEnd') { const wait = window.FX && FX.prevView && FX.prevView.phase === 'playing' ? 1900 : 0; clearTimeout(window.endT); window.endT = setTimeout(() => endModal(v), wait); }
 }
 
 function endModal(v) {
@@ -1143,10 +1205,11 @@ function endModal(v) {
   const rows = rr.teams.map((t, i) => `<tr><td>${i === v.myTeam ? 'Nós' : 'Eles'}</td><td>${t.meldPts}</td><td>${t.bonus}</td><td>${t.bater}</td><td>${t.redPts}</td><td>−${t.handPts}</td><td>${t.penalty ? '−100' : 0}</td><td><b>${t.total}</b></td><td><b>${v.scores[i]}</b></td></tr>`).join('');
   const head = v.phase === 'gameEnd' ? (v.winner === -1 ? 'Empate!' : v.winner === v.myTeam ? '🏆 Vitória!' : 'Fim de jogo') + (rr.stockOut ? ' · o monte acabou' : '') : (rr.outSeat != null ? v.players[rr.outSeat].name + ' bateu!' : 'Fim da rodada');
   const m = document.createElement('div'); m.className = 'modal'; m.id = 'endm';
-  m.innerHTML = `<div><h2>${head}</h2>${v.phase === 'gameEnd' && v.winner >= 0 ? `<p>Ganhou: <b>${teamName(v, v.winner)}</b></p>` : ''}
+  m.innerHTML = `<div><h2>${head}</h2>${v.phase === 'gameEnd' && v.winner >= 0 ? `<p>Ganhou: <b>${teamName(v, v.winner)}</b></p>` : ''}${window.FX ? FX.gainHtml() : ''}
    <table><tr><th></th><th>Jogos</th><th>Canastra</th><th>Bater</th><th>3 verm.</th><th>Mão</th><th>Morto</th><th>Rodada</th><th>Total</th></tr>${rows}</table>
    ${optsHtml(v, host)}${host ? `<button style="width:100%;margin-top:14px" id="prox">${v.phase === 'gameEnd' ? 'Jogar de novo' : 'Próxima rodada'}</button>` : '<p class="hint">Aguardando a anfitriã continuar…</p>'}</div>`;
   document.body.appendChild(m);
+  if (window.FX) FX.countUp(m);
   bindOpts(m);
   if (host) $('#prox').onclick = () => { m.remove(); send({ a: v.phase === 'gameEnd' ? 'again' : 'next' }); };
   const old = document.querySelectorAll('#endm'); if (old.length > 1) old[0].remove();
@@ -1173,6 +1236,7 @@ m.querySelector('button').onclick = () => m.remove();
   document.body.appendChild(m);
 }
 
+if (window.FX) { FX.cardHtml = cardHtml; FX.avHtml = avHtml; FX.avatars = () => avatars; FX.confetti = confetti; }
 presenceStart();
 goHome();
 </script>
