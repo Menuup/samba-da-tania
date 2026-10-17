@@ -101,6 +101,11 @@
     s.mortoTaken = [false, false];
     s.descended = [false, false];
     s.melds = [[], []];
+    // estatísticas por jogador: da rodada (rstats) e do jogo inteiro (gstats)
+    const zero = () => ({ draws: 0, pile: 0, melds: 0, canL: 0, canS: 0, canB: 0, bater: 0, reds: 0, descFirst: 0 });
+    s.rstats = Array.from({ length: s.n }, zero);
+    if (!s.gstats) s.gstats = Array.from({ length: s.n }, zero);
+    s.firstDesc = null;
     s.reds = [[], []];
     for (let i = 0; i < s.n; i++) layReds(s, i);
     s.meldSeq = 0; s.pileTakes = 0; s.lock = null; s.turnNo = 0; s.drawn = 0; s.owed = 0;
@@ -134,6 +139,7 @@
       if (deferred) s.owed = (s.owed || 0) + 1;
       else if (s.stock.length) hand.push(s.stock.pop());
     }
+    if (n && s.rstats) s.rstats[seat].reds += n;
     return n;
   }
   function takeMorto(s, seat) {
@@ -144,6 +150,7 @@
 
   function endRound(s, outSeat, stockOut) {
     const res = [];
+    if (outSeat != null && s.rstats) s.rstats[outSeat].bater = 1;
     for (let t = 0; t < 2; t++) {
       let mp = 0, bonus = 0, handPts = 0;
       for (const m of s.melds[t]) { mp += meldPts(m); bonus += canastraBonus(m); }
@@ -157,6 +164,7 @@
       s.scores[t] += total;
       res.push({ meldPts: mp, bonus, bater, redPts, handPts, penalty, total });
     }
+    if (s.rstats && s.gstats) s.rstats.forEach((r, i) => { for (const k in r) s.gstats[i][k] += r[k]; });
     s.roundResult = { outSeat, stockOut: !!stockOut, teams: res };
     s.phase = 'roundEnd';
     const max = Math.max(...s.scores);
@@ -219,7 +227,11 @@
     };
     const drop = (cards) => { for (const c of cards) hand.splice(hand.findIndex((x) => x.id === c.id), 1); };
     const zone = Number.isInteger(a.zone) && a.zone >= 0 && a.zone < s.n && teamOf(s, a.zone) === t ? a.zone : seat;
-    const lay = (ms) => { for (const m of ms) { m.id = ++s.meldSeq; m.zone = zone; s.melds[t].push(m); } s.descended[t] = true; };
+    const lay = (ms) => {
+      for (const m of ms) { m.id = ++s.meldSeq; m.zone = zone; s.melds[t].push(m); }
+      if (ms.length && s.rstats) { const st = s.rstats[seat]; st.melds += ms.length; ms.forEach((m) => { if (m.canastra) st[m.black ? 'canB' : m.clean ? 'canL' : 'canS']++; }); if (!s.descended[t]) { st.descFirst++; if (s.firstDesc == null) s.firstDesc = t; } }
+      s.descended[t] = true;
+    };
 
     switch (a.a) {
       case 'draw': {
@@ -228,6 +240,7 @@
         // uma carta por toque: primeiro as de reposição dos 3 vermelhos que saíram, depois as 2 da vez
         const repo = (s.owed || 0) > 0;
         hand.push(s.stock.pop());
+        if (s.rstats) s.rstats[seat].draws++;
         if (repo) s.owed--; else s.drawn = (s.drawn || 0) + 1;
         const nth = s.drawn;
         const nr = layReds(s, seat, true);
@@ -265,9 +278,10 @@
         const pile = s.discard; s.discard = [];
         for (const g of groups) drop(g);
         hand.push(...pile); const nrp = layReds(s, seat);
-        if (merged) { merged.id = existing.id; merged.zone = existing.zone; s.melds[t][s.melds[t].indexOf(existing)] = merged; }
+        if (merged) { merged.id = existing.id; merged.zone = existing.zone; s.melds[t][s.melds[t].indexOf(existing)] = merged; if (merged.canastra && !existing.canastra && s.rstats) s.rstats[seat][merged.black ? 'canB' : merged.clean ? 'canL' : 'canS']++; }
         lay(chk.melds);
         s.step = 'play'; s.lock = null; s.pileTakes++; s.tookPile = true;
+        if (s.rstats) s.rstats[seat].pile++;
         s.last = name + ' pegou o lixo (' + k + (k === 1 ? ' carta: ' : ' cartas: ') + [top].concat(pile).slice(0, 14).map(cardName).join(' ') + (k > 14 ? ' …' : '') + ') e baixou ' + newGroups[ti].map(cardName).join(' ') + (nrp ? ' e pôs ' + nrp + ' três vermelho' + (nrp > 1 ? 's' : '') + ' na mesa (comprou ' + nrp + ' no lugar)' : '') + '.';
         const er = afterHand(s, seat); if (er) return E(er);
         return { state: s };
@@ -295,6 +309,7 @@
         if (!nm || nm.rank !== m.rank) return E('Essas cartas não encaixam nesse jogo.');
         drop(cards);
         nm.id = m.id; nm.zone = m.zone; s.melds[t][s.melds[t].indexOf(m)] = nm;
+        if (nm.canastra && !m.canastra && s.rstats) s.rstats[seat][nm.black ? 'canB' : nm.clean ? 'canL' : 'canS']++;
         s.last = name + ' acrescentou ' + cards.map(cardName).join(' ') + ' ao jogo de ' + RN[m.rank] + (nm.canastra && !m.canastra ? ' e fez CANASTRA' : '') + '.';
         const er = afterHand(s, seat); if (er) return E(er);
         return { state: s };
@@ -348,6 +363,7 @@
       mortoTaken: s.mortoTaken, descended: s.descended,
       need: [needFor(s.scores[0]), needFor(s.scores[1])],
       melds: s.melds,
+      stats: s.rstats || [], gstats: s.gstats || [], firstDesc: s.firstDesc == null ? null : s.firstDesc,
       turn: s.turn, step: s.step, last: s.last, lastSeat: s.lastSeat == null ? null : s.lastSeat, log: (s.log || []).slice(-30), logN: s.logN || 0,
       roundResult: s.roundResult, winner: s.winner,
     };
@@ -481,9 +497,12 @@
   // Sugestão para o jogador: todos os jogos que dá para montar com a mão (mesmo que ainda não cheguem nos pontos).
   const suggestGroups = (hand, melds, need, descended) => planGroups(hand, new Set(melds.map((m) => m.rank)), need, descended, true).map((g) => g.map((c) => c.id));
 
+  // Soma das estatísticas dos jogadores de um time (da rodada: stats; do jogo: gstats).
+  const teamStats = (list, players, t) => { const o = {}; (list || []).forEach((st, i) => { if (players[i] && players[i].team === t || (!players[i].team && i % 2 === t)) for (const k in st) o[k] = (o[k] || 0) + st[k]; }); return o; };
+
   const api = {
     SUITS, SYM, RN, TARGET, isWild, isBlack3, isRed3, pts, cardName, makeDeck, classify, meldPts, canastraBonus, needFor,
-    newGame, nextRound, act, viewFor, botPlan, botMove, timeoutMove, suggestGroups, autoGroups, teamOf, teamSeats, canBater, mulberry, clone,
+    teamStats, newGame, nextRound, act, viewFor, botPlan, botMove, timeoutMove, suggestGroups, autoGroups, teamOf, teamSeats, canBater, mulberry, clone,
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.Samba = api;

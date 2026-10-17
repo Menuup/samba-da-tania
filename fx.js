@@ -180,7 +180,12 @@
     const before = FX.level(p.xp); p.xp += gain; const after = FX.level(p.xp);
     ls.set('profile', p); FX.lastGain = { gain, lines, levelUp: after > before, level: after, xp: p.xp };
     if (after > before) setTimeout(() => FX.sound('levelup'), 1800);
+    // Gancho para quem quiser guardar o perfil fora do aparelho (index.html usa para a nuvem).
+    if (typeof FX.onAward === 'function') try { FX.onAward(v, FX.lastGain); } catch (e) { console.warn('fx onAward', e); }
   };
+  FX.onAward = null;
+  // Grava um perfil vindo de fora (por exemplo, o fundido com a nuvem) por cima do local.
+  FX.setProfile = (p) => { if (!p || typeof p !== 'object') return FX.profile(); const m = Object.assign(FX.profile(), p); ls.set('profile', m); return m; };
   FX.profileHtml = (compact) => {
     const p = FX.profile(); const L = FX.level(p.xp); const a = FX.xpFor(L), b = FX.xpFor(L + 1); const pct = Math.round(100 * (p.xp - a) / (b - a));
     const bar = `<div class="xpbar"><i style="width:${pct}%"></i></div>`;
@@ -226,11 +231,14 @@
           fresh.forEach((c, k) => {
             const el = q(`.hand .card[data-id="${c.id}"]`); const to = R(el) || now.handArea || FX.center();
             if (el) el.classList.add('fxhide');
-            FX.fly(before.stock || now.stock || FX.center(), to, { html: cardHtml(c), flip: true, duration: 420, delay: k * 90, onEnd: () => { if (el) el.classList.remove('fxhide'); } });
+            // a carta vira grande no centro da mesa, fica à vista e só depois desce para a mão
+            const ctr = FX.center(); const big = { left: ctr.left - 12, top: ctr.top - 18, width: 70, height: 104 };
+            FX.fly(before.stock || now.stock || FX.center(), big, { html: cardHtml(c), flip: true, duration: 560, delay: k * 300, w: 70, h: 104, lift: -18 });
+            FX.fly(big, to, { html: cardHtml(c), duration: 450, delay: k * 300 + 560 + 650, w: 70, h: 104, toScale: Math.max(0.45, (to.width || 34) / 70), lift: 0, onEnd: () => { if (el) el.classList.remove('fxhide'); } });
           });
           FX.sound('flip');
         } else {
-          for (let k = 0; k < Math.min(drawn, 3); k++) FX.fly(before.stock || now.stock || FX.center(), seatRect(actor, now), { duration: 380, delay: k * 110, toScale: 0.5, fade: true, w: 34, h: 50 });
+          for (let k = 0; k < Math.min(drawn, 3); k++) FX.fly(before.stock || now.stock || FX.center(), seatRect(actor, now), { duration: 650, delay: k * 220, toScale: 0.5, fade: true, w: 34, h: 50 });
           FX.sound('flip');
         }
       }
@@ -247,7 +255,7 @@
         const top = v.discardTop;
         const from = actor === me ? (before.hand.get(top.id) || now.handArea || FX.center()) : seatRect(actor, now);
         const pileEl = q('#pile .card'); if (pileEl) pileEl.classList.add('fxhide');
-        FX.fly(from, now.pile || FX.center(), { html: cardHtml(top), duration: 380, onEnd: () => { if (pileEl) pileEl.classList.remove('fxhide'); } });
+        FX.fly(from, now.pile || FX.center(), { html: cardHtml(top), duration: 650, onEnd: () => { if (pileEl) pileEl.classList.remove('fxhide'); } });
         FX.sound('place');
       } else if ((pv.discardCount || 0) > 0 && v.discardCount === 0) {
         const k = Math.min(pv.discardCount, 8); const to = actor === me ? (now.handArea || FX.center()) : seatRect(actor, now);
@@ -263,7 +271,7 @@
           const el = q(`.meld[data-m="${m.id}"]`); const to = R(el) || (t === v.myTeam ? now.zoneMine : now.zoneOpp) || FX.center();
           added.slice(0, 7).forEach((c, k) => {
             const from = actor === me ? (before.hand.get(c.id) || before.pile || now.handArea || FX.center()) : seatRect(actor, now);
-            FX.fly(from, to, { html: cardHtml(c), duration: 400, delay: k * 70, toScale: 0.6, fade: true, w: 34, h: 50 });
+            FX.fly(from, to, { html: cardHtml(c), duration: 600, delay: k * 140, toScale: 0.6, fade: true, w: 34, h: 50 });
           });
           FX.sound('place', 120);
           if (m.canastra && !(pm && pm.canastra)) FX.canastraScene(m, el, t === v.myTeam, 350 + Math.min(added.length, 7) * 70);

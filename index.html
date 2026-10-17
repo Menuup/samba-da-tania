@@ -307,6 +307,41 @@ body.chat-open .chtab{right:min(78vw,320px)}
 .pst{display:flex;gap:10px;flex-wrap:wrap;font-size:12px;opacity:.9}.pst span{display:flex;flex-direction:column;align-items:center;min-width:52px}.pst b{font-size:16px}
 .xp{margin:8px 0;padding:8px 10px;border-radius:12px;background:#ffffff14}.xp.gain{background:#0f5a4366;border:1px solid #80ed9966}.xp.gain>b{font-size:20px;color:var(--gold)}.xp small{opacity:.85;display:block;margin:2px 0 6px}.lvup{font-weight:800;color:var(--gold);margin:4px 0}
 @media(max-width:600px){#endm table{font-size:11px}#endm td,#endm th{padding:3px 2px}#endm h2{font-size:22px}}
+/* conta e histórico de partidas */
+.acct{display:flex;flex-direction:column;gap:8px;margin-top:-4px}
+.acct .st{font-size:14px;opacity:.9;display:flex;align-items:center;gap:8px}.acct .st i{font-style:normal;font-size:16px}
+.acct .row button{font-size:15px;padding:10px 12px}
+.mh{padding:8px 0;border-bottom:1px solid #ffffff22;font-size:14px}.mh .d{font-size:12px;opacity:.75;display:flex;justify-content:space-between;gap:8px}
+.mh .pl2{display:flex;flex-wrap:wrap;gap:4px 8px;margin:3px 0}.mh .pl2 span{opacity:.85}.mh .pl2 span.me{color:#80ed99;font-weight:700}
+.mh .sc2{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}.mh .sc2 b{font-variant-numeric:tabular-nums}
+.mh .rs{font-weight:800;padding:1px 9px;border-radius:99px;font-size:13px;background:#ffffff22}.mh .rs.v{background:#1f8f5f}.mh .rs.d{background:#7a1020}
+.mh .xg{font-size:12px;color:var(--gold);font-weight:700}
+/* selo de reconexão do convidado */
+#rejoin{position:fixed;left:50%;top:8px;transform:translateX(-50%);z-index:81;background:var(--gold);color:#3b0f26;font-weight:800;font-size:14px;padding:6px 14px;border-radius:99px;box-shadow:0 6px 20px #0008;display:none;white-space:nowrap}
+#rejoin i{display:inline-block;width:10px;height:10px;border-radius:50%;border:2px solid #3b0f26;border-top-color:transparent;margin-right:6px;vertical-align:-1px;animation:spin .9s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){#rejoin i{animation:none}}
+
+.seat.turn::after{background:conic-gradient(var(--tc,var(--gold)) var(--p),#ffffff22 0)}
+.seat.mine{border-color:#3ddc84!important;box-shadow:0 0 0 2px #3ddc8455}
+.seat:not(.mine){border-color:#f2c14e!important;box-shadow:0 0 0 2px #f2c14e44}
+.seat.mine .av{border-color:#3ddc84}.seat:not(.mine) .av{border-color:#f2c14e}
+.seat.turn{animation:seatpulse 1.2s ease-in-out infinite}
+.sz.opp .zg{border-color:#f2c14e88!important}.sz.mine .zg{border-color:#3ddc8499!important}
+.chtab{display:none!important}
+#app.wide{padding-bottom:calc(14px + env(safe-area-inset-bottom))!important}
+.late{display:flex;align-items:center;justify-content:space-between;gap:8px;background:#b00020;color:#fff;font-weight:800;border-radius:12px;padding:6px 10px;margin:2px 0;font-size:13px;animation:latepulse 1s ease-in-out infinite}
+.late button{padding:4px 12px;font-size:13px;background:#fff;color:#b00020}
+.late.me{font-size:15px;justify-content:center}
+@keyframes latepulse{50%{background:#7a0016}}
+
+#app.wide .sz .meld.pk .pkc .card.split{display:flex;flex-direction:row;padding:0;overflow:hidden}
+.card.split .h1,.card.split .h2{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1}
+.card.split .h1{color:var(--ink)}.card.split .h1.red{color:var(--red)}
+.card.split .h2{background:#efe3ff;color:#6a2ca0;border-left:1px dashed #6a2ca066}
+#app.wide .sz .meld.pk .pkc .card.split b{font-size:calc(14 * var(--u,1px) * var(--ms,1))}
+#app.wide .sz .meld.pk .pkc .card.split i{font-size:calc(11 * var(--u,1px) * var(--ms,1))}
+.meld .tag.suja{background:#6a2ca0;color:#fff}
 </style>
 </head>
 <body>
@@ -322,8 +357,10 @@ body.chat-open .chtab{right:min(78vw,320px)}
 </div>
 
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
-<script src="engine.js?v=20261016a"></script>
-<script src="fx.js?v=20261016a"></script>
+<script src="engine.js?v=20261016d"></script>
+<script src="fx.js?v=20261016d"></script>
+<script src="cloud-config.js?v=20261016d"></script>
+<script src="cloud.js?v=20261016d"></script>
 <script>
 'use strict';
 const $ = (s) => document.querySelector(s);
@@ -628,7 +665,7 @@ function refreshFriendsUI() {
 })();
 
 /* ---------- rede: anfitrião (jogador 0) e convidados ---------- */
-const Net = { opts: { timer: 60, bot: 'rapido', msg: 6, lvl: 'normal' }, deadline: null, timerId: null, turnTimer: null, viewAt: 0, chat: [], lastAv: null, host: false, code: null, peer: null, conn: null, conns: {}, lobby: [], g: null, botTimer: null, view: null, retry: 0 };
+const Net = { opts: { timer: 60, bot: 'normal', msg: 6, lvl: 'normal' }, deadline: null, timerId: null, turnTimer: null, viewAt: 0, chat: [], lastAv: null, host: false, code: null, peer: null, conn: null, conns: {}, lobby: [], g: null, botTimer: null, view: null, retry: 0 };
 
 function randCode() { const a = 'ABCDEFGHJKLMNPQRSTUVWXYZ'; let c = ''; for (let i = 0; i < 4; i++) c += a[(Math.random() * a.length) | 0]; return c; }
 
@@ -692,6 +729,8 @@ function hostAct(seat, a) {
     const r = S.nextRound(Net.g); if (r.error) return toast(r.error); Net.g = r.state;
   } else if (a.a === 'again' && seat === 0 && Net.g && Net.g.phase === 'gameEnd') {
     Net.g = S.newGame(Net.lobby.map((p) => ({ name: p.name, bot: p.bot })));
+  } else if (a.a === 'nudge' && Net.g && Net.lateId != null) {
+    Net.nudge = (Net.nudge || 0) + 1;
   } else if (a.a === 'setopts' && seat === 0 && (!Net.g || Net.g.phase !== 'playing')) {
     if ([0, 20, 30, 45, 60, 90, 120].includes(a.timer)) Net.opts.timer = a.timer;
     if (['rapido', 'normal', 'lento', 'muito'].includes(a.bot)) Net.opts.bot = a.bot;
@@ -709,6 +748,7 @@ function viewOf(seat) {
   if (!Net.g) return { phase: 'lobby', opts: Net.opts, code: Net.code, seat, players: Net.lobby.map((p) => ({ name: p.name, bot: p.bot, connected: p.connected })) };
   const v = S.viewFor(Net.g, seat);
   v.online = Net.lobby.map((p) => p.connected); v.code = Net.code; v.opts = Net.opts;
+  v.late = Net.lateId != null && Net.g.phase === 'playing' && Net.lateId === Net.g.round * 100000 + (Net.g.turnNo || 0); v.nudge = Net.nudge || 0;
   v.timeLeft = Net.deadline && Net.g.phase === 'playing' && !Net.g.players[Net.g.turn].bot && Net.opts.timer ? Math.max(0, Math.round((Net.deadline - Date.now()) / 1000)) : null;
   return v;
 }
@@ -730,13 +770,12 @@ function armTimer() {
   if (!g || g.phase !== 'playing' || !Net.opts.timer || g.players[g.turn].bot) { clearTimeout(Net.turnTimer); Net.deadline = null; Net.timerId = null; return; }
   const id = g.round * 100000 + (g.turnNo || 0);
   if (id === Net.timerId && Net.deadline) return;
-  clearTimeout(Net.turnTimer); Net.timerId = id; Net.deadline = Date.now() + Net.opts.timer * 1000;
+  clearTimeout(Net.turnTimer); Net.timerId = id; Net.lateId = null; Net.deadline = Date.now() + Net.opts.timer * 1000;
   Net.turnTimer = setTimeout(() => {
     const g2 = Net.g;
     if (!g2 || g2.phase !== 'playing' || g2.round * 100000 + (g2.turnNo || 0) !== id) return;
-    const r = S.timeoutMove(g2, g2.turn);
-    if (!r.error) { Net.g = r.state; persist(); }
-    Net.deadline = null; Net.timerId = null; broadcast(); armTimer(); scheduleBot();
+    // tempo acabou: a mesa espera a pessoa e todos recebem o alerta
+    Net.lateId = id; broadcast();
   }, Net.opts.timer * 1000);
   broadcast();
 }
@@ -748,23 +787,59 @@ function scheduleBot() {
     const r = S.botMove(Net.g, Net.g.turn, Net.opts.lvl);
     if (!r.error) { Net.g = r.state; persist(); broadcast(); armTimer(); }
     scheduleBot();
-  }, { rapido: 700, normal: 1600, lento: 3000, muito: 5000 }[Net.opts.bot] || 700);
+  }, { rapido: 1500, normal: 2500, lento: 3600, muito: 5000 }[Net.opts.bot] || 2500);
 }
 
-function join(code) {
+// Convidado: a tela do jogo fica como está enquanto tenta voltar (a cada 2,5 s, até 12 vezes).
+// O 'hello' vai com o mesmo pid, e o anfitrião devolve a vista de onde parou.
+const REJOIN_MAX = 12, REJOIN_MS = 2500;
+const rejoinEl = document.createElement('div'); rejoinEl.id = 'rejoin'; document.body.appendChild(rejoinEl);
+function showRejoin(n) {
+  if (!n) { rejoinEl.style.display = 'none'; return; }
+  rejoinEl.innerHTML = '<i></i>Reconectando… ' + n + '/' + REJOIN_MAX; rejoinEl.style.display = 'block';
+}
+function leaveTable() {
+  clearTimeout(Net.rejoinT); Net.rejoinT = null; Net.rejoin = 0; showRejoin(0);
+  if (Net.peer) { Net.peer.sambaGone = true; try { Net.peer.destroy(); } catch (e) {} }
+  Net.peer = null; Net.conn = null;
+}
+function rejoinFailModal(code) {
+  const m = document.createElement('div'); m.className = 'modal';
+  m.innerHTML = `<div class="center"><div style="font-size:46px">📵</div><h2>Não consegui voltar para a mesa</h2><p class="hint">Confira a internet e se a mesa <b>${code}</b> ainda está aberta no celular de quem criou.</p><button id="rjy" style="width:100%;margin-bottom:8px">Tentar de novo</button><button class="sec" id="rjn" style="width:100%">Voltar ao início</button></div>`;
+  m.querySelector('#rjy').onclick = () => { m.remove(); Net.rejoin = 0; join(code, true); };
+  m.querySelector('#rjn').onclick = () => { m.remove(); goHome(); };
+  document.body.appendChild(m);
+}
+function join(code, retry) {
   code = code.trim().toUpperCase();
   if (code.length !== 4) return toast('O código tem 4 letras.');
   Net.host = false; Net.code = code;
-  render({ phase: 'conectando' });
+  if (!retry) { leaveTable(); render({ phase: 'conectando' }); }
+  else if (Net.peer) { Net.peer.sambaGone = true; try { Net.peer.destroy(); } catch (e) {} }
   const peer = new Peer(); Net.peer = peer;
+  // Caiu: marca este peer como morto (para o 'close' do destroy não contar de novo) e agenda a volta.
+  const lost = () => {
+    if (peer.sambaGone) return; peer.sambaGone = true;
+    if (Net.host || Net.peer !== peer || Net.code !== code) return;
+    try { peer.destroy(); } catch (e) {}
+    Net.rejoin = (Net.rejoin || 0) + 1;
+    if (Net.rejoin > REJOIN_MAX) { showRejoin(0); rejoinFailModal(code); return; }
+    showRejoin(Net.rejoin);
+    clearTimeout(Net.rejoinT); Net.rejoinT = setTimeout(() => join(code, true), REJOIN_MS);
+  };
   peer.on('open', () => {
     const conn = peer.connect(PREFIX + code, { reliable: true }); Net.conn = conn;
-    conn.on('open', () => { ls.set('sala', code); conn.send({ t: 'hello', pid, name: myName, avatar: myAvatar }); });
+    conn.on('open', () => { Net.rejoin = 0; showRejoin(0); ls.set('sala', code); conn.send({ t: 'hello', pid, name: myName, avatar: myAvatar }); });
     conn.on('data', (m) => { if (m.t === 'view') onView(m.v); else if (m.t === 'avs' && Array.isArray(m.list)) { avatars = m.list.slice(0, 6).map(safeAv); if (Net.view) render(Net.view); } else if (m.t === 'chat' && m.m) onChat(m.m); else if (m.t === 'chatlog' && Array.isArray(m.list)) { chatLog = []; m.list.forEach((x) => onChat({ ...x })); unread = 0; updateBadges(); } else if (m.t === 'err') { toast(m.msg); if (!Net.view) goHome(); } });
-    conn.on('close', () => { toast('Conexão perdida. Tentando voltar…'); setTimeout(() => join(code), 2500); });
+    conn.on('close', lost);
+    conn.on('error', lost);
   });
+  peer.on('disconnected', () => { if (!peer.sambaGone) try { peer.reconnect(); } catch (e) { lost(); } });
   peer.on('error', (e) => {
-    if (e.type === 'peer-unavailable') { toast('Não achei essa mesa. Confira o código e se a Tânia já criou a mesa.'); goHome(); }
+    if (e.type === 'peer-unavailable') {
+      if (retry) { lost(); return; } // a mesa pode estar voltando também
+      toast('Não achei essa mesa. Confira o código e se a Tânia já criou a mesa.'); goHome();
+    } else if (['network', 'server-error', 'socket-error', 'socket-closed', 'disconnected'].includes(e.type) && (retry || Net.view)) lost();
     else toast('Problema de conexão: ' + e.type);
   });
 }
@@ -774,7 +849,7 @@ function send(a) { if (Net.host) hostAct(0, a); else if (Net.conn && Net.conn.op
 /* ---------- tela ---------- */
 let sel = new Set(); let sortMode = ls.get('sort', 'suit'); let showRules = false; let lastTurnMine = false;
 
-function goHome() { Net.view = null; render({ phase: 'home' }); }
+function goHome() { if (!Net.host) leaveTable(); Net.view = null; render({ phase: 'home' }); }
 
 let banners = []; let lastLogN = -1; let lastRoundB = -1; let bnTimer = null;
 function trackBanners(v) {
@@ -787,6 +862,9 @@ function trackBanners(v) {
   }
 }
 function onView(v) {
+  const pv = Net.view;
+  if (window.FX && v.phase === 'playing' && v.late && v.turn === v.seat && (!pv || !pv.late || (v.nudge || 0) > (pv.nudge || 0))) { FX.sound('turn'); FX.buzz([300, 120, 300, 120, 300]); }
+  else if (window.FX && v.phase === 'playing' && v.late && pv && !pv.late) FX.sound('lock');
   Net.view = v; Net.viewAt = Date.now();
   const inGame = v.phase === 'playing' || v.phase === 'roundEnd' || v.phase === 'gameEnd';
   if (inGame) trackBanners(v);
@@ -857,7 +935,7 @@ const teamName = (v, t) => v.players.filter((p) => p.team === t).map((p) => p.na
 function render(v) { renderInner(v); bindChrome(); }
 function renderInner(v) {
   const app = $('#app'); app.classList.remove('wide');
-  if (v.phase === 'conectando') { app.innerHTML = `<div class="center card-box"><h2>Conectando…</h2><p class="hint">Se demorar mais de 20 segundos, volte e tente de novo.</p><button class="sec" id="back">Voltar</button></div>`; $('#back').onclick = () => { try { Net.peer && Net.peer.destroy(); } catch (e) {} goHome(); }; return; }
+  if (v.phase === 'conectando') { app.innerHTML = `<div class="center card-box"><h2>Conectando…</h2><p class="hint">Se demorar mais de 20 segundos, volte e tente de novo.</p><button class="sec" id="back">Voltar</button></div>`; $('#back').onclick = () => { leaveTable(); goHome(); }; return; }
   if (v.phase === 'home') return renderHome(app);
   if (v.phase === 'lobby') return renderLobby(app, v);
   renderGame(app, v);
@@ -930,26 +1008,31 @@ setInterval(() => {
   if (!el || !v || v.timeLeft == null) return;
   const left = Math.max(0, v.timeLeft - Math.floor((Date.now() - Net.viewAt) / 1000));
   el.textContent = '⏱ ' + left + 's'; el.classList.toggle('low', left <= 10);
-  const st = document.querySelector('.seat.turn'); if (st && v.opts && v.opts.timer) st.style.setProperty('--p', Math.max(0, Math.min(100, 100 * left / v.opts.timer)) + '%');
+  const st = document.querySelector('.seat.turn'); if (st && v.opts && v.opts.timer) { const fr = Math.max(0, Math.min(1, left / v.opts.timer)); st.style.setProperty('--p', fr * 100 + '%'); st.style.setProperty('--tc', `hsl(${Math.round(120 * fr)},85%,50%)`); }
 }, 500);
 function renderHome(app) {
-  const saved = ls.get('host', null), sala = ls.get('sala', '');
+  const saved = ls.get('host', null);
+  // Código da mesa vindo da URL ou do aparelho: só 4 letras/números, nunca HTML cru dentro do value.
+  const soCodigo = (c) => String(c || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 4);
+  const sala = soCodigo(new URLSearchParams(location.search).get('sala')) || soCodigo(ls.get('sala', ''));
   app.innerHTML = `<div class="center" style="padding-top:24px"><div style="font-size:54px">🃏</div><h1 style="font-size:38px;color:var(--gold)">Samba da Tânia</h1><p class="hint">Jogo de cartas online para jogar com a turma</p><div style="margin-top:8px;display:flex;gap:8px;justify-content:center">${friendsBtn}<button class="sec mutebtn" title="Som">🔊</button></div></div>
   <div class="card-box"><label>Seu nome</label><input id="nome" value="${myName.replace(/"/g, '')}" placeholder="Como a turma te chama?" maxlength="14">
    <div class="me-av" style="margin-top:12px"><span id="avnow">${avHtml(myAvatar, 64)}</span><div><label for="foto" style="display:inline-block"><span class="sec" style="display:inline-block;padding:10px 14px;border-radius:14px;background:#ffffff22;cursor:pointer;font-weight:700">📷 Usar minha foto</span></label><input id="foto" type="file" accept="image/*" style="display:none"></div></div>
    <div class="avs">${EMOJIS.map((e) => `<button type="button" data-e="${e}" class="${e === myAvatar ? 'on' : ''}">${e}</button>`).join('')}</div>
    <button class="sec themebtn" style="width:100%">🎨 Escolher a cor da mesa</button></div>
   ${window.FX ? FX.profileHtml() : ''}
+  <div class="card-box acct" id="acct"></div>
   <div class="card-box"><button id="criar" style="width:100%">Criar uma mesa</button><p class="hint">Quem cria é o anfitrião: deixe esta tela aberta durante o jogo.</p>
    ${saved && saved.g ? `<button class="sec" id="retomar" style="width:100%">Retomar a mesa ${saved.code}</button>` : ''}</div>
-  <div class="card-box"><label>Entrar numa mesa que já existe</label><div class="row"><input id="cod" placeholder="CÓDIGO" maxlength="4" style="text-transform:uppercase;letter-spacing:4px;font-weight:800" value="${new URLSearchParams(location.search).get('sala') || sala || ''}"><button id="entrar" style="flex:none">Entrar</button></div></div>
+  <div class="card-box"><label>Entrar numa mesa que já existe</label><div class="row"><input id="cod" placeholder="CÓDIGO" maxlength="4" style="text-transform:uppercase;letter-spacing:4px;font-weight:800" value="${sala}"><button id="entrar" style="flex:none">Entrar</button></div></div>
   <div class="card-box"><button class="sec" id="treino" style="width:100%">Jogar com robôs (2, 4 ou 6 jogadores)</button> <button class="sec" id="regras" style="width:100%;margin-top:8px">Como se joga</button></div>
   <div class="card-box" id="inst" ${isStandalone() ? 'hidden' : ''}><b>📲 Instalar no celular</b><p class="hint" style="margin:6px 0">Vira um ícone na tela inicial e abre em tela cheia, como um app normal. Funciona em qualquer celular.</p><button id="instb" style="width:100%" hidden>Instalar o app</button><div id="insth">${installSteps()}</div></div>`;
   if (deferredInstall) { $('#instb').hidden = false; $('#insth').hidden = true; $('#instb').onclick = () => { deferredInstall.prompt(); deferredInstall = null; $('#inst').hidden = true; }; }
-  const setAv = (a) => { myAvatar = a; ls.set('avatar', a); $('#avnow').innerHTML = avHtml(a, 64); document.querySelectorAll('.avs button').forEach((b) => b.classList.toggle('on', b.dataset.e === a)); };
+  paintAccount();
+  const setAv = (a) => { myAvatar = a; ls.set('avatar', a); $('#avnow').innerHTML = avHtml(a, 64); document.querySelectorAll('.avs button').forEach((b) => b.classList.toggle('on', b.dataset.e === a)); cloudName(); };
   document.querySelectorAll('.avs button').forEach((b) => (b.onclick = () => setAv(b.dataset.e)));
   $('#foto').onchange = (e) => { const f = e.target.files[0]; if (f) photoToAvatar(f, setAv); };
-  const nome = () => { myName = $('#nome').value.trim(); if (!myName) { toast('Escreva seu nome primeiro.'); return false; } ls.set('name', myName); return true; };
+  const nome = () => { myName = $('#nome').value.trim(); if (!myName) { toast('Escreva seu nome primeiro.'); return false; } ls.set('name', myName); cloudName(); return true; };
   $('#criar').onclick = () => nome() && hostStart();
   $('#entrar').onclick = () => nome() && join($('#cod').value);
   $('#treino').onclick = () => { if (nome()) soloModal(); };
@@ -982,7 +1065,11 @@ function meldHtml(m, mine, tap) {
   const tag = m.canastra ? (m.black ? 'PRETA' : m.clean ? 'LIMPA' : 'SUJA') : '';
   if (compactMelds()) {
     const wn = m.wildIds.length; const face = m.cards.find((c) => !m.wildIds.includes(c.id)) || m.cards[0];
-    return `<div class="meld pk ${mine ? 'mine' : ''} ${tap ? 'tap' : ''}" data-m="${m.id}"><div class="pkc">${m.cards.length > 2 ? '<div class="card mini back o2"></div>' : ''}${m.cards.length > 1 ? '<div class="card mini back o1"></div>' : ''}${cardHtml(face, 'mini')}<span class="cnt ${m.canastra ? 'ok' : ''}">${m.cards.length}${m.canastra ? '' : '/7'}</span></div>${wn ? `<span class="wd">★${wn > 1 ? '×' + wn : ''}</span>` : ''}${tag ? `<span class="tag">${tag}</span>` : ''}</div>`;
+    const wc = m.cards.find((c) => m.wildIds.includes(c.id));
+    const red = face.s === 'C' || face.s === 'O';
+    const faceHtml = wn ? `<div class="card mini split"><span class="h1 ${red ? 'red' : ''}"><b>${S.RN[face.r]}</b><i>${S.SYM[face.s]}</i></span><span class="h2">${wc && wc.r === 2 ? '<b>2</b>' : '<b>★</b>'}</span></div>` : cardHtml(face, 'mini');
+    const tag2 = m.canastra ? tag : wn ? 'SUJA' : '';
+    return `<div class="meld pk ${mine ? 'mine' : ''} ${tap ? 'tap' : ''}" data-m="${m.id}"><div class="pkc">${m.cards.length > 2 ? '<div class="card mini back o2"></div>' : ''}${m.cards.length > 1 ? '<div class="card mini back o1"></div>' : ''}${faceHtml}<span class="cnt ${m.canastra ? 'ok' : ''}">${m.cards.length}${m.canastra ? '' : '/7'}</span></div>${wn > 1 ? `<span class="wd">★×${wn}</span>` : ''}${tag2 ? `<span class="tag ${wn ? 'suja' : ''}">${tag2}</span>` : ''}</div>`;
   }
   return `<div class="meld ${mine ? 'mine' : ''} ${tap ? 'tap' : ''}" data-m="${m.id}"><b class="rk">${S.RN[m.rank]}</b><span class="cnt ${m.canastra ? 'ok' : ''}" title="${m.canastra ? 'canastra' : 'faltam ' + (7 - m.cards.length) + ' para a canastra'}">${m.cards.length}${m.canastra ? '' : '/7'}</span><div class="cards">${m.cards.map((c) => cardHtml(c, 'mini ' + (m.wildIds.includes(c.id) ? 'w' : ''))).join('')}</div>${tag ? `<span class="tag">${tag}</span>` : ''}</div>`;
 }
@@ -1126,7 +1213,7 @@ function renderGame(app, v) {
   ${scoreTable(v)}
   <div class="tw">
 
-    ${v.players.map((p, i) => { const r = (i - v.seat + v.n) % v.n; const th = 2 * Math.PI * r / v.n; const x = 50 - 47 * Math.sin(th), y = 53 + 41 * Math.cos(th); return `<div class="seat ${v.turn === i && v.phase === 'playing' ? 'turn' : ''} ${p.team === v.myTeam ? 'mine' : ''}" data-seat="${i}" style="left:${x}%;top:${y}%">${avHtml(avatars[i], 34)}<b>${i === v.seat ? 'Você' : p.name}</b><br>🂠 ${p.count}${v.online && !v.online[i] ? ' · ⚪ saiu' : ''}</div>`; }).join('')}
+    ${v.players.map((p, i) => { const r = (i - v.seat + v.n) % v.n; const th = 2 * Math.PI * r / v.n; const x = Math.min(84, Math.max(16, 50 - 47 * Math.sin(th))), y = 53 + 41 * Math.cos(th); return `<div class="seat ${v.turn === i && v.phase === 'playing' ? 'turn' : ''} ${p.team === v.myTeam ? 'mine' : ''}" data-seat="${i}" style="left:${x}%;top:${y}%">${avHtml(avatars[i], 34)}<b>${i === v.seat ? 'Você' : p.name}</b><br>🂠 ${p.count}${v.online && !v.online[i] ? ' · ⚪ saiu' : ''}</div>`; }).join('')}
     <div class="mortos"><div class="mt ${v.mortoTaken[v.myTeam] ? 'gone' : ''}"><div class="card mini back"></div>Morto nós${v.mortoTaken[v.myTeam] ? ' (pego)' : ''}</div><div class="mt ${v.mortoTaken[1 - v.myTeam] ? 'gone' : ''}"><div class="card mini back"></div>Morto eles${v.mortoTaken[1 - v.myTeam] ? ' (pego)' : ''}</div></div>
     <div class="felt n2">
       ${seatZones(v, play && sel.size)}
@@ -1136,11 +1223,13 @@ function renderGame(app, v) {
     </div></div>
   ${(() => { const lg = (v.log || []).slice(logOpen ? -30 : -5); return `<div class="log"><div class="lh"><b>O que cada um fez</b><button type="button" class="sec" id="logt">${logOpen ? 'Mostrar menos' : 'Ver tudo'}</button></div>${lg.map((t, i) => `<div class="ll ${i === lg.length - 1 ? 'new' : ''}"></div>`).join('')}</div>`; })()}
   <div class="dock"><div class="bns">${shownBanners.map((b) => `<div class="banner">${b.s != null ? avHtml(avatars[b.s], 30) : ''}<span class="bt"></span></div>`).join('')}</div>
+  ${v.late ? (my ? '<div class="late me">Seu tempo acabou! A mesa está esperando você jogar.</div>' : `<div class="late">O tempo de ${v.players[v.turn].name.replace(/[<>&"]/g, '')} acabou. Esperando…<button type="button" id="nudge">Chamar</button></div>`) : ''}
   <div class="status ${my ? 'me' : ''}">${status}${cdHtml(v)}</div>
   ${staged.length || selInfo ? `<div class="stg">${gi.map((x, k) => `<span class="gp ${x.ok ? 'ok' : 'bad'}" data-g="${k}">Jogo ${k + 1}: ${x.ok ? x.pts + ' pts' : 'não vale'} ✕</span>`).join('')}${selInfo ? `<span class="gp ${selInfo.ok ? 'ok' : 'bad'}">Marcadas${withPile ? ' + lixo' : ''}${selInfo.ok && selInfo.n > 1 ? ' (' + selInfo.n + ' jogos)' : ''}: ${selInfo.ok ? selInfo.pts + ' pts' : 'não vale'}</span>` : ''}<span class="gp tot">Total ${allPts}${desc || need.canastra ? '' : ' / ' + need.min}</span></div>` : ''}
   ${false ? `<div class="zsel">Baixar na frente de: ${mySeats.map((i) => `<button type="button" class="${zoneSel === i ? 'on' : ''}" data-z="${i}"></button>`).join('')}</div>` : ''}
   <div class="bar"><button id="baixar" ${draw && !v.drawn ? (v.discardCount && !v.pileLocked ? '' : 'disabled') : play && (staged.length || sel.size >= 3) ? '' : 'disabled'}>${draw && !v.drawn ? 'Pegar o lixo' : 'Baixar'}</button><button class="sec" id="grupo" ${canGroup ? '' : 'disabled'}>+ Outro jogo</button><button id="desc" ${play && sel.size === 1 && !staged.length ? '' : 'disabled'}>Descartar</button><button class="sec" id="sug" ${draw || play ? '' : 'disabled'}>💡 Sugerir jogos</button><button class="sec" id="ord">Agrupar iguais</button></div>
   <div class="hand">${hand.map((c) => { const g = stagedIds.get(c.id); return cardHtml(c, (g ? 'stg' + ((g - 1) % 4) : sel.has(c.id) ? 'sel' : '') + (ageOf(c.id) < 5000 ? ' newh' + (ageOf(c.id) < 900 ? ' newc' : '') : ''), `data-id="${c.id}"`); }).join('')}</div></div>`;
+  if ($('#nudge')) $('#nudge').onclick = () => { send({ a: 'nudge' }); toast('Chamado!'); };
   $('#regras').onclick = () => { showRules = true; rulesModal(); };
   document.querySelectorAll('.banner .bt').forEach((el, i) => (el.textContent = shownBanners[i].t));
   { const lg = (v.log || []).slice(logOpen ? -30 : -5); document.querySelectorAll('.log .ll').forEach((el, i) => (el.textContent = lg[i].t)); }
@@ -1237,7 +1326,105 @@ m.querySelector('button').onclick = () => m.remove();
 }
 
 if (window.FX) { FX.cardHtml = cardHtml; FX.avHtml = avHtml; FX.avatars = () => avatars; FX.confetti = confetti; }
+
+/* ---------- conta na nuvem e histórico de partidas ---------- */
+// Sem cloud-config.js preenchido, Cloud.enabled é false e tudo abaixo fica só no aparelho.
+const CL = window.Cloud || null;
+const cloudOn = () => !!(CL && CL.enabled);
+function cloudName() { if (CL && myName) CL.saveName(myName, myAvatar); }
+// Linha de conta dentro da tela inicial; redesenhada no lugar a cada mudança, sem mexer no resto da tela.
+function accountLine() {
+  const st = cloudOn() ? CL.status() : 'off'; const u = cloudOn() ? CL.user() : null;
+  if (st === 'off') return { st, ic: '📱', txt: 'Só neste aparelho' };
+  if (st === 'conectando') return { st, ic: '⏳', txt: 'Conectando à conta…' };
+  if (st === 'anonimo') return { st, ic: '☁️', txt: 'Conta anônima · salva na nuvem' };
+  if (st === 'google') return { st, ic: '✅', txt: 'Conta Google: ' + ((u && (u.name || u.email)) || 'você') };
+  return { st, ic: '📵', txt: 'Sem conexão agora' };
+}
+function paintAccount() {
+  const el = $('#acct'); if (!el) return;
+  const a = accountLine();
+  el.innerHTML = `<div class="st"><i>${a.ic}</i><span></span></div><div class="row">${a.st === 'anonimo' ? '<button id="acg">Entrar com Google</button>' : ''}<button class="sec" id="acm">Minhas partidas</button></div>`;
+  el.querySelector('.st span').textContent = a.txt; // nome da conta via textContent (segurança)
+  el.querySelector('#acm').onclick = matchesModal;
+  const g = el.querySelector('#acg');
+  if (g) g.onclick = async () => {
+    g.disabled = true;
+    const user = await CL.signInGoogle();
+    if (user && !user.anonymous) {
+      toast('Pronto! Conta ligada' + (user.name ? ' a ' + user.name : '') + '.');
+      cloudName();
+      const p = await CL.syncProfile(FX.profile()); if (p) { FX.setProfile(p); paintProfile(); }
+    }
+    paintAccount();
+  };
+}
+function paintProfile() { const el = document.querySelector('#app .card-box.prof'); if (el && window.FX) el.outerHTML = FX.profileHtml(); }
+// Cópia local do histórico (últimas 50), para a lista funcionar sem nuvem.
+function localMatches() { const l = ls.get('matches', []); return Array.isArray(l) ? l : []; }
+function pushLocalMatch(rec) { const l = localMatches(); l.unshift(Object.assign({ at: Date.now(), id: Date.now().toString(36) }, rec)); ls.set('matches', l.slice(0, 50)); }
+// Junta a lista da nuvem com a cópia local (mesmo id = mesma partida), da mais recente para a mais antiga.
+function mergeMatches(cloud, local) {
+  const seen = new Set(); const out = [];
+  (cloud || []).concat(local || []).forEach((r) => { if (!r || seen.has(r.id)) return; seen.add(r.id); out.push(r); });
+  return out.sort((a, b) => (b.at || b.clientAt || 0) - (a.at || a.clientAt || 0));
+}
+// XP somado ao longo do jogo (rodada a rodada); zera quando muda de mesa ou começa um jogo novo.
+let xpGame = 0, xpGameKey = '';
+if (window.FX) FX.onAward = (v, gain) => {
+  const key = v.code || 'solo';
+  if (key !== xpGameKey || v.round === 1) { xpGameKey = key; xpGame = 0; }
+  xpGame += (gain && gain.gain) || 0;
+  if (v.phase === 'gameEnd' && CL) {
+    const rec = CL.matchFromView(v, xpGame);
+    if (rec) { rec.bots = v.players.filter((p) => p.bot).length; rec.id = Date.now().toString(36) + Math.random().toString(36).slice(2, 8); pushLocalMatch(rec); CL.saveMatch(rec); }
+    xpGame = 0;
+  }
+  if (cloudOn()) CL.syncProfile(FX.profile()).then((p) => { if (p) FX.setProfile(p); });
+};
+const fmtN = (n) => (+n || 0).toLocaleString('pt-BR');
+const fmtDt = (ms) => { try { return new Date(ms).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }); } catch (e) { return ''; } };
+async function matchesModal() {
+  const m = document.createElement('div'); m.className = 'modal';
+  m.innerHTML = '<div><div style="display:flex;justify-content:space-between;align-items:center"><h2>Minhas partidas</h2><button class="sec" id="mhx" style="padding:6px 14px">Fechar</button></div><p class="hint" id="mhn">Buscando…</p><div id="mhl"></div></div>';
+  m.querySelector('#mhx').onclick = () => m.remove(); document.body.appendChild(m);
+  // A nuvem só entra quando a conta está pronta; sem rede ou sem conta, a cópia do aparelho aparece sempre.
+  const st = cloudOn() ? CL.status() : 'off'; let fromCloud = null;
+  if (st === 'anonimo' || st === 'google') { try { fromCloud = await CL.listMatches(30); } catch (e) { fromCloud = null; } }
+  if (fromCloud && cloudOn() && CL.status() === 'erro') fromCloud = null;
+  const list = mergeMatches(fromCloud, localMatches()).slice(0, 50);
+  if (!m.parentNode) return;
+  const note = m.querySelector('#mhn');
+  if (!list.length) { note.textContent = 'Nenhuma partida ainda. Jogue uma!'; return; }
+  note.textContent = fromCloud ? 'Guardadas na sua conta.' : cloudOn() ? 'Sem conexão: mostrando o que está neste aparelho.' : 'Guardadas só neste aparelho.';
+  const l = m.querySelector('#mhl');
+  list.forEach((r) => {
+    const ps = Array.isArray(r.players) ? r.players : []; const mine = r.myTeam;
+    const allBots = r.bots != null && ps.length && r.bots >= ps.length - 1;
+    const sc = Array.isArray(r.scores) ? r.scores : [0, 0]; const nos = mine == null ? sc[0] : sc[mine], eles = mine == null ? sc[1] : sc[1 - mine];
+    const res = r.winner == null ? ['', '—'] : r.winner === -1 ? ['', 'Empate'] : r.winner === mine ? ['v', 'Vitória'] : ['d', 'Derrota'];
+    const d = document.createElement('div'); d.className = 'mh';
+    d.innerHTML = `<div class="d"><span></span><span>${r.pending ? '⏳ ainda vai subir' : ''}</span></div><div class="pl2"></div><div class="sc2"><span><b>Nós ${fmtN(nos)}</b> <span class="vs">×</span> Eles ${fmtN(eles)}</span><span class="rs ${res[0]}">${res[1]}</span><span class="xg">+${+r.xp || 0} XP</span></div>`;
+    d.querySelector('.d span').textContent = fmtDt(r.at || r.clientAt || 0) + ' · ' + (allBots || r.code === 'solo' ? 'Contra robôs' : 'Mesa ' + String(r.code || '').slice(0, 4)) + (r.rodadas ? ' · ' + r.rodadas + (r.rodadas > 1 ? ' rodadas' : ' rodada') : '');
+    const pl = d.querySelector('.pl2');
+    ps.forEach((p) => { const s = document.createElement('span'); s.textContent = p.name || '?'; if (mine != null && p.team === mine) s.className = 'me'; pl.appendChild(s); });
+    l.appendChild(d);
+  });
+}
+function cloudStart() {
+  if (!CL) return;
+  CL.onChange((ev) => {
+    // A conta manda no código de amigo: o aparelho adota e a presença volta a subir com o código novo.
+    if (ev.ucode && validCode(ev.ucode) && ev.ucode !== myCode) { myCode = ev.ucode; presenceStart(); refreshFriendsUI(); }
+    if (ev.profile && window.FX) { FX.setProfile(ev.profile); paintProfile(); }
+    paintAccount();
+  });
+  cloudName();
+  CL.init();
+}
+
 presenceStart();
+cloudStart();
 goHome();
 </script>
 </body>
