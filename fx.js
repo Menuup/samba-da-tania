@@ -169,7 +169,9 @@
   FX.title = (L) => (L >= 35 ? 'Lenda' : L >= 20 ? 'Grão-Mestre' : L >= 10 ? 'Mestre' : L >= 5 ? 'Jogador' : 'Aprendiz');
   FX.lastGain = null; FX.awarded = null;
   FX.award = (v) => {
-    const key = (v.code || 'solo') + ':' + v.round + ':' + v.phase; if (FX.awarded === key) return; FX.awarded = key;
+    const key = v.runId ? 'xp:' + v.runId + ':' + v.round : (v.code || 'solo') + ':' + v.round + ':' + v.phase; if (FX.awarded === key) return; FX.awarded = key;
+    // chave por partida guardada no livro (Eco): a mesma partida desenhada duas vezes dá XP uma vez só
+    if (v.runId && window.Eco) { if (window.Eco.has(key)) return; window.Eco.mark(key); }
     const p = FX.profile(); const rr = v.roundResult; const t = v.myTeam; const lines = [];
     let gain = 10; lines.push(['Rodada jogada', 10]); p.rounds++;
     const can = (v.melds[t] || []).filter((m) => m.canastra);
@@ -179,7 +181,7 @@
     if (v.phase === 'gameEnd') { p.games++; if (v.winner === t) { gain += 50; lines.push(['Vitória', 50]); p.wins++; } }
     const before = FX.level(p.xp); p.xp += gain; const after = FX.level(p.xp);
     ls.set('profile', p); FX.lastGain = { gain, lines, levelUp: after > before, level: after, xp: p.xp };
-    if (after > before) setTimeout(() => FX.sound('levelup'), 1800);
+    if (after > before) { setTimeout(() => FX.sound('levelup'), 1800); if (window.Eco) try { window.Eco.onLevelUp(before, after); } catch (e) {} }
     // Gancho para quem quiser guardar o perfil fora do aparelho (index.html usa para a nuvem).
     if (typeof FX.onAward === 'function') try { FX.onAward(v, FX.lastGain); } catch (e) { console.warn('fx onAward', e); }
   };

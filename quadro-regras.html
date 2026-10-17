@@ -1,0 +1,187 @@
+<title>Regras do Samba Tranca</title>
+<style>
+/* Layout: uma tabela por assunto, três colunas (pergunta, escolha rápida, sua resposta), barra fixa embaixo com o progresso. */
+:root{
+  --bg:#f3f5f2; --panel:#ffffff; --fg:#1b2420; --muted:#5b6862; --line:#d7ded9;
+  --accent:#0f5a43; --accent-fg:#ffffff; --gold:#b9801a; --chip:#e6eee9; --chip-on:#0f5a43; --chip-on-fg:#fff; --assumed:#f6efdc;
+  --font-d:"Bricolage Grotesque",system-ui,sans-serif; --font-b:"Source Sans 3",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#121815; --panel:#1b2420; --fg:#e8eeea; --muted:#9aa8a1; --line:#2c3832;
+  --accent:#4fc08f; --accent-fg:#0b1511; --gold:#e0b04f; --chip:#25312b; --chip-on:#4fc08f; --chip-on-fg:#0b1511; --assumed:#2b2819; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#121815; --panel:#1b2420; --fg:#e8eeea; --muted:#9aa8a1; --line:#2c3832;
+  --accent:#4fc08f; --accent-fg:#0b1511; --gold:#e0b04f; --chip:#25312b; --chip-on:#4fc08f; --chip-on-fg:#0b1511; --assumed:#2b2819; color-scheme:dark}
+body{background:var(--bg);color:var(--fg);font:17px/1.45 var(--font-b);padding-inline:16px;padding-block:20px 120px}
+.wrap{max-width:980px;margin:0 auto;display:flex;flex-direction:column;gap:22px}
+h1,h2{font-family:var(--font-d);text-wrap:balance;margin:0}
+h1{font-size:clamp(28px,5vw,40px);line-height:1.1}
+h2{font-size:21px}
+.lead{color:var(--muted);max-width:65ch;margin:8px 0 0}
+.how{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px;display:grid;gap:6px}
+.how b{font-family:var(--font-d)}
+.sec{display:flex;flex-direction:column;gap:10px}
+.sec h2 small{font-family:var(--font-b);font-weight:400;color:var(--muted);font-size:15px;margin-left:8px}
+.tbl{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.row{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1.5fr);gap:10px 18px;padding:14px 16px;border-top:1px solid var(--line)}
+.row:first-child{border-top:0}
+.row.done{background:color-mix(in srgb,var(--accent) 6%,var(--panel))}
+.q{font-weight:600;min-width:0}
+.assume{display:block;font-weight:400;font-size:14px;color:var(--muted);background:var(--assumed);border-radius:8px;padding:4px 8px;margin-top:6px}
+.ans{display:flex;flex-direction:column;gap:8px;min-width:0}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{font:inherit;font-size:15px;border:1px solid var(--line);background:var(--chip);color:var(--fg);border-radius:999px;padding:5px 12px;cursor:pointer}
+.chip[aria-pressed="true"]{background:var(--chip-on);color:var(--chip-on-fg);border-color:var(--chip-on)}
+textarea{font:inherit;font-size:16px;width:100%;min-height:46px;resize:vertical;border:1px solid var(--line);border-radius:8px;background:var(--bg);color:var(--fg);padding:8px 10px}
+:is(button,textarea):focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+.bar{position:fixed;left:0;right:0;bottom:0;background:var(--panel);border-top:1px solid var(--line);padding:10px 16px calc(10px + env(safe-area-inset-bottom,0px));z-index:5}
+.bar>div{max-width:980px;margin:0 auto;display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.prog{flex:1;min-width:160px;font-size:15px}
+.meter{height:8px;border-radius:99px;background:var(--chip);overflow:hidden;margin-top:4px}
+.meter i{display:block;height:100%;width:0;background:var(--accent);transition:width .25s}
+.go{font:inherit;font-weight:700;background:var(--accent);color:var(--accent-fg);border:0;border-radius:10px;padding:11px 18px;cursor:pointer}
+.ghost{font:inherit;background:transparent;color:var(--muted);border:1px solid var(--line);border-radius:10px;padding:10px 14px;cursor:pointer}
+#out{width:100%;min-height:160px;margin-top:10px}
+#outbox{max-width:980px;margin:0 auto}
+@media(max-width:640px){.row{grid-template-columns:minmax(0,1fr)}}
+@media(prefers-reduced-motion:reduce){.meter i{transition:none}}
+</style>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Source+Sans+3:wght@400;600&display=swap">
+
+<div class="wrap">
+  <header>
+    <h1>Regras do Samba Tranca</h1>
+    <p class="lead">Preencha do jeito que a Tânia joga. Onde eu já chutei uma regra, aparece em amarelo: toque numa opção ou escreva a sua. Pode deixar em branco o que não souber.</p>
+  </header>
+  <div class="how">
+    <div><b>Como usar:</b> toque numa opção rápida e, se quiser, complete no campo.</div>
+    <div><b>No fim:</b> toque em "Copiar respostas" e cole na conversa comigo. O que você digitar fica guardado neste aparelho.</div>
+  </div>
+  <main id="root" class="wrap"></main>
+  <div id="outbox" hidden>
+    <p class="lead">Se o botão não copiou, selecione o texto abaixo, copie e cole na conversa.</p>
+    <textarea id="out" readonly></textarea>
+  </div>
+</div>
+
+<div class="bar"><div>
+  <div class="prog"><span id="count">0 de 0 respondidas</span><div class="meter"><i id="meter"></i></div></div>
+  <button class="ghost" id="clear" type="button">Limpar tudo</button>
+  <button class="go" id="copy" type="button">Copiar respostas</button>
+</div></div>
+
+<script>
+var SECTIONS = [
+ {t:'Quem joga e com quais cartas', rows:[
+  ['Quantas pessoas jogam por mesa?', 'Hoje: 2 a 4. Com 4, jogam em duplas (de frente).', ['2','3','4 em duplas','4 cada um por si','mais de 4']],
+  ['Quantos baralhos e quantos coringas?', 'Hoje: 2 baralhos + 4 coringas (108 cartas).', ['2 baralhos com coringa','2 baralhos sem coringa','3 baralhos','outro']],
+  ['Quais cartas são coringa?', 'Hoje: os coringas e todos os 2.', ['Só os coringas','Coringas e os 2','Só os 2','outro']],
+  ['Quantas cartas cada um recebe?', 'Hoje: 11.', ['9','11','13','15']],
+  ['Existe "morto" (cartas separadas para pegar depois)?', 'Hoje: sim, 11 cartas por time, pega quando a mão acaba.', ['Sim, 11 cartas','Sim, 15 cartas','Não existe','outro']],
+  ['Quem começa a primeira jogada?', 'Hoje: o jogador à esquerda de quem deu.', ['Esquerda de quem deu','Quem deu','Sorteio']]
+ ]},
+ {t:'A sua vez', rows:[
+  ['O que se faz na vez, em ordem?', 'Hoje: comprar (ou pegar o lixo), baixar jogos, descartar 1.', []],
+  ['Pode pegar o lixo inteiro? Com que condição?', 'Hoje: pode sempre, sem condição.', ['Sempre pode','Só se usar a carta de cima num jogo','Só se já tiver jogo baixado','outro']],
+  ['Existe "trancar" o lixo? Como?', 'Hoje: não existe.', ['Não existe','Sim, com coringa','Sim, com 3 preto','Sim, outro jeito']],
+  ['Pode descartar um coringa?', 'Hoje: pode.', ['Pode','Não pode','Só com condição']]
+ ]},
+ {t:'Jogos que podem ser baixados', rows:[
+  ['Que tipos de jogo existem?', 'Hoje: sequência do mesmo naipe e trinca da mesma figura.', ['Só sequência','Sequência e trinca','outro']],
+  ['Quantas cartas no mínimo para baixar?', 'Hoje: 3.', ['3','4','outro']],
+  ['O Ás vale como?', 'Hoje: antes do 2 ou depois do K (A-2-3 ou Q-K-A).', ['Só baixo (A-2-3)','Só alto (Q-K-A)','Os dois, mas não dá a volta','outro']],
+  ['Quantos coringas cabem em cada jogo?', 'Hoje: no máximo 1.', ['1','2','Quantos quiser','outro']],
+  ['O 2 natural pode ficar na sua posição (ex.: 2♥ entre A♥ e 3♥)?', 'Hoje: sim, conta como carta normal.', ['Sim','Não']],
+  ['Pode ter dois jogos da mesma figura ou do mesmo naipe na mesa?', 'Hoje: pode.', ['Pode','Não pode','outro']],
+  ['Pode trocar um coringa por uma carta natural e reaproveitar o coringa?', 'Hoje: não pode.', ['Não pode','Pode']]
+ ]},
+ {t:'Canastra e Samba', rows:[
+  ['O que é uma canastra?', 'Hoje: jogo com 7 cartas ou mais.', ['7 cartas ou mais','outro']],
+  ['O que é o "Samba"? (esta é a pergunta mais importante)', 'Ainda não sei. Explique com as suas palavras e dê um exemplo de cartas.', []],
+  ['Canastra limpa e suja valem quanto?', 'Hoje: limpa +200, suja +100.', ['Limpa 200 / suja 100','Limpa 500 / suja 300','outro']],
+  ['Existe canastra especial (ex.: A até K, 14 cartas)?', 'Hoje: não.', ['Não','Sim, vale mais']]
+ ]},
+ {t:'Bater e acabar a rodada', rows:[
+  ['O que precisa para bater?', 'Hoje: ficar sem cartas, com 1 canastra no time e já ter pego o morto.', []],
+  ['Pode bater sem descartar a última carta?', 'Hoje: pode, se baixar tudo.', ['Pode','Tem que descartar a última']],
+  ['O que acontece se o monte acabar?', 'Hoje: a rodada termina e conta ponto.', ['Rodada termina','Continua só com o lixo','outro']],
+  ['Quem nunca pegou o morto perde ponto?', 'Hoje: −100.', ['−100','−50','Não perde']]
+ ]},
+ {t:'Pontos e fim do jogo', rows:[
+  ['Quanto vale cada carta?', 'Hoje: 3 a 7 = 5; 8 a K = 10; Ás = 15; 2 = 20; coringa = 30.', []],
+  ['Cartas que sobram na mão', 'Hoje: subtraem do time.', ['Subtraem','Não contam']],
+  ['Bônus por bater', 'Hoje: +100.', ['+100','+50','Nenhum','outro']],
+  ['Com quantos pontos acaba o jogo?', 'Hoje: 1500.', ['1000','1500','2000','3000','outro']]
+ ]},
+ {t:'O que é só da família', rows:[
+  ['Alguma regra da Tânia que não está acima?', 'Qualquer detalhe que muda o jogo. Quanto mais exemplo, melhor.', []],
+  ['Descreva uma jogada completa de ponta a ponta', 'Exemplo: "Comprei o 5♠, tinha 6♠ e 7♠, baixei os três…"', []],
+  ['O que mais gera briga na mesa?', 'Mostra onde o app precisa ser mais claro.', []]
+ ]}
+];
+var KEY='samba-regras-v1', data={};
+try{ data=JSON.parse(localStorage.getItem(KEY)||'{}'); }catch(e){ data={}; }
+function save(){ try{ localStorage.setItem(KEY,JSON.stringify(data)); }catch(e){} }
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;'); }
+var root=document.getElementById('root'), total=0, html='';
+SECTIONS.forEach(function(s,si){
+  html+='<section class="sec"><h2>'+esc(s.t)+'</h2><div class="tbl">';
+  s.rows.forEach(function(r,ri){
+    var id=si+'-'+ri; total++;
+    html+='<div class="row" id="r'+id+'"><div class="q">'+esc(r[0])+'<span class="assume">'+esc(r[1])+'</span></div><div class="ans">'+
+      (r[2].length?'<div class="chips">'+r[2].map(function(c){return '<button type="button" class="chip" data-id="'+id+'" data-v="'+esc(c)+'" aria-pressed="false">'+esc(c)+'</button>';}).join('')+'</div>':'')+
+      '<textarea id="t'+id+'" data-id="'+id+'" placeholder="Escreva aqui…" rows="2"></textarea></div></div>';
+  });
+  html+='</div></section>';
+});
+root.innerHTML=html;
+
+function refresh(){
+  var done=0;
+  document.querySelectorAll('.row').forEach(function(row){
+    var id=row.id.slice(1), d=data[id]||{}, ok=!!((d.c&&d.c.length)||(d.t&&d.t.trim()));
+    row.classList.toggle('done',ok); if(ok) done++;
+    row.querySelectorAll('.chip').forEach(function(b){ b.setAttribute('aria-pressed',(d.c||[]).indexOf(b.dataset.v)>-1?'true':'false'); });
+  });
+  document.getElementById('count').textContent=done+' de '+total+' respondidas';
+  document.getElementById('meter').style.width=(100*done/total)+'%';
+}
+Object.keys(data).forEach(function(id){ var t=document.getElementById('t'+id); if(t&&data[id].t) t.value=data[id].t; });
+root.addEventListener('click',function(e){
+  var b=e.target.closest('.chip'); if(!b) return;
+  var d=data[b.dataset.id]=data[b.dataset.id]||{c:[],t:''}; d.c=d.c||[];
+  var i=d.c.indexOf(b.dataset.v); if(i>-1) d.c.splice(i,1); else d.c.push(b.dataset.v);
+  save(); refresh();
+});
+root.addEventListener('input',function(e){
+  if(!e.target.matches('textarea')) return;
+  var d=data[e.target.dataset.id]=data[e.target.dataset.id]||{c:[],t:''}; d.t=e.target.value; save(); refresh();
+});
+function build(){
+  var out='REGRAS DO SAMBA TRANCA (respostas da Tânia/Caetano)\n';
+  SECTIONS.forEach(function(s,si){
+    out+='\n## '+s.t+'\n';
+    s.rows.forEach(function(r,ri){
+      var d=data[si+'-'+ri]||{}, a=[].concat(d.c||[]); if(d.t&&d.t.trim()) a.push(d.t.trim());
+      out+='- '+r[0]+' → '+(a.length?a.join(' | '):'(sem resposta: vale o que eu chutei)')+'\n';
+    });
+  });
+  return out;
+}
+document.getElementById('copy').addEventListener('click',function(){
+  var txt=build(), box=document.getElementById('outbox'), ta=document.getElementById('out');
+  ta.value=txt; box.hidden=false;
+  function fallback(){ ta.focus(); ta.select(); }
+  if(navigator.clipboard&&navigator.clipboard.writeText){
+    navigator.clipboard.writeText(txt).then(function(){ document.getElementById('copy').textContent='Copiado! Cole na conversa'; setTimeout(function(){document.getElementById('copy').textContent='Copiar respostas';},3000); },fallback);
+  } else fallback();
+});
+var armed=false;
+document.getElementById('clear').addEventListener('click',function(){
+  var b=this;
+  if(!armed){ armed=true; b.textContent='Toque de novo para apagar'; setTimeout(function(){armed=false;b.textContent='Limpar tudo';},3000); return; }
+  data={}; save(); armed=false; b.textContent='Limpar tudo';
+  document.querySelectorAll('textarea[data-id]').forEach(function(t){t.value='';}); refresh();
+});
+refresh();
+</script>

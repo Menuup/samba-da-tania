@@ -113,7 +113,7 @@
     s.turn = (s.dealer + 1) % s.n; // direita de quem deu
     s.step = 'draw';
     s.phase = 'playing';
-    s.roundResult = null;
+    s.roundResult = null; s.startedAt = Date.now(); s.turnos = Array(s.n).fill(0);
     s.last = 'Rodada ' + s.round + ' começou. Vez de ' + s.players[s.turn].name + '.';
     s.log = [{ t: s.last, s: null }]; s.logN = 1; s.lastSeat = null;
     return s;
@@ -122,9 +122,13 @@
     opts = opts || {};
     const n = players.length;
     const s = {
-      players: players.map((p) => ({ name: p.name, bot: !!p.bot })),
-      n, nTeams: 2, scores: [0, 0], target: opts.target || TARGET, round: 0, dealer: n - 1, winner: null,
+      players: players.map((p) => (p.lvl ? { name: p.name, bot: !!p.bot, lvl: p.lvl } : { name: p.name, bot: !!p.bot })),
+      n, nTeams: 2, scores: opts.scores ? [+opts.scores[0] || 0, +opts.scores[1] || 0] : [0, 0], target: opts.target || TARGET, round: 0, dealer: n - 1, winner: null,
     };
+    s.vantagem = s.scores.slice();
+    if (opts.maxRounds) s.maxRounds = opts.maxRounds;
+    if (opts.mode) s.mode = opts.mode;
+    s.runId = Date.now().toString(36) + Array.from({ length: 4 }, () => 'abcdefghijklmnopqrstuvwxyz'[(Math.random() * 26) | 0]).join('');
     return startRound(s, opts.rng);
   }
 
@@ -168,6 +172,15 @@
     s.roundResult = { outSeat, stockOut: !!stockOut, teams: res };
     s.phase = 'roundEnd';
     const max = Math.max(...s.scores);
+    // fase/torneio/desafio: o monte acabar encerra só a rodada; empate puxa outra rodada
+    if (s.mode === 'fase' || s.mode === 'torneio' || s.mode === 'desafio') {
+      if (s.maxRounds) {
+        if (s.round >= s.maxRounds && s.scores[0] !== s.scores[1]) { s.phase = 'gameEnd'; s.winner = s.scores.indexOf(max); }
+      } else if (s.target <= 1) {
+        if (res[0].total !== res[1].total) { s.phase = 'gameEnd'; s.winner = res[0].total > res[1].total ? 0 : 1; }
+      } else if (max >= s.target && s.scores[0] !== s.scores[1]) { s.phase = 'gameEnd'; s.winner = s.scores.indexOf(max); }
+      return;
+    }
     if (stockOut || (max >= s.target && s.scores[0] !== s.scores[1])) {
       s.phase = 'gameEnd';
       s.winner = s.scores[0] === s.scores[1] ? -1 : s.scores.indexOf(max);
@@ -236,7 +249,7 @@
     switch (a.a) {
       case 'draw': {
         if (s.step !== 'draw') return E('Você já comprou. Agora baixe jogos e descarte.');
-        if (!s.stock.length) { s.last = 'O monte acabou. Fim de jogo.'; endRound(s, null, true); return { state: s }; }
+        if (!s.stock.length) { s.last = s.mode ? 'O monte acabou. Fim da rodada.' : 'O monte acabou. Fim de jogo.'; endRound(s, null, true); return { state: s }; }
         // uma carta por toque: primeiro as de reposição dos 3 vermelhos que saíram, depois as 2 da vez
         const repo = (s.owed || 0) > 0;
         hand.push(s.stock.pop());
@@ -320,6 +333,7 @@
         if (!c) return E('Carta inválida.');
         if (hand.length === 1 && s.mortoTaken[t] && !canBater(s, t)) return E('Para bater o time precisa de uma canastra limpa e uma suja.');
         drop([c]); s.discard.push(c);
+        if (s.turnos) s.turnos[seat] = (s.turnos[seat] || 0) + 1;
         s.last = name + ' descartou ' + cardName(c) + '.';
         const next = (s.turn + 1) % s.n;
         s.lock = isBlack3(c) ? { type: 'black', seat: next } : isWild(c) ? { type: 'wild', owner: seat } : null;
@@ -366,6 +380,8 @@
       stats: s.rstats || [], gstats: s.gstats || [], firstDesc: s.firstDesc == null ? null : s.firstDesc,
       turn: s.turn, step: s.step, last: s.last, lastSeat: s.lastSeat == null ? null : s.lastSeat, log: (s.log || []).slice(-30), logN: s.logN || 0,
       roundResult: s.roundResult, winner: s.winner,
+      runId: s.runId || null, startedAt: s.startedAt || null, vantagem: s.vantagem || [0, 0], mode: s.mode || null, maxRounds: s.maxRounds || 0, turnos: s.turnos || [],
+      roundWinner: s.roundResult ? (s.roundResult.teams[0].total === s.roundResult.teams[1].total ? -1 : s.roundResult.teams[0].total > s.roundResult.teams[1].total ? 0 : 1) : null,
     };
   }
 
@@ -456,6 +472,7 @@
   }
   // Jogada do robô já com plano B se a regra recusar a primeira ideia.
   function botMove(s, seat, level) {
+    level = (s.players[seat] && s.players[seat].lvl) || level;
     let r = act(s, seat, botPlan(s, seat, level));
     if (!r.error) return r;
     if (s.step === 'draw') return act(s, seat, { a: 'draw' });
