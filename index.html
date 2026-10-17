@@ -357,10 +357,10 @@ body.chat-open .chtab{right:min(78vw,320px)}
 </div>
 
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
-<script src="engine.js?v=20261016d"></script>
-<script src="fx.js?v=20261016d"></script>
-<script src="cloud-config.js?v=20261016d"></script>
-<script src="cloud.js?v=20261016d"></script>
+<script src="engine.js?v=20261017a"></script>
+<script src="fx.js?v=20261017a"></script>
+<script src="cloud-config.js?v=20261017a"></script>
+<script src="cloud.js?v=20261017a"></script>
 <script>
 'use strict';
 const $ = (s) => document.querySelector(s);
@@ -729,9 +729,12 @@ function hostAct(seat, a) {
     const r = S.nextRound(Net.g); if (r.error) return toast(r.error); Net.g = r.state;
   } else if (a.a === 'again' && seat === 0 && Net.g && Net.g.phase === 'gameEnd') {
     Net.g = S.newGame(Net.lobby.map((p) => ({ name: p.name, bot: p.bot })));
+  } else if (a.a === 'robovez' && Net.g && Net.lateId != null && Net.g.phase === 'playing' && Date.now() - (Net.deadline || 0) > 60000) {
+    const r = S.timeoutMove(Net.g, Net.g.turn); if (r.error) return; Net.g = r.state; Net.lateId = null; Net.timerId = null;
   } else if (a.a === 'nudge' && Net.g && Net.lateId != null) {
     Net.nudge = (Net.nudge || 0) + 1;
-  } else if (a.a === 'setopts' && seat === 0 && (!Net.g || Net.g.phase !== 'playing')) {
+  } else if (a.a === 'setopts' && seat === 0) {
+    if (a.timer != null && Net.g && Net.g.phase === 'playing') { Net.timerId = null; Net.lateId = null; }
     if ([0, 20, 30, 45, 60, 90, 120].includes(a.timer)) Net.opts.timer = a.timer;
     if (['rapido', 'normal', 'lento', 'muito'].includes(a.bot)) Net.opts.bot = a.bot;
     if ([3, 5, 8, 12, 20].includes(a.msg)) Net.opts.msg = a.msg;
@@ -753,7 +756,14 @@ function viewOf(seat) {
   return v;
 }
 function sendTo(seat, msg) { const p = Net.lobby[seat]; if (p && Net.conns[p.pid]) Net.conns[p.pid].send(msg); }
+let lastChange = Date.now();
+setInterval(() => {
+  if (!Net.host || !Net.g || Net.g.phase !== 'playing') return;
+  const g = Net.g;
+  if (g.players[g.turn].bot && Date.now() - lastChange > 15000) { lastChange = Date.now(); scheduleBot(); }
+}, 5000);
 function broadcast() {
+  lastChange = Date.now();
   const key = Net.lobby.map((p) => p.pid + (p.avatar ? p.avatar.length : 0)).join('|');
   if (key !== Net.lastAv) {
     Net.lastAv = key; const list = Net.lobby.map((p) => p.avatar || '🙂');
@@ -1208,7 +1218,7 @@ function renderGame(app, v) {
   const zoneSel = mySeats.includes(zoneSeat) ? zoneSeat : v.seat;
   const lockMsg = v.pileLocked ? (v.lockType === 'black' ? '🔒 3 preto: você não pode pegar o lixo' : '🔒 Coringa: lixo trancado até voltar a quem jogou') : '';
   const canGroup = (draw || play) && sel.size >= 3;
-  app.innerHTML = `<div class="top"><div class="score">Rodada ${v.round} · ${desc ? 'já desceu' : need.canastra ? 'descer: canastra' : 'descer: ' + need.min + ' pts'}</div><div class="score">${[v.myTeam, 1 - v.myTeam].map((t) => `<span class="tn ${t === v.myTeam ? 'n' : 'e'}">${t === v.myTeam ? 'Nós' : 'Eles'}</span> <b class="pt">${v.scores[t]}</b>`).join(' <span class="vs">×</span> ')}</div><span style="display:flex;gap:6px">${chromeBtns}<button class="sec" id="logbtn" title="Histórico">📜</button><button class="sec" id="regras" style="padding:6px 12px">?</button></span></div>
+  app.innerHTML = `<div class="top"><div class="score">Rodada ${v.round} · ${desc ? 'já desceu' : need.canastra ? 'descer: canastra' : 'descer: ' + need.min + ' pts'}</div><div class="score">${[v.myTeam, 1 - v.myTeam].map((t) => `<span class="tn ${t === v.myTeam ? 'n' : 'e'}">${t === v.myTeam ? 'Nós' : 'Eles'}</span> <b class="pt">${v.scores[t]}</b>`).join(' <span class="vs">×</span> ')}</div><span style="display:flex;gap:6px">${chromeBtns}${v.seat === 0 ? '<button class="sec" id="ajtempo" title="Tempo e ritmo">⏱</button>' : ''}<button class="sec" id="logbtn" title="Histórico">📜</button><button class="sec" id="regras" style="padding:6px 12px">?</button></span></div>
   <div class="need ${desc ? 'ok' : ''}">${needTxt}</div>
   ${scoreTable(v)}
   <div class="tw">
@@ -1223,13 +1233,15 @@ function renderGame(app, v) {
     </div></div>
   ${(() => { const lg = (v.log || []).slice(logOpen ? -30 : -5); return `<div class="log"><div class="lh"><b>O que cada um fez</b><button type="button" class="sec" id="logt">${logOpen ? 'Mostrar menos' : 'Ver tudo'}</button></div>${lg.map((t, i) => `<div class="ll ${i === lg.length - 1 ? 'new' : ''}"></div>`).join('')}</div>`; })()}
   <div class="dock"><div class="bns">${shownBanners.map((b) => `<div class="banner">${b.s != null ? avHtml(avatars[b.s], 30) : ''}<span class="bt"></span></div>`).join('')}</div>
-  ${v.late ? (my ? '<div class="late me">Seu tempo acabou! A mesa está esperando você jogar.</div>' : `<div class="late">O tempo de ${v.players[v.turn].name.replace(/[<>&"]/g, '')} acabou. Esperando…<button type="button" id="nudge">Chamar</button></div>`) : ''}
+  ${v.late ? (my ? '<div class="late me">Seu tempo acabou! A mesa está esperando você jogar.</div>' : `<div class="late">O tempo de ${v.players[v.turn].name.replace(/[<>&"]/g, '')} acabou. Esperando…<button type="button" id="nudge">Chamar</button>${(Date.now() - (Net.viewAt || Date.now())) >= 0 ? '<button type="button" id="robovez" class="sec">Robô joga a vez</button>' : ''}</div>`) : ''}
   <div class="status ${my ? 'me' : ''}">${status}${cdHtml(v)}</div>
   ${staged.length || selInfo ? `<div class="stg">${gi.map((x, k) => `<span class="gp ${x.ok ? 'ok' : 'bad'}" data-g="${k}">Jogo ${k + 1}: ${x.ok ? x.pts + ' pts' : 'não vale'} ✕</span>`).join('')}${selInfo ? `<span class="gp ${selInfo.ok ? 'ok' : 'bad'}">Marcadas${withPile ? ' + lixo' : ''}${selInfo.ok && selInfo.n > 1 ? ' (' + selInfo.n + ' jogos)' : ''}: ${selInfo.ok ? selInfo.pts + ' pts' : 'não vale'}</span>` : ''}<span class="gp tot">Total ${allPts}${desc || need.canastra ? '' : ' / ' + need.min}</span></div>` : ''}
   ${false ? `<div class="zsel">Baixar na frente de: ${mySeats.map((i) => `<button type="button" class="${zoneSel === i ? 'on' : ''}" data-z="${i}"></button>`).join('')}</div>` : ''}
   <div class="bar"><button id="baixar" ${draw && !v.drawn ? (v.discardCount && !v.pileLocked ? '' : 'disabled') : play && (staged.length || sel.size >= 3) ? '' : 'disabled'}>${draw && !v.drawn ? 'Pegar o lixo' : 'Baixar'}</button><button class="sec" id="grupo" ${canGroup ? '' : 'disabled'}>+ Outro jogo</button><button id="desc" ${play && sel.size === 1 && !staged.length ? '' : 'disabled'}>Descartar</button><button class="sec" id="sug" ${draw || play ? '' : 'disabled'}>💡 Sugerir jogos</button><button class="sec" id="ord">Agrupar iguais</button></div>
   <div class="hand">${hand.map((c) => { const g = stagedIds.get(c.id); return cardHtml(c, (g ? 'stg' + ((g - 1) % 4) : sel.has(c.id) ? 'sel' : '') + (ageOf(c.id) < 5000 ? ' newh' + (ageOf(c.id) < 900 ? ' newc' : '') : ''), `data-id="${c.id}"`); }).join('')}</div></div>`;
   if ($('#nudge')) $('#nudge').onclick = () => { send({ a: 'nudge' }); toast('Chamado!'); };
+  if ($('#robovez')) $('#robovez').onclick = () => { send({ a: 'robovez' }); toast('Se passou 1 minuto do tempo dela, o robô joga esta vez.'); };
+  if ($('#ajtempo')) $('#ajtempo').onclick = () => { const m = document.createElement('div'); m.className = 'modal'; m.innerHTML = '<div><h2>Tempo e ritmo</h2>' + optsHtml(v, true) + '<button style="width:100%;margin-top:10px">Fechar</button></div>'; m.querySelector('div > button:last-child').onclick = () => m.remove(); document.body.appendChild(m); bindOpts(m); };
   $('#regras').onclick = () => { showRules = true; rulesModal(); };
   document.querySelectorAll('.banner .bt').forEach((el, i) => (el.textContent = shownBanners[i].t));
   { const lg = (v.log || []).slice(logOpen ? -30 : -5); document.querySelectorAll('.log .ll').forEach((el, i) => (el.textContent = lg[i].t)); }

@@ -1,0 +1,51 @@
+// Samba da Tânia — regras do Firestore.
+// Como usar: console.firebase.google.com → seu projeto → Firestore Database → aba "Regras".
+// Apague o que estiver lá, cole este arquivo inteiro e clique em "Publicar".
+//
+// A ideia é uma só: cada pessoa lê e escreve apenas a própria pasta, e só nos campos combinados.
+//   users/{uid}             → nome, avatar, código de amigo, perfil (XP, jogos, vitórias...) e a
+//                             marca de sincronia por aparelho (sync)
+//   users/{uid}/matches/{m} → o histórico de partidas dessa pessoa
+// Nada mais é aberto. Ninguém enxerga a pasta de outra pessoa, nem logado.
+//
+// Complemento fora destas regras (o login anônimo é automático e a config é pública):
+//   1. ativar o App Check (reCAPTCHA v3) no console, para só o site publicado falar com o banco;
+//   2. criar um alerta de orçamento no Google Cloud, para avisar se alguém encher o banco.
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function dono(uid) { return request.auth != null && request.auth.uid == uid; }
+    function d() { return request.resource.data; }
+    // Perfil (xp, games, wins...): um mapa curto. As regras não varrem valor a valor; o tamanho
+    // já impede encher o documento, e o cliente só grava número (mergeProfile ignora o resto).
+    function perfilOk(p) { return p is map && p.keys().size() <= 20; }
+    // Marca de sincronia: um mapa por id de aparelho (até 12 aparelhos por conta).
+    function syncOk(s) { return s is map && s.keys().size() <= 12; }
+
+    match /users/{uid} {
+      allow read, delete: if dono(uid);
+      allow create, update: if dono(uid)
+        && d().keys().hasOnly(['name', 'avatar', 'ucode', 'updatedAt', 'profile', 'sync'])
+        && (!('name' in d()) || (d().name is string && d().name.size() <= 14))
+        && (!('avatar' in d()) || (d().avatar is string && d().avatar.size() <= 8))
+        && (!('ucode' in d()) || (d().ucode is string && d().ucode.matches('^[A-Z2-9]{6}$')))
+        && (!('profile' in d()) || perfilOk(d().profile))
+        && (!('sync' in d()) || syncOk(d().sync));
+
+      match /matches/{m} {
+        allow read, delete: if dono(uid);
+        allow create, update: if dono(uid)
+          && d().keys().hasOnly(['code', 'round', 'rodadas', 'players', 'scores', 'myTeam', 'winner', 'xp', 'baterPor', 'bots', 'clientAt', 'at'])
+          && d().code is string && d().code.size() <= 4
+          && d().players is list && d().players.size() <= 6
+          && (!('scores' in d()) || (d().scores is list && d().scores.size() <= 2))
+          && (!('baterPor' in d()) || d().baterPor == null || (d().baterPor is string && d().baterPor.size() <= 14))
+          && (!('xp' in d()) || d().xp is number)
+          && (!('round' in d()) || d().round is number)
+          && (!('rodadas' in d()) || d().rodadas is number)
+          && (!('bots' in d()) || d().bots is number)
+          && (!('clientAt' in d()) || d().clientAt is number);
+      }
+    }
+  }
+}

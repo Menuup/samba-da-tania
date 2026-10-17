@@ -13,4 +13,11 @@
         storageBucket: 'xxx.appspot.com', messagingSenderId: '...', appId: '...',
       };
    Esse objeto não é segredo (fica na página de qualquer jeito); quem protege os dados são as regras. */
-window.SAMBA_FIREBASE = null;
+window.SAMBA_FIREBASE = {
+  apiKey: 'AIzaSyDbU00S656IQgR4jmQVbqXNmNSqdX5I2QY',
+  authDomain: 'samba-da-tania.firebaseapp.com',
+  projectId: 'samba-da-tania',
+  storageBucket: 'samba-da-tania.firebasestorage.app',
+  messagingSenderId: '575454411752',
+  appId: '1:575454411752:web:4417056a4f4aec9fbfc25d',
+};
