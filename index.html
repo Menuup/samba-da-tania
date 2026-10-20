@@ -485,16 +485,16 @@ body.verso-dourado .card.back{background:linear-gradient(135deg,#9c7d1e,#f2c14e,
 </div>
 
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
-<script src="engine.js?v=20261019l"></script>
-<script src="fx.js?v=20261019l"></script>
-<script src="eco.js?v=20261019l"></script>
-<script src="fases.js?v=20261019l"></script>
-<script src="mapa.js?v=20261019l"></script>
-<script src="torneios.js?v=20261019l"></script>
-<script src="tutorial.js?v=20261019l"></script>
-<script src="voz.js?v=20261019l"></script>
-<script src="cloud-config.js?v=20261019l"></script>
-<script src="cloud.js?v=20261019l"></script>
+<script src="engine.js?v=20261019m"></script>
+<script src="fx.js?v=20261019m"></script>
+<script src="eco.js?v=20261019m"></script>
+<script src="fases.js?v=20261019m"></script>
+<script src="mapa.js?v=20261019m"></script>
+<script src="torneios.js?v=20261019m"></script>
+<script src="tutorial.js?v=20261019m"></script>
+<script src="voz.js?v=20261019m"></script>
+<script src="cloud-config.js?v=20261019m"></script>
+<script src="cloud.js?v=20261019m"></script>
 <script>
 'use strict';
 const $ = (s) => document.querySelector(s);
@@ -805,7 +805,7 @@ function refreshFriendsUI() {
 })();
 
 /* ---------- rede: anfitrião (jogador 0) e convidados ---------- */
-const Net = { local: false, ctx: { mode: 'livre' }, spec: null, acc: null, opts: { timer: 60, bot: 'normal', msg: 6, lvl: 'dificil', entrada: 50 }, deadline: null, timerId: null, turnTimer: null, viewAt: 0, chat: [], lastAv: null, host: false, code: null, peer: null, conn: null, conns: {}, lobby: [], g: null, botTimer: null, view: null, retry: 0 };
+const Net = { local: false, ctx: { mode: 'livre' }, spec: null, acc: null, opts: { timer: 0, bot: 'normal', msg: 6, lvl: 'dificil', entrada: 50 }, deadline: null, timerId: null, turnTimer: null, viewAt: 0, chat: [], lastAv: null, host: false, code: null, peer: null, conn: null, conns: {}, lobby: [], g: null, botTimer: null, view: null, retry: 0 };
 
 function randCode() { const a = 'ABCDEFGHJKLMNPQRSTUVWXYZ'; let c = ''; for (let i = 0; i < 4; i++) c += a[(Math.random() * a.length) | 0]; return c; }
 
@@ -1024,7 +1024,7 @@ document.addEventListener('visibilitychange', () => {
 const temOutraPessoa = () => !Net.local && Net.lobby.some((p, i) => i && !p.bot && p.connected);
 // Joga a vez de quem não jogou (compra e descarta a carta menos útil) e segue a mesa.
 function autoVez(id) {
-  const g = Net.g; if (!Net.host || !g || g.phase !== 'playing') return;
+  const g = Net.g; if (!Net.host || Net.local || !g || g.phase !== 'playing') return; // jogo contra robôs nunca joga a vez da pessoa
   if (id != null && g.round * 100000 + (g.turnNo || 0) !== id) return;
   const seat = g.turn; const r = S.timeoutMove(g, seat); if (r.error) return;
   Net.timeouts = Net.timeouts || []; Net.timeouts[seat] = (Net.timeouts[seat] || 0) + 1;
@@ -1054,6 +1054,7 @@ function showRejoin(n) {
   rejoinEl.innerHTML = '<i></i>Reconectando… ' + n + '/' + REJOIN_MAX; rejoinEl.style.display = 'block';
 }
 function leaveTable() {
+  clearTimeout(Net.turnTimer); Net.timerId = null; Net.lateId = null; Net.deadline = null;
   clearTimeout(Net.rejoinT); Net.rejoinT = null; Net.rejoin = 0; showRejoin(0);
   if (Net.peer) { Net.peer.sambaGone = true; try { Net.peer.destroy(); } catch (e) {} }
   Net.peer = null; Net.conn = null;
@@ -1255,7 +1256,7 @@ const isStandalone = () => (window.matchMedia && matchMedia('(display-mode: stan
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(() => {});
 const cdHtml = (v) => (v.timeLeft != null && v.phase === 'playing' ? ` <span id="cd" class="cd ${v.timeLeft <= 10 ? 'low' : ''}">⏱ ${v.timeLeft}s</span>` : '');
 function optsHtml(v, host) {
-  const o = Object.assign({ timer: 60, bot: 'rapido', msg: 6, lvl: 'dificil' }, v.opts || {});
+  const o = Object.assign({ timer: 0, bot: 'rapido', msg: 6, lvl: 'dificil' }, v.opts || {});
   const LV = [['facil', 'Fácil'], ['normal', 'Normal'], ['dificil', 'Difícil'], ['mestre', 'Mestre']];
   const T = [[0, 'Sem limite'], [20, '20 s'], [30, '30 s'], [45, '45 s'], [60, '60 s'], [90, '90 s'], [120, '2 min']];
   const B = [['rapido', 'Rápido'], ['normal', 'Normal'], ['lento', 'Lento'], ['muito', 'Bem lento']];
@@ -1418,7 +1419,7 @@ function seatZones(v, tap) {
   const redHtml = (rs) => (rs.length ? `<div class="rd3" title="3 vermelhos">${rs.map((c) => cardHtml(c, 'mini')).join('')}<span class="tag">3♥ ×${rs.length}</span></div>` : '');
   const two = true; // faixa larga do adversário logo abaixo dele, em qualquer tamanho de mesa
   let h = '';
-  if (mine.length || rm.length) h += `<div class="sz mine" data-mh="0.38" data-mw="0.9" style="left:50%;bottom:28px;top:auto;transform:translateX(-50%);max-width:72%"><div class="zg"><div class="zl">Jogos do seu time</div>${redHtml(rm)}${mine.map((m) => meldHtml(m, true, tap)).join('')}</div></div>`;
+  if (mine.length || rm.length) h += `<div class="sz mine" data-mh="0.38" data-mw="0.9" style="left:50%;bottom:28px;top:auto;transform:translateX(-50%);max-width:72%"><div class="zg"><div class="zl">${v.n > 2 ? 'Jogos do seu time (você e o parceiro 🤝)' : 'Seus jogos'}</div>${redHtml(rm)}${mine.map((m) => meldHtml(m, true, tap)).join('')}</div></div>`;
   if (opp.length || ro.length) {
     h += two
       ? `<div class="sz opp" data-mh="0.34" data-mw="0.94" style="left:50%;top:3%;transform:translateX(-50%);max-width:80%"><div class="zg"><div class="zl">Jogos dos adversários</div>${redHtml(ro)}${opp.map((m) => meldHtml(m, false)).join('')}</div></div>`
@@ -1504,7 +1505,7 @@ function renderGame(app, v) {
   ${!celular() && contasAbertas() ? scoreTable(v) : ""}
   <div class="tw n${v.n}">
 
-    ${v.players.map((p, i) => { const r = (i - v.seat + v.n) % v.n; const th = 2 * Math.PI * r / v.n; const pos = seatPos(r, v.n, th); return `<div class="seat ${v.turn === i && v.phase === 'playing' ? 'turn' : ''} ${p.team === v.myTeam ? 'mine' : ''}" data-seat="${i}" style="${pos}">${avMold(avatars[i], 34, v.molds && v.molds[i])}<b>${i === v.seat ? 'Você' : p.name}</b><br>🂠 ${p.count}${v.online && !v.online[i] ? ' · ⚪ saiu' : ''}</div>`; }).join('')}
+    ${v.players.map((p, i) => { const r = (i - v.seat + v.n) % v.n; const th = 2 * Math.PI * r / v.n; const pos = seatPos(r, v.n, th); return `<div class="seat ${v.turn === i && v.phase === 'playing' ? 'turn' : ''} ${p.team === v.myTeam ? 'mine' : ''}" data-seat="${i}" style="${pos}">${avMold(avatars[i], 34, v.molds && v.molds[i])}<b>${i === v.seat ? 'Você' : (v.n > 2 && p.team === v.myTeam ? '🤝 ' : '') + p.name}</b><br>🂠 ${p.count}${v.online && !v.online[i] ? ' · ⚪ saiu' : ''}</div>`; }).join('')}
     <div class="mortos"><div class="mt ${v.mortoTaken[v.myTeam] ? 'gone' : ''}"><div class="card mini back"></div>Morto nós${v.mortoTaken[v.myTeam] ? ' (pego)' : ''}</div><div class="mt ${v.mortoTaken[1 - v.myTeam] ? 'gone' : ''}"><div class="card mini back"></div>Morto eles${v.mortoTaken[1 - v.myTeam] ? ' (pego)' : ''}</div></div>
     <div class="felt n2">
       ${seatZones(v, play && sel.size)}
@@ -1757,7 +1758,7 @@ if (EC) EC.onChange = () => { if (Net.view === null && !document.querySelector('
 function themeTemp(t) { const r = document.documentElement.style; r.setProperty('--felt', t.felt); r.setProperty('--felt2', t.felt2); r.setProperty('--rim', t.rim); r.setProperty('--bg', t.bg); }
 function localStart(spec, resume) {
   if (window.Mapa) Mapa.fechar();
-  leaveTable(); clearTimeout(Net.botTimer);
+  leaveTable(); clearTimeout(Net.botTimer); clearTimeout(Net.turnTimer); Net.timerId = null; Net.lateId = null; Net.deadline = null; // nada de relógio de mesa anterior
   Net.host = true; Net.local = true; Net.peer = null; Net.code = null; Net.conns = {}; Net.chat = []; Net.lateId = null; Net.deadline = null;
   Net.spec = spec; Net.ctx = Object.assign({}, spec.ctx || {}, { mode: spec.mode, id: spec.id || null });
   Net.acc = resume ? resume.acc || { rounds: [] } : { rounds: [] };
@@ -2385,7 +2386,7 @@ function precisaNome(fn) {
 }
 const NIVEIS = [['facil', 'Fácil', 'Robôs distraídos. Bom para aprender.'], ['normal', 'Normal', 'Joga direito, mas erra um pouco.'], ['dificil', 'Difícil', 'Guarda na memória o que passa pela mesa e se defende.'], ['mestre', 'Mestre', 'O mais forte. Joga limpo, sem ver as suas cartas.']];
 const NOME_NIVEL = { facil: 'Fácil', normal: 'Normal', dificil: 'Difícil', mestre: 'Mestre' };
-const cfgRobos = () => Object.assign({ n: 4, lvl: 'dificil', target: 10000, vant: 0 }, ls.get('robos-cfg', {}));
+const cfgRobos = () => Object.assign({ n: 2, lvl: 'dificil', target: 10000, vant: 0 }, ls.get('robos-cfg', {}));
 
 function menuHtml() {
   const w = EC ? EC.wallet() : { coins: 0, gems: 0 };
@@ -2436,7 +2437,7 @@ function telaRobos() {
     const seg = (nome, chave, itens) => `<div class="opt"><b>${nome}</b><div class="seg">${itens.map(([v, t, s]) => `<button type="button" class="${c[chave] === v ? 'on' : ''}" data-k="${chave}" data-v="${v}">${t}${s ? `<small>${s}</small>` : ''}</button>`).join('')}</div></div>`;
     const nivel = NIVEIS.find((x) => x[0] === c.lvl);
     const resumo = `${[null, null, '1 contra 1', null, '2 contra 2', null, '3 contra 3'][c.n]} · robôs ${NOME_NIVEL[c.lvl]} · ${({ 1: 'uma rodada', 3000: 'até 3.000', 5000: 'até 5.000', 10000: 'jogo inteiro' })[c.target]}${longo && c.vant ? ' · robôs começam com ' + c.vant.toLocaleString('pt-BR') : ''}`;
-    $t('.tl-corpo').innerHTML = `${seg('Quantos jogam?', 'n', [[2, '1 contra 1', 'você e 1 robô'], [4, '2 contra 2', 'você, 1 parceiro e 2 robôs'], [6, '3 contra 3', 'a mesa cheia']])}
+    $t('.tl-corpo').innerHTML = `${seg('Quantos jogam?', 'n', [[2, '1 contra 1', 'só você e 1 robô'], [4, '2 contra 2', 'um robô joga COM você'], [6, '3 contra 3', 'dois robôs jogam COM você']])}
       ${seg('Nível dos robôs', 'lvl', NIVEIS.map(([k, n]) => [k, n]))}<p class="hint" style="margin:-4px 0 12px">${nivel[2]}</p>
       ${seg('Tamanho do jogo', 'target', [[1, 'Uma rodada', 'uns 10 min'], [3000, 'Até 3.000', 'uns 20 min'], [5000, 'Até 5.000', 'uns 35 min'], [10000, 'Jogo inteiro', 'uns 50 min']])}
       ${longo ? seg('Vantagem dos robôs', 'vant', [[0, 'Nenhuma'], [1000, '1.000'], [2000, '2.000'], [3000, '3.000'], [5000, '5.000']]) + '<p class="hint" style="margin:-4px 0 12px">Eles começam o jogo na frente. É a forma justa de deixar mais difícil.</p>' : ''}
