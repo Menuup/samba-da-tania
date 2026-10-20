@@ -490,13 +490,21 @@
     return Math.max(0, COPIAS - vis);
   }
   // Chance de o jogador "who" conseguir pegar o lixo se a carta de cima for da figura r (1 igual + coringa já serve).
-  function perigo(s, me, who, r) {
+  // chance de, sorteando h cartas de N (u delas "boas"), vir pelo menos 1 e pelo menos 2
+  function hiper(N, u, h) {
+    if (u <= 0 || h <= 0) return [0, 0];
+    let p0 = 1; for (let i = 0; i < h; i++) p0 *= Math.max(0, N - u - i) / (N - i);
+    const den = N - u - h + 1; const p1 = den > 0 ? p0 * (h * u) / den : 0;
+    return [Math.max(0, 1 - p0), Math.max(0, 1 - p0 - p1)];
+  }
+  function perigo(s, me, who, r, exato) {
     const h = s.hands[who].length; if (!h) return 0;
     const pool = Math.max(20, s.stock.length + s.hands.reduce((a, x, i) => a + (i === me ? 0 : x.length), 0) + s.mortos.reduce((a, m) => a + m.length, 0));
     const u = unseenOf(s, me, r); const e = (u * h) / pool;
     const known = (s.known && s.known[who] ? s.known[who].filter((x) => x === r).length : 0);
     const descartou = s.discR && s.discR[who] && s.discR[who].slice(-4).includes(r);
     let p1 = 1 - Math.exp(-e), p2 = 1 - Math.exp(-e) * (1 + e); // ≥1 e ≥2 cópias
+    if (exato) { const q = hiper(pool, u, h); p1 = q[0]; p2 = q[1]; }
     if (known >= 2) { p1 = 1; p2 = 1; } else if (known === 1) { p1 = 1; p2 = Math.max(p2, 1 - Math.exp(-e)); }
     if (descartou && known < 2) { p1 *= 0.5; p2 *= 0.3; }
     const pw = 1 - Math.pow(1 - 24 / 216, h); // ter pelo menos um coringa
@@ -505,7 +513,7 @@
   const projecao = (s, t) => s.melds[t].reduce((a, m) => a + meldPts(m) + canastraBonus(m), 0) + s.reds[t].length * 100 - (s.mortoTaken[t] ? 0 : 100);
   // Parâmetros dos robôs fortes (ajustados por simulação: node sim-ajuste.js). Mestre = os mesmos movimentos com números afinados.
   const PARAMS = {
-    dificil: { minPile: 1, pileWild: 2, wildDump: 14, parWild: 12, limpa4: 4, limpa6: 6, pairKeep: 30, meldKeep: 25, ptsW: 0.25, presBase: 8, presPer: 3, black3: -40, black3Pile: 2, wildCost: 70, jokerExtra: 20, lockPile: 6, lockCusto: 45, presMatch: 0 },
+    dificil: { minPile: 1, pileWild: 2, wildDump: 14, parWild: 12, limpa4: 4, limpa6: 6, pairKeep: 30, meldKeep: 25, ptsW: 0.25, presBase: 8, presPer: 3, black3: -40, black3Pile: 2, wildCost: 70, jokerExtra: 20, lockPile: 6, lockCusto: 45, presMatch: 0, vivaW: 0, parceiroW: 0, hiper: 0 },
   };
   // Mestre: números afinados por simulação contra o Difícil (sim-ajuste.js). Joga limpo como o Difícil: só usa o que está à vista e na memória da mesa.
   PARAMS.mestre = Object.assign({}, PARAMS.dificil, {"minPile":1,"pileWild":2,"wildDump":14,"parWild":12,"limpa4":4,"limpa6":5,"pairKeep":30,"meldKeep":25,"ptsW":0.25,"presBase":8,"presPer":6,"black3":-40,"black3Pile":2,"wildCost":70,"jokerExtra":20,"lockPile":6,"lockCusto":0});
@@ -573,13 +581,18 @@
       else {
         const k = by[c.r] ? by[c.r].length : 1;
         const guardar = (k >= 2 ? P.pairKeep : 0) + (temJogo.has(c.r) ? P.meldKeep : 0) + pts(c) * P.ptsW;
-        custo = guardar + perigo(s, seat, n1, c.r) * presente;
+        const viva = P.vivaW ? (P.vivaW * Math.min(unseenOf(s, seat, c.r), 12) / 12) * (k >= 2 ? 1 : 0.5) : 0; // figura com muitas cópias ainda por aparecer vale guardar
+        const pe = perigo(s, seat, n1, c.r, P.hiper);
+        custo = guardar + viva + pe * presente;
+        // mesa de 4 ou 6: figura que o parceiro levou do lixo e ainda deve ter ajuda a ele (só pela memória da mesa, nunca pela mão dele)
+        if (P.parceiroW && s.n >= 4 && s.known && (s.known[(seat + 2) % s.n] || []).includes(c.r)) custo -= P.parceiroW * (1 - pe);
       }
       return { c, custo };
     }).sort((a, b) => a.custo - b.custo);
     // lixo grande e todo descarte é perigoso: tranca com um 2 (coringa tranca até voltar a mim)
     const best = opts.find((x) => !isWild(x.c)) || opts[0];
     if (best && !isWild(best.c) && !isBlack3(best.c) && pileN >= P.lockPile && best.custo > P.lockCusto) { const dois = hand.find((c) => c.r === 2); if (dois) return { a: 'discard', id: dois.id }; }
+    if (!opts.length) return { a: 'draw' }; // mão vazia: nada a descartar (a regra recusa e o plano B assume)
     return { a: 'discard', id: (best || opts[0]).c.id };
   }
 
