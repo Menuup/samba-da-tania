@@ -11,6 +11,13 @@
   const anoDe = (j) => String(j.data || '').slice(0, 4);
   const resultado = (j) => (j.ptsA > j.ptsB ? 'A' : j.ptsB > j.ptsA ? 'B' : 'E');
 
+  // Tirar as cartas: metade pretas, metade vermelhas, embaralhadas; cada pessoa escolhe uma e a cor define o time.
+  function baralhinho(nPessoas, rng) {
+    rng = rng || Math.random; const c = []; for (let i = 0; i < nPessoas; i++) c.push(i < Math.floor(nPessoas / 2) ? 'P' : 'V');
+    if (nPessoas % 2) c.push('V'); // ímpar: sobra uma carta que ninguém escolhe
+    for (let i = c.length - 1; i > 0; i--) { const k = Math.floor(rng() * (i + 1)); [c[i], c[k]] = [c[k], c[i]]; }
+    return c;
+  }
   // Sorteia os times entre os presentes (4 viram 2×2, 6 viram 3×3; ímpar deixa um de fora). rng: 0..1
   function sorteio(presentes, rng) {
     rng = rng || Math.random; const a = presentes.slice();
@@ -29,8 +36,12 @@
         if (r === 'E') { x.e++; x.pts += 1; x.seq = 0; } else if (r === lado) { x.v++; x.pts += 3; x.seq = x.seq > 0 ? x.seq + 1 : 1; } else { x.d++; x.seq = x.seq < 0 ? x.seq - 1 : -1; }
       }));
     });
-    const lista = Object.values(t).map((x) => Object.assign(x, { aprov: x.jogos ? x.v / x.jogos : 0, saldo: x.pro - x.contra }));
-    lista.sort((a, b) => b.pts - a.pts || b.aprov - a.aprov || b.saldo - a.saldo || a.nome.localeCompare(b.nome));
+    // Justo com quem falta: a classificação é pelo APROVEITAMENTO (pontos ganhos ÷ pontos possíveis), não pelo total.
+    // Para entrar na classificação é preciso ter jogado ao menos metade dos jogos de quem mais jogou (mínimo 3).
+    const lista = Object.values(t).map((x) => Object.assign(x, { aprov: x.jogos ? x.v / x.jogos : 0, ppj: x.jogos ? x.pts / (3 * x.jogos) : 0, saldo: x.pro - x.contra }));
+    const maior = Math.max(0, ...lista.map((x) => x.jogos)); const minimo = Math.min(maior, Math.max(3, Math.ceil(maior / 2)));
+    lista.forEach((x) => { x.q = x.jogos >= minimo; x.minimo = minimo; });
+    lista.sort((a, b) => (b.q - a.q) || b.ppj - a.ppj || b.jogos - a.jogos || b.saldo - a.saldo || a.nome.localeCompare(b.nome));
     return lista;
   }
 
@@ -39,10 +50,10 @@
     const rk = ranking(jogos, ano); const js = jogos.filter((j) => anoDe(j) === String(ano));
     const out = [];
     if (!rk.length) return out;
-    out.push({ id: 'campeao', ic: '🏆', nome: 'Campeão do ano', quem: rk[0].nome, det: rk[0].pts + ' pontos em ' + rk[0].jogos + ' jogos' });
-    const minJ = Math.max(3, Math.ceil(Math.max(...rk.map((x) => x.jogos)) / 2));
-    const ap = rk.filter((x) => x.jogos >= minJ).slice().sort((a, b) => b.aprov - a.aprov || b.jogos - a.jogos)[0];
-    if (ap) out.push({ id: 'aprov', ic: '🎯', nome: 'Maior aproveitamento', quem: ap.nome, det: Math.round(ap.aprov * 100) + '% de vitórias (mín. ' + minJ + ' jogos)' });
+    out.push({ id: 'campeao', ic: '🏆', nome: 'Campeão do ano', quem: rk[0].nome, det: Math.round(rk[0].ppj * 100) + '% de aproveitamento em ' + rk[0].jogos + ' jogos' + (rk[0].q ? '' : ' (ainda provisório)') });
+    const ap = rk.filter((x) => x.q).slice().sort((a, b) => b.aprov - a.aprov || b.jogos - a.jogos)[0];
+    if (ap) out.push({ id: 'aprov', ic: '🎯', nome: 'Mais vitórias em proporção', quem: ap.nome, det: Math.round(ap.aprov * 100) + '% de vitórias (' + ap.v + ' em ' + ap.jogos + ')' });
+    const pres = rk.slice().sort((a, b) => b.jogos - a.jogos)[0]; if (pres) out.push({ id: 'presenca', ic: '📅', nome: 'Presença de ouro', quem: pres.nome, det: pres.jogos + ' jogos no ano' });
     const pro = rk.slice().sort((a, b) => b.pro - a.pro)[0]; out.push({ id: 'pontos', ic: '💥', nome: 'Mais pontos feitos', quem: pro.nome, det: pro.pro + ' pontos somados' });
     const seq = rk.slice().sort((a, b) => b.seq - a.seq)[0]; if (seq.seq >= 2) out.push({ id: 'seq', ic: '🔥', nome: 'Sequência de vitórias (agora)', quem: seq.nome, det: seq.seq + ' seguidas' });
     // dupla de ouro: pares que jogaram juntos, melhor aproveitamento (mín. 3 jogos juntos)
@@ -68,10 +79,10 @@
     const rk = ranking(jogos, ano);
     if (!rk.length) return 'Ranking ' + ano + ': ainda sem jogos.';
     const medalha = ['🥇', '🥈', '🥉'];
-    return '🃏 Samba dos Domingos ' + ano + '\n' + rk.map((x, i) => (medalha[i] || (i + 1) + 'º') + ' ' + x.nome + ' · ' + x.pts + ' pts · ' + x.v + 'V ' + x.e + 'E ' + x.d + 'D').join('\n');
+    return '🃏 Samba dos Domingos ' + ano + '\n' + rk.map((x, i) => (x.q ? (medalha[i] || (i + 1) + 'º') : '▫️') + ' ' + x.nome + ' · ' + Math.round(x.ppj * 100) + '% · ' + x.v + 'V ' + x.e + 'E ' + x.d + 'D · ' + x.jogos + ' jogos').join('\n');
   }
 
-  const api = { PADRAO, anoDe, resultado, sorteio, ranking, premios, proximaCasa, resumoTexto };
+  const api = { baralhinho, PADRAO, anoDe, resultado, sorteio, ranking, premios, proximaCasa, resumoTexto };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.Domingos = api;
 })(typeof window !== 'undefined' ? window : globalThis);

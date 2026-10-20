@@ -477,6 +477,8 @@ body.verso-dourado .card.back{background:linear-gradient(135deg,#9c7d1e,#f2c14e,
 .mis-lista{display:flex;flex-direction:column;gap:8px}.mis-i{display:flex;align-items:center;gap:12px;text-align:left;width:100%;padding:12px;border-radius:14px;background:#ffffff1c;color:#fff;border:2px solid transparent}
 .mis-i.agora{border-color:var(--gold);background:#f2c14e30}.mis-i.ok{opacity:.8}.mis-i:disabled{opacity:.45}.mis-n{font-size:22px;font-weight:800;min-width:34px;text-align:center}.mis-t{flex:1;display:flex;flex-direction:column}.mis-t b{font-size:17px}.mis-t small{opacity:.85;font-size:13px}.mis-p{font-weight:800;color:var(--gold);white-space:nowrap}
 
+.dcs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:8px 0}.dc{border-radius:10px;aspect-ratio:2/3;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:34px;color:#fff;border:2px solid #ffffff55}.dc.costas{background:repeating-linear-gradient(45deg,#7a1e4a,#7a1e4a 6px,#5a1236 6px,#5a1236 12px)}.dc.p{background:#222;color:#fff}.dc.v{background:#fff;color:#c2185b}.dc small{font-size:11px;font-weight:700}
+
 </style>
 </head>
 <body>
@@ -492,18 +494,18 @@ body.verso-dourado .card.back{background:linear-gradient(135deg,#9c7d1e,#f2c14e,
 </div>
 
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
-<script src="engine.js?v=20261020e"></script>
-<script src="fx.js?v=20261020e"></script>
-<script src="eco.js?v=20261020e"></script>
-<script src="fases.js?v=20261020e"></script>
-<script src="mapa.js?v=20261020e"></script>
-<script src="torneios.js?v=20261020e"></script>
-<script src="tutorial.js?v=20261020e"></script>
-<script src="missoes.js?v=20261020e"></script>
-<script src="domingos.js?v=20261020e"></script>
-<script src="voz.js?v=20261020e"></script>
-<script src="cloud-config.js?v=20261020e"></script>
-<script src="cloud.js?v=20261020e"></script>
+<script src="engine.js?v=20261020f"></script>
+<script src="fx.js?v=20261020f"></script>
+<script src="eco.js?v=20261020f"></script>
+<script src="fases.js?v=20261020f"></script>
+<script src="mapa.js?v=20261020f"></script>
+<script src="torneios.js?v=20261020f"></script>
+<script src="tutorial.js?v=20261020f"></script>
+<script src="missoes.js?v=20261020f"></script>
+<script src="domingos.js?v=20261020f"></script>
+<script src="voz.js?v=20261020f"></script>
+<script src="cloud-config.js?v=20261020f"></script>
+<script src="cloud.js?v=20261020f"></script>
 <script>
 'use strict';
 const $ = (s) => document.querySelector(s);
@@ -2655,10 +2657,23 @@ function missaoFim(i, ganhou) {
 
 /* --- Domingos: ranking da turma que joga pessoalmente --- */
 const DM = window.Domingos || null;
-let domTab = 'rank', domAno = String(new Date().getFullYear()), domSort = null, domPres = null, domCasa = null;
+let domTab = 'rank', domAno = String(new Date().getFullYear()), domSort = null, domPres = null, domCasa = null, domCartas = null;
 const domDados = () => Object.assign({}, DM.PADRAO, ls.get('domingos', {}));
 const domSalva = (d) => ls.set('domingos', d);
 const domHoje = () => { const x = new Date(); x.setDate(x.getDate() - x.getDay()); return x.getFullYear() + '-' + String(x.getMonth() + 1).padStart(2, '0') + '-' + String(x.getDate()).padStart(2, '0'); };
+function domCartasHtml() {
+  const c = domCartas; const nome = domPres[c.vez];
+  const grade = c.cor.map((cor, i) => { const dono = Object.keys(c.pega).find((k) => c.pega[k] === i); return dono ? `<div class="dc ${cor === 'P' ? 'p' : 'v'}"><b>${cor === 'P' ? '♠' : '♥'}</b><small>${escH(dono)}</small></div>` : `<button type="button" class="dc costas" data-cart="${i}" ${nome ? '' : 'disabled'}>🂠</button>`; }).join('');
+  return `<div class="mn-resumo">${nome ? `🃏 Vez de <b>${escH(nome)}</b>: toque numa carta` : 'Todos escolheram!'}<br><small>Preta contra vermelha. As cartas estão embaralhadas.</small></div><div class="dcs">${grade}</div>`;
+}
+function domPegaCarta(i) {
+  const c = domCartas; if (!c || c.vez >= domPres.length) return; c.pega[domPres[c.vez]] = i; c.vez++;
+  if (c.vez >= domPres.length) { // todos escolheram: a cor define o time
+    const A = domPres.filter((n) => c.cor[c.pega[n]] === 'P'), B = domPres.filter((n) => c.cor[c.pega[n]] !== 'P');
+    setTimeout(() => { domSort = { A, B, fora: [] }; domCartas = null; telaDomingos(); }, 1400);
+  }
+  telaDomingos();
+}
 function telaDomingos() {
   if (!DM) return;
   const d = domDados(); if (!domPres) domPres = d.jogadores.slice(); if (domCasa == null) domCasa = DM.proximaCasa(d.jogos, d.casais.length);
@@ -2669,13 +2684,14 @@ function telaDomingos() {
    <div class="opt"><div class="seg">${anos.map((a) => `<button type="button" class="${a === domAno ? 'on' : ''}" data-ano="${a}">${a}</button>`).join('')}</div></div>`;
   if (domTab === 'rank') {
     const rk = DM.ranking(d.jogos, domAno);
-    corpo += rk.length ? `<div class="mis-lista">${rk.map((x, i) => `<div class="mis-i ${i === 0 ? 'agora' : ''}"><span class="mis-n">${medalha[i] || i + 1 + 'º'}</span><span class="mis-t"><b>${escH(x.nome)}</b><small>${x.jogos} jogos · ${x.v}V ${x.e}E ${x.d}D · ${Math.round(x.aprov * 100)}% · saldo ${x.saldo > 0 ? '+' : ''}${x.saldo}</small></span><span class="mis-p">${x.pts} pts</span></div>`).join('')}</div><p class="hint">Vitória 3 pontos, empate 1, derrota 0.</p><button class="sec" id="dwa" style="width:100%;margin-top:8px">📲 Mandar o ranking no WhatsApp</button>` : '<p class="hint">Ainda não há jogos em ' + domAno + '. Toque em "Novo jogo" no domingo.</p>';
+    corpo += rk.length ? `<div class="mis-lista">${rk.map((x, i) => `<div class="mis-i ${i === 0 && x.q ? 'agora' : ''}" style="${x.q ? '' : 'opacity:.6'}"><span class="mis-n">${x.q ? medalha[i] || i + 1 + 'º' : '▫️'}</span><span class="mis-t"><b>${escH(x.nome)}</b><small>${x.jogos} jogos · ${x.v}V ${x.e}E ${x.d}D · ${x.pts} pts · saldo ${x.saldo > 0 ? '+' : ''}${x.saldo}${x.q ? '' : ' · jogou pouco ainda'}</small></span><span class="mis-p">${Math.round(x.ppj * 100)}%</span></div>`).join('')}</div><p class="hint">Como é calculado: vitória vale 3 pontos, empate 1 e derrota 0. A posição vai pelo <b>aproveitamento</b> (pontos ganhos ÷ pontos possíveis), então quem falta num domingo não é punido. Para entrar na classificação é preciso ter jogado pelo menos ${rk[0].minimo} jogos (metade dos jogos de quem mais jogou). Quem jogou menos aparece apagado, sem posição.</p><button class="sec" id="dwa" style="width:100%;margin-top:8px">📲 Mandar o ranking no WhatsApp</button>` : '<p class="hint">Ainda não há jogos em ' + domAno + '. Toque em "Novo jogo" no domingo.</p>';
   } else if (domTab === 'novo') {
     corpo += `<div class="card-box"><div class="opt"><b>Data</b><input type="date" id="ddata" value="${domHoje()}" style="width:100%"></div>
      <div class="opt"><b>Quem recebe (coxinha na casa de...)</b><div class="seg">${d.casais.map((c, i) => `<button type="button" class="${domCasa === i ? 'on' : ''}" data-casa="${i}">${escH(c.join(' e '))}</button>`).join('')}<button type="button" class="${domCasa === -1 ? 'on' : ''}" data-casa="-1">Outro lugar</button></div></div>
      <div class="opt"><b>Quem está jogando</b><div class="seg">${d.jogadores.map((n) => `<button type="button" class="${domPres.includes(n) ? 'on' : ''}" data-pres="${escH(n)}">${escH(n)}</button>`).join('')}</div></div>
-     <button class="bigbtn" id="dsort">🎲 Sortear os times</button>
-     ${domSort ? `<div class="mn-resumo">⚔️ <b>${domSort.A.map(escH).join(' + ')}</b><br>contra<br><b>${domSort.B.map(escH).join(' + ')}</b>${domSort.fora.length ? `<br><small>Fora desta: ${domSort.fora.map(escH).join(', ')}</small>` : ''}</div>
+     <button class="bigbtn" id="dcart">🃏 Tirar as cartas (preta × vermelha)</button><button class="sec" id="dsort" style="width:100%;margin-top:8px">🎲 Sortear pelo app</button>
+     ${domCartas ? domCartasHtml() : ''}
+     ${domSort ? `<div class="mn-resumo">⚔️ <b>${domSort.A.map(escH).join(' + ')}</b><br>contra<br><b>${domSort.B.map(escH).join(' + ')}</b><br><small>O lugar de cada um na mesa vocês sorteiam aí na hora.</small>${domSort.fora.length ? `<br><small>Fora desta: ${domSort.fora.map(escH).join(', ')}</small>` : ''}</div>
        <div class="opt"><b>Placar final</b><div style="display:flex;gap:10px;align-items:center"><input type="number" id="dpa" inputmode="numeric" placeholder="Time 1" style="flex:1;text-align:center;font-size:22px"><span>×</span><input type="number" id="dpb" inputmode="numeric" placeholder="Time 2" style="flex:1;text-align:center;font-size:22px"></div></div>
        <button class="bigbtn" id="dsalva">✅ Salvar este jogo</button>` : ''}</div>`;
   } else if (domTab === 'hist') {
@@ -2693,7 +2709,9 @@ function telaDomingos() {
     t.querySelectorAll('[data-casa]').forEach((b) => (b.onclick = () => { domCasa = +b.dataset.casa; telaDomingos(); }));
     t.querySelectorAll('[data-pres]').forEach((b) => (b.onclick = () => { const n = b.dataset.pres; domPres = domPres.includes(n) ? domPres.filter((x) => x !== n) : domPres.concat([n]); domSort = null; telaDomingos(); }));
     const on = (id, fn) => { const e = t.querySelector('#' + id); if (e) e.onclick = fn; };
-    on('dsort', () => { if (domPres.length < 4) return toast('Marque pelo menos 4 pessoas.'); domSort = DM.sorteio(domPres); telaDomingos(); });
+    on('dcart', () => { if (domPres.length < 4) return toast('Marque pelo menos 4 pessoas.'); domSort = null; domCartas = { cor: DM.baralhinho(domPres.length), pega: {}, vez: 0 }; telaDomingos(); });
+    t.querySelectorAll('[data-cart]').forEach((b) => (b.onclick = () => domPegaCarta(+b.dataset.cart)));
+    on('dsort', () => { if (domPres.length < 4) return toast('Marque pelo menos 4 pessoas.'); domCartas = null; domSort = DM.sorteio(domPres); telaDomingos(); });
     on('dsalva', () => {
       const a = t.querySelector('#dpa').value, b = t.querySelector('#dpb').value; if (a === '' || b === '') return toast('Escreva o placar dos dois times.');
       const dd = domDados(); dd.jogos = dd.jogos.concat([{ id: Date.now().toString(36), data: t.querySelector('#ddata').value || domHoje(), casa: domCasa >= 0 ? domCasa : null, timeA: domSort.A, timeB: domSort.B, ptsA: +a, ptsB: +b }]);
