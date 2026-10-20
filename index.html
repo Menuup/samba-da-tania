@@ -72,6 +72,7 @@ h1,h2{font-family:Georgia,"Times New Roman",serif;margin:0}
 .dock{position:sticky;bottom:0;background:linear-gradient(transparent,var(--bg) 18px);padding:6px 0 4px;margin-top:6px}
 .dock .status{margin-top:0}
 .need{margin:8px 0;padding:6px 10px;border-radius:10px;background:#00000040;font-size:15px;font-weight:600}.need.ok{background:#0f5a4388}
+.pile{position:relative}.lockic{position:absolute;right:-6px;top:-8px;font-size:20px;line-height:1;filter:drop-shadow(0 1px 2px #000a);pointer-events:none}
 .lockmsg{text-align:center;font-size:14px;font-weight:700;color:var(--gold);margin-bottom:6px}
 .stg{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px}.gp{font-size:14px;padding:4px 9px;border-radius:99px;background:#ffffff22;cursor:default}.gp[data-g]{cursor:pointer}.gp.ok{background:#0f5a43}.gp.bad{background:#7a1020}.gp.tot{background:var(--gold);color:#3b0f26;font-weight:800}
 .card.stg0{outline:3px solid #4cc9f0}.card.stg1{outline:3px solid #80ed99}.card.stg2{outline:3px solid #ff5d8f}.card.stg3{outline:3px solid #f2c14e}
@@ -255,6 +256,9 @@ body.chat-open .chtab{right:min(78vw,320px)}
 #app.wide .sz{width:max-content}
 .sz.opp{padding:0;min-width:0;background:none;border-radius:0;font-size:inherit;flex:none;display:flex}
 @media(max-width:600px){
+#app.wide .seat.lado{flex-direction:column;gap:0;width:58px;padding:2px 3px;text-align:center;line-height:1.15;white-space:normal}
+#app.wide .seat.lado .av{display:none}
+#app.wide .seat.lado b{display:block;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 #app.wide .seat{display:flex;align-items:center;gap:4px;padding:2px 7px;min-width:0;font-size:11px;white-space:nowrap;line-height:1.2}
 #app.wide .seat br{display:none}
 #app.wide .seat .av{width:15px!important;height:15px!important;font-size:10px!important;margin:0!important;border-width:1px}
@@ -470,6 +474,9 @@ body.verso-dourado .card.back{background:linear-gradient(135deg,#9c7d1e,#f2c14e,
 .mn-resumo{text-align:center;margin:6px 0 12px;padding:10px;border-radius:12px;background:#0003;font-weight:700}
 .trava{opacity:.8;margin:8px 0;font-size:15px}.ok{color:#9cf0b0;font-weight:700}
 
+.mis-lista{display:flex;flex-direction:column;gap:8px}.mis-i{display:flex;align-items:center;gap:12px;text-align:left;width:100%;padding:12px;border-radius:14px;background:#ffffff1c;color:#fff;border:2px solid transparent}
+.mis-i.agora{border-color:var(--gold);background:#f2c14e30}.mis-i.ok{opacity:.8}.mis-i:disabled{opacity:.45}.mis-n{font-size:22px;font-weight:800;min-width:34px;text-align:center}.mis-t{flex:1;display:flex;flex-direction:column}.mis-t b{font-size:17px}.mis-t small{opacity:.85;font-size:13px}.mis-p{font-weight:800;color:var(--gold);white-space:nowrap}
+
 </style>
 </head>
 <body>
@@ -485,16 +492,17 @@ body.verso-dourado .card.back{background:linear-gradient(135deg,#9c7d1e,#f2c14e,
 </div>
 
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
-<script src="engine.js?v=20261019m"></script>
-<script src="fx.js?v=20261019m"></script>
-<script src="eco.js?v=20261019m"></script>
-<script src="fases.js?v=20261019m"></script>
-<script src="mapa.js?v=20261019m"></script>
-<script src="torneios.js?v=20261019m"></script>
-<script src="tutorial.js?v=20261019m"></script>
-<script src="voz.js?v=20261019m"></script>
-<script src="cloud-config.js?v=20261019m"></script>
-<script src="cloud.js?v=20261019m"></script>
+<script src="engine.js?v=20261020a"></script>
+<script src="fx.js?v=20261020a"></script>
+<script src="eco.js?v=20261020a"></script>
+<script src="fases.js?v=20261020a"></script>
+<script src="mapa.js?v=20261020a"></script>
+<script src="torneios.js?v=20261020a"></script>
+<script src="tutorial.js?v=20261020a"></script>
+<script src="missoes.js?v=20261020a"></script>
+<script src="voz.js?v=20261020a"></script>
+<script src="cloud-config.js?v=20261020a"></script>
+<script src="cloud.js?v=20261020a"></script>
 <script>
 'use strict';
 const $ = (s) => document.querySelector(s);
@@ -1034,7 +1042,7 @@ function autoVez(id) {
 function scheduleBot() {
   clearTimeout(Net.botTimer);
   const g = Net.g;
-  if (!g || g.phase !== 'playing' || !g.players[g.turn].bot) return;
+  if (!g || g.phase !== 'playing' || !g.players[g.turn].bot || (Net.ctx && Net.ctx.misFim)) return;
   Net.botTimer = setTimeout(() => {
     if (!Net.g || Net.g.phase !== 'playing' || !Net.g.players[Net.g.turn] || !Net.g.players[Net.g.turn].bot) return; // a partida mudou enquanto o robô pensava
     let r = S.botMove(Net.g, Net.g.turn, (Net.lobby[Net.g.turn] && Net.lobby[Net.g.turn].lvl) || Net.opts.lvl);
@@ -1196,11 +1204,31 @@ const teamName = (v, t) => v.players.filter((p) => p.team === t).map((p) => p.na
 const celular = () => innerWidth <= 600;
 // Tabela de contas da rodada: aberta em tela alta, fechada em tela baixa (o placar grande no topo fica sempre); quem tocou no placar manda.
 const contasAbertas = () => { const x = ls.get('contas', null); return x === null ? innerHeight >= 780 : !!x; };
+// celular: em volta da mesa. Você embaixo, o parceiro/adversário da frente em cima, os outros nas laterais (a altura final vem do placeSeats)
+function seatSlot(r, n) {
+  if (r === 0) return { k: 'b' };
+  if (n === 2 || r === n / 2) return { k: 't' };
+  const esq = r < n / 2, m = n / 2 - 1; // m = assentos de cada lado
+  const idx = esq ? r : n - r; // 1 = o mais perto de você
+  return { k: esq ? 'l' : 'r', alto: m > 1 && idx === m }; // com 2 por lado, o de cima fica mais alto
+}
 function seatPos(r, n, th) {
-  // fatias iguais da largura: cada assento cabe na sua, sem encostar no vizinho
-  if (celular()) return r === 0 ? 'left:50%;top:calc(100% - 11px);max-width:46%' : `left:${(100 * (r - 0.5)) / (n - 1)}%;top:11px;width:calc(${100 / (n - 1)}% - 4px);max-width:170px`;
+  if (celular()) {
+    const s = seatSlot(r, n);
+    if (s.k === 'b') return 'left:50%;top:calc(100% - 11px);max-width:46%';
+    if (s.k === 't') return 'left:50%;top:11px;max-width:60%';
+    return `${s.k === 'l' ? 'left:31px' : 'left:calc(100% - 31px)'};top:50%;`;
+  }
   const x = Math.min(84, Math.max(16, 50 - 47 * Math.sin(th))), y = 53 + 41 * Math.cos(th);
   return `left:${x}%;top:${y}%`;
+}
+// põe os assentos laterais na altura do monte/lixo (o corredor livre entre os jogos de cima e os de baixo)
+function placeSeats() {
+  if (!celular()) return;
+  const tw = document.querySelector('#app.wide .tw'); if (!tw) return;
+  const cen = tw.querySelector('.centro'); if (!cen) return;
+  const tr = tw.getBoundingClientRect(), cr = cen.getBoundingClientRect(); const cy = cr.top + cr.height / 2 - tr.top;
+  tw.querySelectorAll('.seat.lado').forEach((el) => { el.style.top = (cy - (el.classList.contains('alto') ? Math.max(40, el.offsetHeight + 6) : 0)) + 'px'; });
 }
 
 function render(v) { renderInner(v); bindChrome(); if (window.Voz && v && !v.local && v.phase === 'playing') Voz.decorate(); }
@@ -1399,10 +1427,11 @@ function fitZones() {
     const felt = z.closest('.felt'); if (!felt) return;
     const g = z.querySelector('.zg'); if (!g) return;
     const opp = z.classList.contains('opp');
-    let maxH = felt.clientHeight * (+z.dataset.mh || (opp ? 0.33 : 0.38)); const maxW = felt.clientWidth * (+z.dataset.mw || (opp ? 0.28 : 0.68));
+    let maxH = felt.clientHeight * (+z.dataset.mh || (opp ? 0.33 : 0.38)); let maxW = felt.clientWidth * (+z.dataset.mw || (opp ? 0.28 : 0.68));
     // nunca por cima do monte e do lixo: a faixa do meio é só deles (os jogos usam o que sobra acima e abaixo)
     const cen = felt.querySelector('.centro');
     if (cen) { const fr = felt.getBoundingClientRect(), cr = cen.getBoundingClientRect(); const livre = opp ? cr.top - (fr.top + felt.clientHeight * 0.03 + 6) - 4 : (fr.bottom - 34) - cr.bottom - 4; maxH = Math.min(maxH, Math.max(28, livre)); }
+    if (opp && celular() && felt.parentNode.classList.contains('n6')) maxW = Math.min(maxW, felt.clientWidth - 2 * 66); // com 6 à mesa há assentos nas laterais altas
     // mede o tamanho natural e vai encolhendo as cartas até caber na área
     z.style.maxHeight = 'none'; z.style.maxWidth = maxW + 'px'; z.style.width = maxW + 'px'; // largura fixa: os jogos quebram em linhas e as cartas ficam do maior tamanho que cabe
     g.style.maxHeight = 'none'; g.style.overflow = 'visible';
@@ -1505,18 +1534,17 @@ function renderGame(app, v) {
   ${!celular() && contasAbertas() ? scoreTable(v) : ""}
   <div class="tw n${v.n}">
 
-    ${v.players.map((p, i) => { const r = (i - v.seat + v.n) % v.n; const th = 2 * Math.PI * r / v.n; const pos = seatPos(r, v.n, th); return `<div class="seat ${v.turn === i && v.phase === 'playing' ? 'turn' : ''} ${p.team === v.myTeam ? 'mine' : ''}" data-seat="${i}" style="${pos}">${avMold(avatars[i], 34, v.molds && v.molds[i])}<b>${i === v.seat ? 'Você' : (v.n > 2 && p.team === v.myTeam ? '🤝 ' : '') + p.name}</b><br>🂠 ${p.count}${v.online && !v.online[i] ? ' · ⚪ saiu' : ''}</div>`; }).join('')}
+    ${v.players.map((p, i) => { const r = (i - v.seat + v.n) % v.n; const th = 2 * Math.PI * r / v.n; const pos = seatPos(r, v.n, th); const sl = celular() ? seatSlot(r, v.n) : {}; return `<div class="seat ${sl.k === 'l' || sl.k === 'r' ? 'lado' : ''} ${sl.alto ? 'alto' : ''} ${v.turn === i && v.phase === 'playing' ? 'turn' : ''} ${p.team === v.myTeam ? 'mine' : ''}" data-seat="${i}" style="${pos}">${avMold(avatars[i], 34, v.molds && v.molds[i])}<b>${i === v.seat ? 'Você' : (v.n > 2 && p.team === v.myTeam ? '🤝 ' : '') + p.name}</b><br>🂠 ${p.count}${v.online && !v.online[i] ? ' · ⚪ saiu' : ''}</div>`; }).join('')}
     <div class="mortos"><div class="mt ${v.mortoTaken[v.myTeam] ? 'gone' : ''}"><div class="card mini back"></div>Morto nós${v.mortoTaken[v.myTeam] ? ' (pego)' : ''}</div><div class="mt ${v.mortoTaken[1 - v.myTeam] ? 'gone' : ''}"><div class="card mini back"></div>Morto eles${v.mortoTaken[1 - v.myTeam] ? ' (pego)' : ''}</div></div>
     <div class="felt n2">
       ${seatZones(v, play && sel.size)}
       <div class="centro"><div class="pile ${draw ? 'act' : ''}" id="stock"><div class="card back"></div>Monte ${v.stockCount}${draw ? `<br><small>${v.owed ? 'carta do 3 vermelho' : v.drawn ? 'vire a 2ª' : 'vire a 1ª'}</small>` : ''}</div>
-      <div class="pile ${draw && v.discardCount && !v.pileLocked && !v.drawn && !v.owed ? 'act' : ''}" id="pile">${v.discardTop ? cardHtml(v.discardTop) : '<div class="card empty"></div>'}Lixo ${v.discardCount}${v.pileLocked ? ' 🔒' : ''}</div></div>
-      ${lockMsg ? `<div class="lockmsg">${lockMsg}</div>` : ''}
+      <div class="pile ${draw && v.discardCount && !v.pileLocked && !v.drawn && !v.owed ? 'act' : ''}" id="pile">${v.discardTop ? cardHtml(v.discardTop) : '<div class="card empty"></div>'}Lixo ${v.discardCount}${v.pileLocked ? `<span class="lockic" title="${lockMsg}">🔒</span>` : ''}</div></div>
     </div></div>
   ${(() => { const lg = (v.log || []).slice(logOpen ? -30 : -5); return `<div class="log"><div class="lh"><b>O que cada um fez</b><button type="button" class="sec" id="logt">${logOpen ? 'Mostrar menos' : 'Ver tudo'}</button></div>${lg.map((t, i) => `<div class="ll ${i === lg.length - 1 ? 'new' : ''}"></div>`).join('')}</div>`; })()}
   <div class="dock"><div class="bns">${shownBanners.map((b) => `<div class="banner">${b.s != null ? avHtml(avatars[b.s], 30) : ''}<span class="bt"></span></div>`).join('')}</div>
   ${v.late ? (my ? `<div class="late me">Seu tempo acabou! Jogue agora: em ${LATE_GRACE} segundos o jogo compra e descarta por você.</div>` : `<div class="late">O tempo de ${v.players[v.turn].name.replace(/[<>&"]/g, '')} acabou. Em ${LATE_GRACE} segundos o jogo joga a vez.<button type="button" id="nudge">Chamar</button>${v.seat === 0 ? '<button type="button" id="robovez" class="sec">Jogar a vez agora</button>' : ''}</div>`) : ''}
-  ${tutHint ? `<div class="tut">🎓 ${tutHint.replace(/[<>&"]/g, '')}</div>` : ''}
+  ${tutHint ? `<div class="tut">${tutHint.startsWith('🎯') ? '' : '🎓 '}${tutHint.replace(/[<>&"]/g, '')}</div>` : ''}
   <div class="status ${my ? 'me' : ''}">${status}${cdHtml(v)}</div>
   ${staged.length || selInfo ? `<div class="stg">${gi.map((x, k) => `<span class="gp ${x.ok ? 'ok' : 'bad'}" data-g="${k}">Jogo ${k + 1}: ${x.ok ? x.pts + ' pts' : 'não vale'} ✕</span>`).join('')}${selInfo ? `<span class="gp ${selInfo.ok ? 'ok' : 'bad'}">Marcadas${withPile ? ' + lixo' : ''}${selInfo.ok && selInfo.n > 1 ? ' (' + selInfo.n + ' jogos)' : ''}: ${selInfo.ok ? selInfo.pts + ' pts' : 'não vale'}</span>` : ''}<span class="gp tot">Total ${allPts}${desc || need.canastra ? '' : ' / ' + need.min}</span></div>` : ''}
   ${false ? `<div class="zsel">Baixar na frente de: ${mySeats.map((i) => `<button type="button" class="${zoneSel === i ? 'on' : ''}" data-z="${i}"></button>`).join('')}</div>` : ''}
@@ -1587,7 +1615,8 @@ function renderGame(app, v) {
   $('#desc').onclick = () => { send({ a: 'discard', id: [...sel][0] }); sel.clear(); };
   fitMao();
   fitZones();
-  if (v.phase === 'roundEnd' || v.phase === 'gameEnd') { const wait = window.FX && FX.prevView && FX.prevView.phase === 'playing' ? 1900 : 0; clearTimeout(window.endT); window.endT = setTimeout(() => endModal(v), wait); }
+  placeSeats();
+  if ((v.phase === 'roundEnd' || v.phase === 'gameEnd') && !(Net.ctx && Net.ctx.mode === 'missao')) { const wait = window.FX && FX.prevView && FX.prevView.phase === 'playing' ? 1900 : 0; clearTimeout(window.endT); window.endT = setTimeout(() => endModal(v), wait); }
 }
 
 function endModal(v) {
@@ -1632,7 +1661,7 @@ m.querySelector('button').onclick = () => m.remove();
 
 /* ---------- moedas, fases, Mesa com Prêmio, Desafio do Dia, loja, banca e treino guiado ---------- */
 // Moedas e diamantes só valem dentro do jogo: não se compram nem viram dinheiro.
-const EC = window.Eco || null, FA = window.Fases || null, TU = window.Tutorial || null, TO = window.Torneios || null;
+const EC = window.Eco || null, FA = window.Fases || null, TU = window.Tutorial || null, MI = window.Missoes || null, TO = window.Torneios || null;
 const RUNKEY = { fase: 'fase-run', premio: 'premio-run', desafio: 'desafio-run', giro: 'giro-run', mm: 'mm-run', livre: 'livre-run' };
 const fmt = (n) => (+n || 0).toLocaleString('pt-BR');
 const escH = (t) => String(t == null ? '' : t).replace(/[<>&"]/g, '');
@@ -1683,7 +1712,7 @@ function homeEcoHtml() {
    <button class="bigbtn" id="hmapa">🗺️ Abrir o tabuleiro</button><button class="sec" id="hfase" style="width:100%;margin-top:8px;font-size:18px">▶ Jogar a fase ${prox.id} agora</button>${comodosHtml()}</div>`;
   if (gate.presente()) {
     const ms = EC.missions();
-    h += `<div class="card-box">${EC.giftReady() ? '<button class="bigbtn" id="gift">🎁 Abrir o presente do dia</button>' : ''}<h2 style="font-size:20px;margin-top:8px">Missões de hoje</h2>${ms.map((m) => `<div class="mis ${m.done ? 'ok' : ''}"><span>${m.done ? '✅' : '▫️'} ${m.txt}</span><b>${m.coins} 🪙</b></div>`).join('')}<p class="hint">As três juntas dão mais 40 moedas.</p></div>`;
+    h += `<div class="card-box">${EC.giftReady() ? '<button class="bigbtn" id="gift">🎁 Abrir o presente do dia</button>' : ''}<button class="sec" id="hmis" style="width:100%;margin-top:8px;font-size:18px">🎯 Missões: ${missoesFeitas()} de ${MI ? MI.LISTA.length : 0}</button></div>`;
   }
   if (gate.desafio()) {
     const d = EC.today(); const jog = EC.has('desafio:' + d + ':iniciado'); const rd = runSalvo('desafio');
@@ -1717,6 +1746,7 @@ function bindHomeEco() {
   on('bonusb', () => { const r = EC.pegarBonus(); if (r) { toast('+' + r.coins + ' moedas de bônus!'); if (window.FX) FX.sound('levelup'); } goHome(); });
   on('hfase', needName(() => faseModal(FA.proxima(EC).id)));
   on('hmapa', mapaModal);
+  on('hmis', () => telaMissoes());
   on('contfase', needName(() => resumeLocal('fase')));
   on('contpremio', needName(() => resumeLocal('premio')));
   on('gift', () => { const r = EC.openGift(); if (r) { toast(r.msg); if (window.FX) FX.sound(r.big ? 'win' : 'levelup'); confetti(r.big ? 4000 : 1500); } goHome(); });
@@ -1783,8 +1813,8 @@ function sairLocal(v) {
 function afterMove() {
   if (!Net.host || !Net.g) return;
   if (Net.local && Net.ctx.mode === 'treino' && TU) TU.prep(Net.g);
-  if (Net.g.phase === 'gameEnd') campAnota();
-  if (Net.g.phase === 'roundEnd' || Net.g.phase === 'gameEnd') doSettle(viewOf(0), true);
+  if (Net.g.phase === 'gameEnd' && Net.ctx.mode !== 'missao') campAnota();
+  if (Net.ctx.mode !== 'missao' && (Net.g.phase === 'roundEnd' || Net.g.phase === 'gameEnd')) doSettle(viewOf(0), true);
 }
 function doSettle(v, host) {
   if (!EC || !v || !v.runId) return null;
@@ -1821,6 +1851,7 @@ function doSettle(v, host) {
 const entradaPaga = {};
 function ecoOnView(v) {
   if (!EC) return;
+  if (Net.ctx && Net.ctx.mode === 'missao' && MI && v.local) { missaoView(v); return; }
   if (TU && TU.state.ativo && v.local) { tutHint = TU.update(v); if (TU.state.fim && EC.grant('tutorial', 100, 0, 'treino guiado')) { toast('Você aprendeu os toques! +100 moedas'); if (window.FX) FX.sound('levelup'); } } else tutHint = null;
   if (!v.local && v.phase === 'playing' && v.opts && v.opts.entrada && v.runId && !entradaPaga[v.runId]) {
     entradaPaga[v.runId] = true; const r = EC.mesaEntrada(v.runId, v.opts.entrada);
@@ -2400,6 +2431,7 @@ function menuHtml() {
   <div class="mn-top"><div class="mn-titulo"><span>🃏</span> Samba da Tânia</div><button class="sec mutebtn" title="Som">🔊</button></div>
   <button class="mn-eu" id="mn-eu"><span id="avnow">${avHtml(myAvatar, 52)}</span><span class="mn-nome"><b>${myName ? escH(myName) : 'Toque para escolher seu nome'}</b>${window.FX ? FX.profileHtml(true) : ''}</span><span class="mn-carteira"><span class="chip">🪙 ${fmt(w.coins)}</span><span class="chip">💎 ${fmt(w.gems)}</span></span></button>
   ${salvo ? `<button class="bigbtn mn-cont" id="mn-cont" data-modo="${salvo}">▶ Continuar ${nomes[salvo]()}</button>` : ''}
+  ${MI ? `<button class="mn-hoje" data-tela="missoes">🎯 Missões: ${MI.LISTA.length ? missoesFeitas() + ' de ' + MI.LISTA.length : ''} jogos que ficam mais difíceis</button>` : ''}
   ${gate.presente() || hoje.n ? `<button class="mn-hoje ${hoje.n ? 'tem' : ''}" data-tela="hoje">📅 Hoje: presente, missões e bônus${hoje.n ? `<i>${hoje.n}</i>` : ''}</button>` : ''}
   <div class="mn-grade">
    ${tile('campanha', 'ouro', '🗺️', 'Campanha', prox ? `Casa da Tânia · fase ${prox.id}<br>⭐ ${estrelas} de 144` : 'A Casa da Tânia')}
@@ -2423,7 +2455,7 @@ function renderHome(app) {
   if (sala && !renderHome.avisou) { renderHome.avisou = true; telaFamilia(String(sala).toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 4)); }
 }
 function bindMenu(app) {
-  app.querySelectorAll('[data-tela]').forEach((b) => (b.onclick = () => ({ campanha: () => (mapaModal(), 0), robos: telaRobos, familia: () => telaFamilia(), torneios: telaTorneios, loja: telaLoja, mais: telaMais, hoje: telaHoje })[b.dataset.tela]()));
+  app.querySelectorAll('[data-tela]').forEach((b) => (b.onclick = () => ({ campanha: () => (mapaModal(), 0), robos: telaRobos, familia: () => telaFamilia(), torneios: telaTorneios, loja: telaLoja, mais: telaMais, hoje: telaHoje, missoes: telaMissoes })[b.dataset.tela]()));
   const eu = $('#mn-eu'); if (eu) eu.onclick = () => (myName ? telaMais() : precisaNome(() => goHome()));
   const c = $('#mn-cont'); if (c) c.onclick = () => precisaNome(() => resumeLocal(c.dataset.modo));
   if (window.FX) bindChrome();
@@ -2547,6 +2579,57 @@ if (EC) EC.onChange = () => {
   const w = document.querySelector('.wal'); if (w) { w.outerHTML = walletHtml(); bindHomeEco(); }
   const ch = document.querySelectorAll('#menu .mn-carteira .chip'); if (ch.length === 2) { const x = EC.wallet(); ch[0].textContent = '🪙 ' + fmt(x.coins); ch[1].textContent = '💎 ' + fmt(x.gems); }
 };
+
+/* --- Missões: trilha de minijogos que ficam mais difíceis --- */
+function missoesFeitas() { return MI && EC ? MI.LISTA.filter((m, i) => EC.has('trilha:' + i)).length : 0; }
+const missaoLiberada = (i) => !EC || i === 0 || EC.has('trilha:' + (i - 1));
+function telaMissoes() {
+  if (!MI) return;
+  const feitas = missoesFeitas(); const proxima = MI.LISTA.findIndex((m, i) => !(EC && EC.has('trilha:' + i)));
+  const lis = MI.LISTA.map((m, i) => {
+    const ok = EC && EC.has('trilha:' + i), lib = missaoLiberada(i);
+    return `<button class="mis-i ${ok ? 'ok' : ''} ${i === proxima ? 'agora' : ''}" data-i="${i}" ${lib ? '' : 'disabled'}><span class="mis-n">${ok ? '✅' : lib ? i + 1 : '🔒'}</span><span class="mis-t"><b>${m.nome}</b><small>${lib ? m.obj : 'Termine a missão ' + i + ' para abrir'}</small></span><span class="mis-p">${ok ? '' : '+' + m.premio + ' 🪙'}</span></button>`;
+  }).join('');
+  abreTela('🎯 Missões', `<p class="hint" style="margin-top:0">Cada missão é uma jogada pronta: você recebe as cartas e tem poucas vezes para cumprir o objetivo. A cada missão fica mais difícil. ${feitas} de ${MI.LISTA.length} feitas.</p><div class="mis-lista">${lis}</div>`, (t) => {
+    t.querySelectorAll('.mis-i').forEach((b) => (b.onclick = () => precisaNome(() => missaoIntro(+b.dataset.i))));
+  });
+}
+function missaoIntro(i) {
+  const m = MI.LISTA[i]; fechaTela();
+  const md = document.createElement('div'); md.className = 'modal';
+  md.innerHTML = `<div><h2>Missão ${i + 1}: ${m.nome}</h2><p style="font-size:18px"><b>🎯 ${m.obj}</b></p><p>Você tem <b>${m.turnos} ${m.turnos === 1 ? 'vez' : 'vezes'}</b> (uma vez = comprar, baixar e descartar). Robô: ${NOME_NIVEL[m.bot] || m.bot}.</p><p class="hint">💡 ${m.dica}</p><button class="bigbtn" id="mj">▶ Jogar</button><button class="sec" id="mv" style="width:100%;margin-top:8px">← Voltar às missões</button></div>`;
+  document.body.appendChild(md);
+  md.querySelector('#mj').onclick = () => { md.remove(); startMissao(i); };
+  md.querySelector('#mv').onclick = () => { md.remove(); telaMissoes(); };
+}
+function startMissao(i) {
+  const m = MI.LISTA[i];
+  const ps = [{ name: myName, bot: false }, { name: 'Dona Nit', bot: true, lvl: m.bot }];
+  localStart({ mode: 'missao', id: i, players: ps, g: MI.build(S, i, myName), ctx: { lvl: m.bot, mi: i } });
+}
+// Acompanha o objetivo a cada jogada; quando cumpre ou acaba o limite, mostra o resultado.
+function missaoView(v) {
+  const i = Net.ctx.mi; if (i == null) return;
+  const a = MI.avalia(S, v, i);
+  tutHint = '🎯 ' + a.txt;
+  if ((a.done || a.fail) && !Net.ctx.misFim) {
+    Net.ctx.misFim = true; clearTimeout(Net.botTimer); clearTimeout(Net.turnTimer);
+    setTimeout(() => missaoFim(i, a.done), 700);
+  }
+}
+function missaoFim(i, ganhou) {
+  const m = MI.LISTA[i]; const md = document.createElement('div'); md.className = 'modal'; md.id = 'misfim';
+  let ganho = null; if (ganhou && EC) ganho = EC.grant('trilha:' + i, m.premio, 0, 'Missão ' + (i + 1) + ': ' + m.nome);
+  if (ganhou && window.FX) FX.sound('levelup'); if (ganhou) confetti(1800);
+  const prox = i + 1 < MI.LISTA.length;
+  md.innerHTML = `<div><h2>${ganhou ? '🎉 Missão cumprida!' : '😅 Não deu desta vez'}</h2><p style="font-size:18px"><b>${m.nome}</b></p>${ganhou ? `<p>${ganho ? '+' + m.premio + ' moedas!' : 'Você já tinha ganhado o prêmio desta missão.'}</p>` : `<p>${m.obj}. Tente de novo: as cartas são as mesmas.</p><p class="hint">💡 ${m.dica}</p>`}
+   ${ganhou && prox ? '<button class="bigbtn" id="mp">▶ Próxima missão</button>' : ''}<button class="${ganhou && prox ? 'sec' : 'bigbtn'}" id="mr" style="width:100%;margin-top:8px">↻ ${ganhou ? 'Jogar de novo' : 'Tentar de novo'}</button><button class="sec" id="ml" style="width:100%;margin-top:8px">🎯 Todas as missões</button></div>`;
+  document.body.appendChild(md);
+  const sai = (fn) => () => { md.remove(); fimLocal(); fn(); };
+  if (md.querySelector('#mp')) md.querySelector('#mp').onclick = sai(() => missaoIntro(i + 1));
+  md.querySelector('#mr').onclick = sai(() => startMissao(i));
+  md.querySelector('#ml').onclick = sai(() => telaMissoes());
+}
 
 presenceStart();
 cloudStart();

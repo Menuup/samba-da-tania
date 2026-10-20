@@ -341,7 +341,9 @@
         if (s.turnos) s.turnos[seat] = (s.turnos[seat] || 0) + 1;
         s.last = name + ' descartou ' + cardName(c) + '.';
         const next = (s.turn + 1) % s.n;
-        s.lock = isBlack3(c) ? { type: 'black', seat: next } : isWild(c) ? { type: 'wild', owner: seat } : null;
+        // coringa/2 tranca o lixo para TODOS até a vez de quem descartou; a tranca continua enquanto os outros descartam
+        const seguraCoringa = s.lock && s.lock.type === 'wild' && s.lock.owner !== seat;
+        s.lock = isBlack3(c) ? { type: 'black', seat: next } : isWild(c) ? { type: 'wild', owner: seat } : seguraCoringa ? s.lock : null;
         if (hand.length === 0) {
           if (!s.mortoTaken[t]) { takeMorto(s, seat); s.last += ' e pegou o morto.'; }
           else { endRound(s, seat); s.last += ' e BATEU!'; return { state: s }; }
