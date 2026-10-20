@@ -11,7 +11,7 @@
     prata: { id: 'prata', nome: 'Prata', insc: 500, premios: [1750, 750, 250, 125], lvl: 'normal', adv: ['dificil', 'normal'], parc: 'normal', vant: 0, abre: 3 }, // jogadora Difícil: ~49% por partida
     ouro: { id: 'ouro', nome: 'Ouro', insc: 1500, premios: [5250, 2250, 750, 375], lvl: 'dificil', adv: ['mestre', 'dificil'], parc: 'dificil', vant: 0, abre: 5, taca: true }, // jogadora Difícil: ~44% por partida (vantagem não pesa em partida de uma rodada)
   };
-  const DUPLAS = [['Dona Nit', 'Zé'], ['Marlene', 'Seu Tião'], ['Lúcia', 'Nando'], ['Cida', 'Beto'], ['Rita', 'Jorge'], ['Neusa', 'Toninho'], ['Vera', 'Chico']];
+  const DUPLAS = [['Tânia', 'Marinho'], ['Dedé', 'Osni'], ['Pedro', 'Marcelo'], ['Cida', 'Beto'], ['Rita', 'Jorge'], ['Neusa', 'Toninho'], ['Vera', 'Chico']];
   const PARCEIROS = ['Tereza', 'Dirce', 'Ivone'];
   const RODADAS = ['Quartas de final', 'Semifinal', 'Final'];
   const COLOC = { 1: 'Campeã', 2: 'Vice', 3: 'Semifinal', 4: 'Quartas' };

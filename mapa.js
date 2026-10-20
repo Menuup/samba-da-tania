@@ -5,7 +5,7 @@
   'use strict';
 
   const ROW = 96, TOPO = 64, XS = [24, 60, 80, 54, 24, 42, 74, 50]; // altura entre casas, folga em cima, posição (%) de cada casa; a 8ª é o chefe, no meio
-  const CHEFES = { 'Dona Nit': '👩‍🍳', 'Zé': '🧔', 'Seu Tião': '👴', 'Marlene': '👩‍🦱', 'Lúcia': '💃' };
+  const CHEFES = { 'Tânia': '👩‍🍳', 'Marinho': '🧔', 'Osni': '🧑‍🔧', 'Dedé': '🎨', 'Pedro': '🦷' };
   // cenário de cada cômodo: piso, cores, enfeites nas bordas ([emoji, x%, y(px), tamanho, giro]) e a marca d'água grande no meio
   const CENAS = [
     { piso: 'xadrez', c1: '#f6ead6', c2: '#e8d2ad', tinta: '#5a3a1a', marca: '🍳', deco: [['🥘', 92, 60, 34, 8], ['☕', 6, 190, 30, -8], ['🍞', 93, 300, 30, 10], ['🧂', 6, 410, 28, -12], ['🥄', 92, 520, 28, 25], ['🍅', 7, 610, 30, 0], ['🧅', 93, 700, 28, -10]] },

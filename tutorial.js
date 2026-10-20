@@ -11,7 +11,7 @@
     { id: 'juntar', txt: 'Ainda sobrou um Ás na mão. Marque esse Ás e toque no seu jogo de Ás, na mesa.' },
     { id: 'ordenar', txt: 'Para arrumar a mão: segure uma carta com o dedo e arraste para outro lugar.' },
     { id: 'descartar', txt: 'Para terminar a vez: marque UMA carta e toque em DESCARTAR.' },
-    { id: 'espera', txt: 'Agora é a vez da Dona Nit. Espere um pouquinho…' },
+    { id: 'espera', txt: 'Agora é a vez da Tânia. Espere um pouquinho…' },
     { id: 'lixo', txt: 'Olhe o LIXO: tem um Rei em cima, e você tem 2 Reis. Marque os 2 Reis e toque em PEGAR O LIXO.' },
     { id: 'desc2', txt: 'Todas as cartas do lixo vieram para a sua mão. Agora descarte UMA carta.' },
     { id: 'fim', txt: 'Pronto! Você aprendeu todos os toques. Pode continuar jogando esta partida ou voltar ao início.' },
@@ -19,7 +19,7 @@
 
   // Monta a partida arrumada: você começa; 5 Ases e 2 Reis na mão; um 3♥ em cima do monte.
   function build(S, myName) {
-    const g = S.newGame([{ name: myName || 'Você' }, { name: 'Dona Nit', bot: true, lvl: 'normal' }], { mode: 'treino' });
+    const g = S.newGame([{ name: myName || 'Você' }, { name: 'Tânia', bot: true, lvl: 'normal' }], { mode: 'treino' });
     let pool = g.hands.flat().concat(g.mortos.flat(), g.stock, g.reds.flat());
     const take = (r, s) => { const i = pool.findIndex((c) => c.r === r && (!s || c.s === s)); return i < 0 ? null : pool.splice(i, 1)[0]; };
     const mine = [take(1, 'P'), take(1, 'O'), take(1, 'C'), take(1, 'E'), take(1, 'P'), take(13, 'P'), take(13, 'O')].filter(Boolean);

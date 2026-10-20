@@ -56,7 +56,7 @@
   // Monta a rodada arrumada para a missão idx.
   function build(S, idx, myName) {
     const m = LISTA[idx];
-    const g = S.newGame([{ name: myName || 'Você' }, { name: 'Dona Nit', bot: true, lvl: m.bot }], { mode: 'missao', rng: S.mulberry(7000 + idx) });
+    const g = S.newGame([{ name: myName || 'Você' }, { name: 'Tânia', bot: true, lvl: m.bot }], { mode: 'missao', rng: S.mulberry(7000 + idx) });
     let pool = g.hands.flat().concat(g.mortos.flat(), g.stock, g.reds.flat());
     const take = (t) => { const c = carta(t); const i = pool.findIndex((x) => x.r === c.r && x.s === c.s); if (i < 0) throw new Error('faltou carta ' + t); return pool.splice(i, 1)[0]; };
     const take2 = (list) => list.map(take);

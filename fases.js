@@ -29,7 +29,7 @@
   // [mesa, adversários, parceiros, vantagem, formato, nome, obj1, obj2, obj3]
   const F = 'facil', N = 'normal', D = 'dificil', M = 'misto', L = 'leve', T = 'forte', Z = 'mestre'; // misto: 1º adversário afiado e os outros normais · leve: 1º normal e os outros distraídos · forte: 1º craque e os outros afiados
   const SALAS = [
-    { n: 1, nome: 'Cozinha', tema: 0, moedas: 50, gems3: 1, taca: 'Panela de Ouro', enfeite: { id: 'v_xadrez', txt: 'verso "Xadrez da Cozinha"' }, chefe: 'Dona Nit', fases: [
+    { n: 1, nome: 'Cozinha', tema: 0, moedas: 50, gems3: 1, taca: 'Panela de Ouro', enfeite: { id: 'v_xadrez', txt: 'verso "Xadrez da Cozinha"' }, chefe: 'Tânia', fases: [
       [2, F, null, 0, 'R1', 'Café da manhã', ['jogar'], ['can', 1], ['vrod']],
       [2, F, null, 0, 'R1', 'Pão na chapa', ['lixo', 1], ['vrod'], ['lixo', 2]],
       [2, F, null, 0, 'R1', 'Bule de café', ['vrod'], ['canL', 1], ['pts', 2000]],
@@ -39,7 +39,7 @@
       [2, F, null, 0, 'R1', 'Duas panelas', ['vrod'], ['can', 2], ['canL', 2]],
       [2, F, null, 600, 'R2', 'A Cozinheira', ['vjogo'], ['bater', 1], ['pts', 3000]],
     ] },
-    { n: 2, nome: 'Sala de estar', tema: 2, moedas: 60, gems3: 1, taca: 'Porta-retratos de Prata', enfeite: { id: 'm_tapete', txt: 'mesa "Tapete da Sala"' }, chefe: 'Zé', fases: [
+    { n: 2, nome: 'Sala de estar', tema: 2, moedas: 60, gems3: 1, taca: 'Porta-retratos de Prata', enfeite: { id: 'm_tapete', txt: 'mesa "Tapete da Sala"' }, chefe: 'Marinho', fases: [
       [4, F, N, 0, 'R1', 'Sofá', ['vrod'], ['can', 1], ['canL', 1]],
       [4, L, N, 0, 'R1', 'Televisão', ['vrod'], ['lixo', 2], ['pts', 3000]],
       [4, L, N, 0, 'R1', 'Porta-retratos', ['vrod'], ['red', 2], ['red', 3]],
@@ -49,7 +49,7 @@
       [4, L, N, 0, 'R1', 'Visita', ['vrod'], ['can', 3], ['bater', 1]],
       [4, L, N, 600, 'R2', 'O Vizinho', ['vjogo'], ['can', 4], ['bater', 1]],
     ] },
-    { n: 3, nome: 'Varanda', tema: 8, moedas: 70, gems3: 1, taca: 'Regador Dourado', enfeite: { id: 'm_varanda', txt: 'mesa "Madeira da Varanda"' }, chefe: 'Seu Tião', especial: true, fases: [
+    { n: 3, nome: 'Varanda', tema: 8, moedas: 70, gems3: 1, taca: 'Regador Dourado', enfeite: { id: 'm_varanda', txt: 'mesa "Madeira da Varanda"' }, chefe: 'Osni', especial: true, fases: [
       [4, M, N, 0, 'R1', 'Rede', ['vrod'], ['lixo', 2], ['canL', 1]],
       [4, M, N, 0, 'R1', 'Samambaia', ['vrod'], ['can', 2], ['bater', 1]],
       [4, M, N, 0, 'R1', 'Chá da tarde', ['vrod'], ['lixo', 3], ['pts', 3500]],
@@ -59,7 +59,7 @@
       [4, M, N, 0, 'M3', 'Festa junina', ['vjogo'], ['bater', 1], ['canL', 3]],
       [4, M, N, 600, 'R3', 'O Compadre', ['vjogo'], ['bater', 2], ['pts', 4000]],
     ] },
-    { n: 4, nome: 'Quintal', tema: 9, moedas: 80, gems3: 1, taca: 'Espeto de Ouro', enfeite: { id: 'v_flores', txt: 'verso "Flores do Quintal"' }, chefe: 'Marlene', fases: [
+    { n: 4, nome: 'Quintal', tema: 9, moedas: 80, gems3: 1, taca: 'Espeto de Ouro', enfeite: { id: 'v_flores', txt: 'verso "Flores do Quintal"' }, chefe: 'Dedé', fases: [
       [6, M, N, 0, 'R1', 'Churrasqueira', ['vrod'], ['can', 2], ['lixo', 1]],
       [6, M, N, 0, 'R1', 'Varal', ['vrod'], ['can', 3], ['bater', 1]],
       [6, M, N, 0, 'R1', 'Mangueira', ['vrod'], ['red', 3], ['red', 4]],
@@ -69,7 +69,7 @@
       [6, M, N, 600, 'R2', 'Aniversário', ['vjogo'], ['vrods', 2], ['bater', 2]],
       [6, Z, N, 0, 'R3', 'A Comadre', ['vjogo'], ['can', 6], ['pts', 4000]],
     ] },
-    { n: 5, nome: 'Clube', tema: 5, moedas: 90, gems3: 2, taca: 'Carteirinha Dourada', enfeite: { id: 'm_clube', txt: 'mesa "Piscina do Clube"' }, chefe: 'Lúcia', fases: [
+    { n: 5, nome: 'Clube', tema: 5, moedas: 90, gems3: 2, taca: 'Carteirinha Dourada', enfeite: { id: 'm_clube', txt: 'mesa "Piscina do Clube"' }, chefe: 'Pedro', fases: [
       [2, T, null, 0, 'R1', 'Portaria', ['vrod'], ['canL', 1], ['bater', 1]],
       [4, M, N, 0, 'R1', 'Salão de jogos', ['vrod'], ['can', 3], ['pts', 3500]],
       [4, Z, N, 0, 'R1', 'Quadra', ['vrod'], ['lixo', 2], ['canL', 2]],
@@ -94,8 +94,8 @@
   const LIMIARES = { 2: [2000, 2500, 3000], 4: [3000, 3500, 4000], 6: [3500, 4000, 4500] };
   // Medidos em 17/10/2026 (sim-fases.js, 60 jogos por fase, robô Normal na cadeira da Tânia): p40 / p60 / p80 dos pontos do time por rodada.
   const LIMIARES_MEDIDOS = { 2: [2725, 3370, 4285], 4: [2740, 3490, 4185], 6: [2750, 3385, 4040] };
-  const NOMES_ADV = ['Zé', 'Marlene', 'Seu Tião', 'Lúcia', 'Cida', 'Beto'];
-  const NOMES_PARC = ['Dona Nit', 'Rita', 'Jorge', 'Neusa'];
+  const NOMES_ADV = ['Marinho', 'Dedé', 'Osni', 'Pedro', 'Marcelo', 'Beto'];
+  const NOMES_PARC = ['Tânia', 'Marcelo', 'Jorge', 'Neusa'];
   const LV_ADJ = { facil: 'distraído', normal: '', dificil: 'afiado', mestre: 'craque' };
   const ORDEM = ['facil', 'normal', 'dificil', 'mestre'];
   // Nível de cada adversário (o a-ésimo): 'misto' = um afiado e o resto normal; 'leve' = um normal e o resto distraído; 'forte' = um craque e o resto afiado.
@@ -116,13 +116,13 @@
   function seats(f, myName, desloca) {
     const n = f.mesa; const ps = [{ name: myName || 'Você', bot: false }];
     let adv, parc;
-    if (f.id === '6.8') { adv = ['Lúcia', 'Marlene', 'Seu Tião']; parc = ['Dona Nit', 'Zé']; }
+    if (f.id === '6.8') { adv = ['Pedro', 'Dedé', 'Osni']; parc = ['Tânia', 'Marinho']; }
     else {
       const sala = SALAS[f.sala - 1];
       adv = NOMES_ADV.filter((x) => x !== sala.chefe); if (f.chefe) adv = [sala.chefe].concat(adv);
       else adv = adv.slice((f.idx - 1) % 3).concat(adv.slice(0, (f.idx - 1) % 3));
       parc = NOMES_PARC.filter((x) => x !== sala.chefe && adv.indexOf(x) < 0);
-      if (f.sala === 1 && !f.chefe) adv = ['Dona Nit'].concat(adv); // na cozinha quem joga com você é a Dona Nit
+      if (f.sala === 1 && !f.chefe) adv = ['Tânia'].concat(adv); // na cozinha quem joga com você é a Tânia
     }
     let a = 0, p = 0;
     for (let i = 1; i < n; i++) {
@@ -140,14 +140,14 @@
   }
   function cartao(f, myName, desloca) {
     const ps = seats(f, myName, desloca);
-    const ELA = /^(Dona Nit|Marlene|Lúcia|Cida|Rita|Neusa|Vera|Tereza|Dirce|Ivone)$/; // adjetivo no feminino para elas
+    const ELA = /^(Tânia|Dedé|Cida|Rita|Neusa|Vera|Tereza|Dirce|Ivone)$/; // adjetivo no feminino para elas
     const nm = (p) => p.name + (LV_ADJ[p.lvl] ? ' (' + (ELA.test(p.name) ? LV_ADJ[p.lvl].replace(/o$/, 'a') : LV_ADJ[p.lvl]) + ')' : '');
     const contra = ps.filter((p, i) => i % 2).map(nm), com = ps.filter((p, i) => i && !(i % 2)).map(nm);
     const lista = (a) => (a.length > 1 ? a.slice(0, -1).join(', ') + ' e ' + a[a.length - 1] : a[0] || '');
     let tempo = FORMATO[f.formato].tela; if (f.formato === 'R1' && f.mesa === 6) tempo = 'Uma rodada · uns 15 min';
     return {
       titulo: f.id + ' · ' + f.nome, tempo,
-      quem: f.id === '6.8' ? 'Contra: ' + lista(contra) + ' · Dona Nit e Zé vieram ajudar você' : 'Contra: ' + lista(contra) + (com.length ? ' · Com você: ' + lista(com) : ''),
+      quem: f.id === '6.8' ? 'Contra: ' + lista(contra) + ' · Tânia e Marinho vieram ajudar você' : 'Contra: ' + lista(contra) + (com.length ? ' · Com você: ' + lista(com) : ''),
       vantagem: f.vant && f.formato !== 'R1' ? 'Eles começam na frente, com ' + f.vant.toLocaleString('pt-BR') + ' pontos. Dá para virar.' : '',
       longa: f.formato === 'R3' ? 'Essa fase leva uns 35 minutos. Dá para parar e continuar depois.' : '',
       objetivos: [0, 1, 2].map((k) => objTxt(f, k)),
@@ -209,8 +209,8 @@
   function barra(E, n) {
     const s = SALAS[n - 1]; const st = salaStars(E, n);
     const chefe = n === 6 ? 'A Festa da Tânia' : s.chefe;
-    if (st < 7) return 'Junte 7 estrelas para chamar ' + (n === 6 ? 'A Festa da Tânia' : (s.chefe === 'Zé' || s.chefe === 'Seu Tião' ? 'o ' : 'a ') + s.chefe) + ': ' + st + ' de 7';
-    if (starsOf(E, n + '.8') < 1) return n < 6 ? 'Vença ' + (s.chefe === 'Zé' || s.chefe === 'Seu Tião' ? 'o ' : 'a ') + s.chefe + ' para abrir ' + (['a ', 'a ', 'o ', 'o ', 'o '][n - 1]) + SALAS[n].nome : 'Vença ' + chefe + '!';
+    if (st < 7) return 'Junte 7 estrelas para chamar ' + (n === 6 ? 'A Festa da Tânia' : (/^(Marinho|Osni|Pedro)$/.test(s.chefe) ? 'o ' : 'a ') + s.chefe) + ': ' + st + ' de 7';
+    if (starsOf(E, n + '.8') < 1) return n < 6 ? 'Vença ' + (/^(Marinho|Osni|Pedro)$/.test(s.chefe) ? 'o ' : 'a ') + s.chefe + ' para abrir ' + (['a ', 'a ', 'o ', 'o ', 'o '][n - 1]) + SALAS[n].nome : 'Vença ' + chefe + '!';
     return st + ' de 24 estrelas neste cômodo';
   }
   function proxima(E) {

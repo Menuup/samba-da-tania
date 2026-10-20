@@ -492,17 +492,18 @@ body.verso-dourado .card.back{background:linear-gradient(135deg,#9c7d1e,#f2c14e,
 </div>
 
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
-<script src="engine.js?v=20261020a"></script>
-<script src="fx.js?v=20261020a"></script>
-<script src="eco.js?v=20261020a"></script>
-<script src="fases.js?v=20261020a"></script>
-<script src="mapa.js?v=20261020a"></script>
-<script src="torneios.js?v=20261020a"></script>
-<script src="tutorial.js?v=20261020a"></script>
-<script src="missoes.js?v=20261020a"></script>
-<script src="voz.js?v=20261020a"></script>
-<script src="cloud-config.js?v=20261020a"></script>
-<script src="cloud.js?v=20261020a"></script>
+<script src="engine.js?v=20261020d"></script>
+<script src="fx.js?v=20261020d"></script>
+<script src="eco.js?v=20261020d"></script>
+<script src="fases.js?v=20261020d"></script>
+<script src="mapa.js?v=20261020d"></script>
+<script src="torneios.js?v=20261020d"></script>
+<script src="tutorial.js?v=20261020d"></script>
+<script src="missoes.js?v=20261020d"></script>
+<script src="domingos.js?v=20261020d"></script>
+<script src="voz.js?v=20261020d"></script>
+<script src="cloud-config.js?v=20261020d"></script>
+<script src="cloud.js?v=20261020d"></script>
 <script>
 'use strict';
 const $ = (s) => document.querySelector(s);
@@ -540,7 +541,7 @@ confetti(5000);
 
 /* ---------- avatar, tema da mesa e conversa ---------- */
 const EMOJIS = ['😀', '😎', '🥰', '🤠', '👵', '👴', '👩', '👨', '🧓', '🐱', '🦊', '🐼', '🦁', '🐸', '🌻', '🍀', '⭐', '❤️', '🎩', '👑'];
-const BOT_AV = ['🤖', '👾', '🦉', '🐙', '🦄'];
+const BOT_AV = ['👩‍🍳', '🧔', '🎨', '🧑‍🔧', '🦷'];
 let myAvatar = ls.get('avatar', '🙂');
 let avatars = [];
 function safeAv(a) {
@@ -1116,13 +1117,22 @@ let sel = new Set(); let sortMode = ls.get('sort', 'suit'); let showRules = fals
 
 function goHome() { if (!Net.host) leaveTable(); Net.view = null; render({ phase: 'home' }); }
 
+// A turma: quem são os robôs e o que cada um diz quando pega o lixo ou bate
+const PERSONAS = {
+  'Tânia': { ic: '👩‍🍳', bio: 'Dona de restaurante, toma conta da casa, da família e dos restaurantes. Mandona e nunca está errada. Diz a lenda que esconde carta para pegar o lixo.', lixo: 'Isso aqui já era meu, tá? 😏', bate: 'Eu falei que não estava errada!' },
+  'Marinho': { ic: '🧔', bio: 'Palmeirense, de extrema esquerda, adora o PT e o Lula. Engraçado, toma conta do restaurante também e é um cara do bem que todo mundo gosta.', lixo: 'O lixo é do povo, companheiros! 🚩', bate: 'Vitória da classe trabalhadora! 🚩' },
+  'Pedro': { ic: '🦷', bio: 'Dentista, marido do Marcelo. Conhece a nata de Ribeirão Preto, adora viajar e frequenta as festas das pessoas influentes.', lixo: 'Esse lixo tem nível, hein. 🥂', bate: 'Bateu! Hora do brinde! 🥂' },
+  'Marcelo': { ic: '🩺', bio: 'Médico do Hospital de Amor, em Barretos, marido do Pedro. Calmo, veio de baixo, trabalhador, um cara do bem.', lixo: 'Calma, estou só fazendo o diagnóstico. 🩺', bate: 'Alta médica: bati! 🩺' },
+  'Osni': { ic: '🧑‍🔧', bio: 'Amigo dos pais desde a adolescência, muito zoeiro. Escultor em ferro, já foi mecânico dos melhores. Adora ser zoado.', lixo: 'Esse jogo está precisando de uma soldada. 🔧', bate: 'Sai que o ferreiro bateu! 🔧' },
+  'Dedé': { ic: '🎨', bio: 'Mulher do Osni e amiga da Tânia desde o colegial. Artista alternativa e engraçada.', lixo: 'Isso é arte pura. 🎨', bate: 'Bati! Obra-prima! 🎨' },
+};
 let banners = []; let lastLogN = -1; let lastRoundB = -1; let bnTimer = null;
 function trackBanners(v) {
   if (v.logN == null) return;
   if (lastLogN < 0 || v.round !== lastRoundB || v.logN < lastLogN) { banners = []; lastLogN = v.logN; lastRoundB = v.round; return; }
   if (v.logN > lastLogN) {
     const n = Math.min(v.logN - lastLogN, v.log.length);
-    v.log.slice(-n).forEach((x) => banners.push({ t: x.t, s: x.s, ts: Date.now() }));
+    v.log.slice(-n).forEach((x) => { banners.push({ t: x.t, s: x.s, ts: Date.now() }); const p = x.s != null && v.players[x.s] && v.players[x.s].bot && PERSONAS[v.players[x.s].name]; if (p && /pegou o lixo/.test(x.t)) banners.push({ t: v.players[x.s].name + ': “' + p.lixo + '”', s: x.s, ts: Date.now() }); else if (p && /BATEU/.test(x.t)) banners.push({ t: v.players[x.s].name + ': “' + p.bate + '”', s: x.s, ts: Date.now() }); });
     banners = banners.slice(-8); lastLogN = v.logN;
   }
 }
@@ -1924,13 +1934,13 @@ function startDesafio() {
   if (rd && rd.ctx.id === d) return resumeLocal('desafio');
   if (EC.has('desafio:' + d + ':iniciado')) return toast('Você já jogou o Desafio de hoje. Amanhã tem outro!');
   EC.mark('desafio:' + d + ':iniciado'); // clicar em Jogar consome o dia
-  const ps = [{ name: myName, bot: false }, { name: 'Zé', bot: true, lvl: 'normal' }, { name: 'Dona Nit', bot: true, lvl: 'normal' }, { name: 'Marlene', bot: true, lvl: 'normal' }];
+  const ps = [{ name: myName, bot: false }, { name: 'Marinho', bot: true, lvl: 'normal' }, { name: 'Tânia', bot: true, lvl: 'normal' }, { name: 'Dedé', bot: true, lvl: 'normal' }];
   localStart({ mode: 'desafio', id: d, players: ps, opts: { target: 1, mode: 'desafio', rng: S.mulberry(+d * 7919 + 1234567) }, ctx: { lvl: 'normal' } });
 }
 function startTutorial() {
   if (!TU) return;
   const g = TU.build(S, myName);
-  localStart({ mode: 'treino', players: [{ name: myName, bot: false }, { name: 'Dona Nit', bot: true, lvl: 'normal' }], g, ctx: { lvl: 'normal' } });
+  localStart({ mode: 'treino', players: [{ name: myName, bot: false }, { name: 'Tânia', bot: true, lvl: 'normal' }], g, ctx: { lvl: 'normal' } });
 }
 
 /* --- fim da rodada: moedas e estrelas --- */
@@ -2125,7 +2135,7 @@ const LOJA = [
   { id: 'b_robos', shelf: 'Para a mesa', name: 'Batizar os robôs (nomes da família)', coins: 200, slot: 'batizar' },
 ];
 const FIGURINHAS = { fg_risadas: ['😂', '🤣', '😆', '😹', '🙈', '😜'], fg_festa: ['🎉', '🥳', '🎊', '🍾', '🎈', '💃'], fg_vovo: ['👵', '☕', '🧶', '🍰', '🙏', '😘'] };
-const NOMES_ROBOS = ['Dona Nit', 'Zé', 'Marlene', 'Seu Tião', 'Lúcia'];
+const NOMES_ROBOS = ['Tânia', 'Marinho', 'Dedé', 'Osni', 'Pedro'];
 const nomesRobos = () => { const n = ls.get('nomesRobos', null); return EC && EC.equipped().batizar && Array.isArray(n) && n.length === 5 ? n.map((x, i) => String(x || '').trim().slice(0, 14) || NOMES_ROBOS[i]) : NOMES_ROBOS; };
 function batizarModal() {
   const m = document.createElement('div'); m.className = 'modal'; const atual = ls.get('nomesRobos', NOMES_ROBOS);
@@ -2260,7 +2270,7 @@ function giroModal() {
     m.querySelector('#ggo').onclick = () => {
       if (EC.wallet().coins < giroE) return toast('Faltam moedas para esta entrada.');
       m.remove();
-      const nomes = ['Zé', 'Marlene', 'Seu Tião'];
+      const nomes = ['Marinho', 'Dedé', 'Osni'];
       const ps = [{ name: myName, bot: false }].concat(nomes.slice(0, EC.CFG.GIRO_CADEIRAS - 1).map((n) => ({ name: n, bot: true, lvl: EC.CFG.GIRO_ROBO })));
       const g = S.newGame(ps, { target: EC.CFG.GIRO_ALVO, mode: 'torneio', scores: [0, EC.CFG.GIRO_VANTAGEM] });
       const r = EC.giroEntrar(g.runId, giroE); if (r.error) return toast(r.error);
@@ -2431,6 +2441,7 @@ function menuHtml() {
   <div class="mn-top"><div class="mn-titulo"><span>🃏</span> Samba da Tânia</div><button class="sec mutebtn" title="Som">🔊</button></div>
   <button class="mn-eu" id="mn-eu"><span id="avnow">${avHtml(myAvatar, 52)}</span><span class="mn-nome"><b>${myName ? escH(myName) : 'Toque para escolher seu nome'}</b>${window.FX ? FX.profileHtml(true) : ''}</span><span class="mn-carteira"><span class="chip">🪙 ${fmt(w.coins)}</span><span class="chip">💎 ${fmt(w.gems)}</span></span></button>
   ${salvo ? `<button class="bigbtn mn-cont" id="mn-cont" data-modo="${salvo}">▶ Continuar ${nomes[salvo]()}</button>` : ''}
+  ${window.Domingos ? '<button class="mn-hoje" data-tela="domingos">🏅 Domingos: o ranking da turma (jogo pessoalmente)</button>' : ''}
   ${MI ? `<button class="mn-hoje" data-tela="missoes">🎯 Missões: ${MI.LISTA.length ? missoesFeitas() + ' de ' + MI.LISTA.length : ''} jogos que ficam mais difíceis</button>` : ''}
   ${gate.presente() || hoje.n ? `<button class="mn-hoje ${hoje.n ? 'tem' : ''}" data-tela="hoje">📅 Hoje: presente, missões e bônus${hoje.n ? `<i>${hoje.n}</i>` : ''}</button>` : ''}
   <div class="mn-grade">
@@ -2455,7 +2466,7 @@ function renderHome(app) {
   if (sala && !renderHome.avisou) { renderHome.avisou = true; telaFamilia(String(sala).toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 4)); }
 }
 function bindMenu(app) {
-  app.querySelectorAll('[data-tela]').forEach((b) => (b.onclick = () => ({ campanha: () => (mapaModal(), 0), robos: telaRobos, familia: () => telaFamilia(), torneios: telaTorneios, loja: telaLoja, mais: telaMais, hoje: telaHoje, missoes: telaMissoes })[b.dataset.tela]()));
+  app.querySelectorAll('[data-tela]').forEach((b) => (b.onclick = () => ({ campanha: () => (mapaModal(), 0), robos: telaRobos, familia: () => telaFamilia(), torneios: telaTorneios, loja: telaLoja, mais: telaMais, hoje: telaHoje, missoes: telaMissoes, domingos: telaDomingos })[b.dataset.tela]()));
   const eu = $('#mn-eu'); if (eu) eu.onclick = () => (myName ? telaMais() : precisaNome(() => goHome()));
   const c = $('#mn-cont'); if (c) c.onclick = () => precisaNome(() => resumeLocal(c.dataset.modo));
   if (window.FX) bindChrome();
@@ -2543,12 +2554,16 @@ function telaHoje() {
 }
 
 /* --- Mais: perfil, regras, aprender, conta, instalar --- */
+function telaTurma() {
+  abreTela('👥 A turma', Object.keys(PERSONAS).map((n) => `<div class="card-box" style="display:flex;gap:12px;align-items:flex-start"><span style="font-size:40px">${PERSONAS[n].ic}</span><span><b style="font-size:20px">${n}</b><br><span style="font-size:15px">${PERSONAS[n].bio}</span></span></div>`).join(''));
+}
 function telaMais() {
   abreTela('⚙️ Mais', `<div class="card-box"><label>Seu nome</label><input id="nome" value="${escH(myName)}" placeholder="Como a turma te chama?" maxlength="14">
    <div class="me-av" style="margin-top:12px"><span id="avnow">${avHtml(myAvatar, 64)}</span><div><label for="foto" style="display:inline-block"><span class="sec" style="display:inline-block;padding:10px 14px;border-radius:14px;background:#ffffff22;cursor:pointer;font-weight:700">📷 Usar minha foto</span></label><input id="foto" type="file" accept="image/*" style="display:none"></div></div>
    <div class="avs">${EMOJIS.map((e) => `<button type="button" data-e="${e}" class="${e === myAvatar ? 'on' : ''}">${e}</button>`).join('')}</div>
    <button class="sec themebtn" style="width:100%">🎨 Escolher a cor da mesa</button></div>
    ${window.FX ? FX.profileHtml() : ''}
+   <button class="sec" id="turma" style="width:100%;margin-top:6px;font-size:18px">👥 Conhecer a turma da mesa</button>
    <button class="sec" id="mm1" style="width:100%;margin-top:6px;font-size:18px">🎓 Aprender os toques no celular${EC && EC.has('tutorial') ? '' : ' (+100 🪙 na 1ª vez)'}</button>
    <button class="sec" id="mm2" style="width:100%;margin-top:10px;font-size:18px">📖 Como se joga</button>
    <button class="sec" id="mm3" style="width:100%;margin-top:10px;font-size:18px">📲 Levar meu jogo para outro celular</button>
@@ -2560,6 +2575,7 @@ function telaMais() {
     t.querySelectorAll('.avs button').forEach((b) => (b.onclick = () => setAv(b.dataset.e)));
     t.querySelector('#foto').onchange = (e) => { const f = e.target.files[0]; if (f) photoToAvatar(f, setAv); };
     t.querySelector('#nome').onchange = () => { const v = t.querySelector('#nome').value.trim(); if (v) { myName = v; ls.set('name', v); cloudName(); } else toast('Escreva seu nome.'); };
+    t.querySelector('#turma').onclick = () => telaTurma();
     t.querySelector('#mm1').onclick = () => precisaNome(() => { fechaTela(); startTutorial(); });
     t.querySelector('#mm2').onclick = () => { showRules = true; rulesModal(); };
     t.querySelector('#mm3').onclick = levarModal;
@@ -2604,7 +2620,7 @@ function missaoIntro(i) {
 }
 function startMissao(i) {
   const m = MI.LISTA[i];
-  const ps = [{ name: myName, bot: false }, { name: 'Dona Nit', bot: true, lvl: m.bot }];
+  const ps = [{ name: myName, bot: false }, { name: 'Tânia', bot: true, lvl: m.bot }];
   localStart({ mode: 'missao', id: i, players: ps, g: MI.build(S, i, myName), ctx: { lvl: m.bot, mi: i } });
 }
 // Acompanha o objetivo a cada jogada; quando cumpre ou acaba o limite, mostra o resultado.
@@ -2629,6 +2645,58 @@ function missaoFim(i, ganhou) {
   if (md.querySelector('#mp')) md.querySelector('#mp').onclick = sai(() => missaoIntro(i + 1));
   md.querySelector('#mr').onclick = sai(() => startMissao(i));
   md.querySelector('#ml').onclick = sai(() => telaMissoes());
+}
+
+/* --- Domingos: ranking da turma que joga pessoalmente --- */
+const DM = window.Domingos || null;
+let domTab = 'rank', domAno = String(new Date().getFullYear()), domSort = null, domPres = null, domCasa = null;
+const domDados = () => Object.assign({}, DM.PADRAO, ls.get('domingos', {}));
+const domSalva = (d) => ls.set('domingos', d);
+const domHoje = () => { const x = new Date(); x.setDate(x.getDate() - x.getDay()); return x.getFullYear() + '-' + String(x.getMonth() + 1).padStart(2, '0') + '-' + String(x.getDate()).padStart(2, '0'); };
+function telaDomingos() {
+  if (!DM) return;
+  const d = domDados(); if (!domPres) domPres = d.jogadores.slice(); if (domCasa == null) domCasa = DM.proximaCasa(d.jogos, d.casais.length);
+  const anos = [...new Set(d.jogos.map(DM.anoDe).concat([String(new Date().getFullYear())]))].sort();
+  const tabs = [['rank', '🏅 Ranking'], ['novo', '➕ Novo jogo'], ['hist', '📜 Jogos'], ['premio', '🎁 Prêmios']];
+  const medalha = ['🥇', '🥈', '🥉'];
+  let corpo = `<div class="seg" style="margin-bottom:10px">${tabs.map(([k, t]) => `<button type="button" class="${domTab === k ? 'on' : ''}" data-tab="${k}">${t}</button>`).join('')}</div>
+   <div class="opt"><div class="seg">${anos.map((a) => `<button type="button" class="${a === domAno ? 'on' : ''}" data-ano="${a}">${a}</button>`).join('')}</div></div>`;
+  if (domTab === 'rank') {
+    const rk = DM.ranking(d.jogos, domAno);
+    corpo += rk.length ? `<div class="mis-lista">${rk.map((x, i) => `<div class="mis-i ${i === 0 ? 'agora' : ''}"><span class="mis-n">${medalha[i] || i + 1 + 'º'}</span><span class="mis-t"><b>${escH(x.nome)}</b><small>${x.jogos} jogos · ${x.v}V ${x.e}E ${x.d}D · ${Math.round(x.aprov * 100)}% · saldo ${x.saldo > 0 ? '+' : ''}${x.saldo}</small></span><span class="mis-p">${x.pts} pts</span></div>`).join('')}</div><p class="hint">Vitória 3 pontos, empate 1, derrota 0.</p><button class="sec" id="dwa" style="width:100%;margin-top:8px">📲 Mandar o ranking no WhatsApp</button>` : '<p class="hint">Ainda não há jogos em ' + domAno + '. Toque em "Novo jogo" no domingo.</p>';
+  } else if (domTab === 'novo') {
+    corpo += `<div class="card-box"><div class="opt"><b>Data</b><input type="date" id="ddata" value="${domHoje()}" style="width:100%"></div>
+     <div class="opt"><b>Quem recebe (coxinha na casa de...)</b><div class="seg">${d.casais.map((c, i) => `<button type="button" class="${domCasa === i ? 'on' : ''}" data-casa="${i}">${escH(c.join(' e '))}</button>`).join('')}<button type="button" class="${domCasa === -1 ? 'on' : ''}" data-casa="-1">Outro lugar</button></div></div>
+     <div class="opt"><b>Quem está jogando</b><div class="seg">${d.jogadores.map((n) => `<button type="button" class="${domPres.includes(n) ? 'on' : ''}" data-pres="${escH(n)}">${escH(n)}</button>`).join('')}</div></div>
+     <button class="bigbtn" id="dsort">🎲 Sortear os times</button>
+     ${domSort ? `<div class="mn-resumo">⚔️ <b>${domSort.A.map(escH).join(' + ')}</b><br>contra<br><b>${domSort.B.map(escH).join(' + ')}</b>${domSort.fora.length ? `<br><small>Fora desta: ${domSort.fora.map(escH).join(', ')}</small>` : ''}</div>
+       <div class="opt"><b>Placar final</b><div style="display:flex;gap:10px;align-items:center"><input type="number" id="dpa" inputmode="numeric" placeholder="Time 1" style="flex:1;text-align:center;font-size:22px"><span>×</span><input type="number" id="dpb" inputmode="numeric" placeholder="Time 2" style="flex:1;text-align:center;font-size:22px"></div></div>
+       <button class="bigbtn" id="dsalva">✅ Salvar este jogo</button>` : ''}</div>`;
+  } else if (domTab === 'hist') {
+    const js = d.jogos.filter((j) => DM.anoDe(j) === domAno).slice().sort((a, b) => (b.data + b.id).localeCompare(a.data + a.id));
+    corpo += js.length ? js.map((j) => `<div class="card-box"><b>${j.data.slice(8)}/${j.data.slice(5, 7)}</b>${j.casa != null && d.casais[j.casa] ? ' · 🥟 ' + escH(d.casais[j.casa].join(' e ')) : ''}<br>${j.timeA.map(escH).join(' + ')} <b>${j.ptsA}</b> × <b>${j.ptsB}</b> ${j.timeB.map(escH).join(' + ')}<br><button class="sec" data-del="${j.id}" style="padding:6px 12px;margin-top:6px">🗑️ Apagar</button></div>`).join('') : '<p class="hint">Nenhum jogo em ' + domAno + '.</p>';
+  } else {
+    const ps = DM.premios(d.jogos, domAno, d.casais);
+    corpo += `<div class="card-box"><b>🎁 Prêmio do ano (o que está valendo)</b><input id="dprem" value="${escH(d.premio || '')}" placeholder="Ex.: jantar pago pelos outros dois casais" style="width:100%;margin-top:6px"><button class="sec" id="dpsalva" style="margin-top:8px">Guardar</button></div>
+     ${ps.length ? ps.map((p) => `<div class="mis-i"><span class="mis-n">${p.ic}</span><span class="mis-t"><b>${p.nome}</b><small>${escH(p.quem)} · ${p.det}</small></span></div>`).join('') : '<p class="hint">Os prêmios aparecem quando houver jogos em ' + domAno + '.</p>'}
+     <p class="hint">Vale o ano inteiro: quem estiver na frente em 31/12 leva.</p>`;
+  }
+  abreTela('🏅 Domingos', corpo, (t) => {
+    t.querySelectorAll('[data-tab]').forEach((b) => (b.onclick = () => { domTab = b.dataset.tab; telaDomingos(); }));
+    t.querySelectorAll('[data-ano]').forEach((b) => (b.onclick = () => { domAno = b.dataset.ano; telaDomingos(); }));
+    t.querySelectorAll('[data-casa]').forEach((b) => (b.onclick = () => { domCasa = +b.dataset.casa; telaDomingos(); }));
+    t.querySelectorAll('[data-pres]').forEach((b) => (b.onclick = () => { const n = b.dataset.pres; domPres = domPres.includes(n) ? domPres.filter((x) => x !== n) : domPres.concat([n]); domSort = null; telaDomingos(); }));
+    const on = (id, fn) => { const e = t.querySelector('#' + id); if (e) e.onclick = fn; };
+    on('dsort', () => { if (domPres.length < 4) return toast('Marque pelo menos 4 pessoas.'); domSort = DM.sorteio(domPres); telaDomingos(); });
+    on('dsalva', () => {
+      const a = t.querySelector('#dpa').value, b = t.querySelector('#dpb').value; if (a === '' || b === '') return toast('Escreva o placar dos dois times.');
+      const dd = domDados(); dd.jogos = dd.jogos.concat([{ id: Date.now().toString(36), data: t.querySelector('#ddata').value || domHoje(), casa: domCasa >= 0 ? domCasa : null, timeA: domSort.A, timeB: domSort.B, ptsA: +a, ptsB: +b }]);
+      domSalva(dd); domSort = null; domTab = 'rank'; domAno = dd.jogos[dd.jogos.length - 1].data.slice(0, 4); toast('Jogo anotado!'); telaDomingos();
+    });
+    t.querySelectorAll('[data-del]').forEach((b) => (b.onclick = () => choiceModal('Apagar este jogo do ranking?', [{ label: 'Apagar', fn: () => { const dd = domDados(); dd.jogos = dd.jogos.filter((j) => j.id !== b.dataset.del); domSalva(dd); telaDomingos(); } }])));
+    on('dwa', () => window.open('https://wa.me/?text=' + encodeURIComponent(DM.resumoTexto(d.jogos, domAno)), '_blank'));
+    on('dpsalva', () => { const dd = domDados(); dd.premio = t.querySelector('#dprem').value.trim().slice(0, 120); domSalva(dd); toast('Prêmio guardado.'); });
+  });
 }
 
 presenceStart();
