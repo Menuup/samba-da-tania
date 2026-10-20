@@ -485,16 +485,16 @@ body.verso-dourado .card.back{background:linear-gradient(135deg,#9c7d1e,#f2c14e,
 </div>
 
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
-<script src="engine.js?v=20261019k"></script>
-<script src="fx.js?v=20261019k"></script>
-<script src="eco.js?v=20261019k"></script>
-<script src="fases.js?v=20261019k"></script>
-<script src="mapa.js?v=20261019k"></script>
-<script src="torneios.js?v=20261019k"></script>
-<script src="tutorial.js?v=20261019k"></script>
-<script src="voz.js?v=20261019k"></script>
-<script src="cloud-config.js?v=20261019k"></script>
-<script src="cloud.js?v=20261019k"></script>
+<script src="engine.js?v=20261019l"></script>
+<script src="fx.js?v=20261019l"></script>
+<script src="eco.js?v=20261019l"></script>
+<script src="fases.js?v=20261019l"></script>
+<script src="mapa.js?v=20261019l"></script>
+<script src="torneios.js?v=20261019l"></script>
+<script src="tutorial.js?v=20261019l"></script>
+<script src="voz.js?v=20261019l"></script>
+<script src="cloud-config.js?v=20261019l"></script>
+<script src="cloud.js?v=20261019l"></script>
 <script>
 'use strict';
 const $ = (s) => document.querySelector(s);
@@ -1599,6 +1599,8 @@ function endModal(v) {
    <table><tr><th></th><th>Jogos</th><th>Canastra</th><th>Bater</th><th>3 verm.</th><th>Mão</th><th>Morto</th><th>Rodada</th><th>Total</th></tr>${rows}</table>
    ${loc ? localEndButtons(v) : optsHtml(v, host) + (host ? `<button style="width:100%;margin-top:14px" id="prox">${v.phase !== 'gameEnd' ? 'Próxima rodada' : v.camp && !v.camp.fim ? 'Próximo jogo do campeonato (' + (v.camp.jogo + 2) + ' de ' + v.camp.total + ')' : 'Jogar de novo'}</button>` : '<p class="hint">Aguardando a anfitriã continuar…</p>')}</div>`;
   document.body.appendChild(m);
+  // 🏠 sempre: o aviso de fim de rodada cobre a tela e escondia o botão do alto
+  if (!m.querySelector('#lhome')) { const bx = document.createElement('button'); bx.className = 'sec'; bx.id = 'emenu'; bx.style.cssText = 'width:100%;margin-top:8px'; bx.textContent = '🏠 Voltar ao menu'; m.firstElementChild.appendChild(bx); bx.onclick = () => { m.remove(); if (v.local) sairLocal(v); else sairMesa(v); }; }
   if (window.FX) FX.countUp(m);
   bindOpts(m);
   if (loc) bindLocalEnd(m, v);

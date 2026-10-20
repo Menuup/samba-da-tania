@@ -1,6 +1,6 @@
 /* Samba da Tânia: guarda os arquivos do jogo para abrir rápido e funcionar como app.
    O jogo online continua precisando de internet. Rede primeiro, cópia guardada se estiver sem sinal. */
-const CACHE = 'samba-tania-v16';
+const CACHE = 'samba-tania-v17';
 const FILES = ['./', 'index.html', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png', 'engine.js', 'fx.js', 'eco.js', 'fases.js', 'torneios.js', 'mapa.js', 'tutorial.js', 'voz.js', 'cloud-config.js', 'cloud.js'];
 
 self.addEventListener('install', (e) => {
