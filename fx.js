@@ -52,7 +52,32 @@
     lock: () => { tone(200, 'square', 0.06, 0.1); tone(140, 'square', 0.1, 0.1, 0.07); noise(0.05, 0.1, 0, 4000); },
     levelup: () => { [784, 988, 1175, 1568].forEach((f, i) => tone(f, 'triangle', 0.35, 0.14, i * 0.1)); },
   };
-  FX.sound = (name, delay) => { if (FX.muted || !SOUNDS[name]) return; if (delay) setTimeout(SOUNDS[name], delay); else SOUNDS[name](); };
+  // Sons comprados na Loja: trocam só os momentos de festa (canastra, batida, vitória, 3 vermelho).
+  const PACKS = {
+    pandeiro: {
+      canastra: () => { [0, 0.12, 0.24, 0.3].forEach((d, i) => { noise(0.07, 0.22, d, 3500); tone(i % 2 ? 330 : 220, 'sine', 0.08, 0.1, d); }); },
+      bater: () => { for (let i = 0; i < 8; i++) noise(0.06, 0.2, i * 0.09, 4000); tone(110, 'sine', 0.3, 0.2, 0.7, 60); },
+      win: () => { for (let i = 0; i < 12; i++) { noise(0.05, 0.18, i * 0.1, 3800); if (i % 3 === 0) tone(196, 'sine', 0.12, 0.14, i * 0.1); } },
+      red3: () => { noise(0.08, 0.2, 0, 4000); noise(0.08, 0.2, 0.1, 4000); },
+    },
+    sinos: {
+      canastra: () => { [1319, 1568, 2093].forEach((f, i) => { tone(f, 'sine', 1.1, 0.12, i * 0.18); tone(f * 2.01, 'sine', 0.6, 0.04, i * 0.18); }); },
+      bater: () => { [1047, 1319, 1568, 2093, 2637].forEach((f, i) => tone(f, 'sine', 1.2, 0.1, i * 0.14)); },
+      win: () => { [784, 1047, 1319, 1568, 2093, 1568, 2093].forEach((f, i) => tone(f, 'sine', 1.0, 0.1, i * 0.16)); },
+      red3: () => { tone(2093, 'sine', 0.8, 0.1); tone(2637, 'sine', 0.8, 0.06, 0.1); },
+    },
+    festa: {
+      canastra: () => { tone(2400, 'square', 0.12, 0.06); tone(2400, 'square', 0.12, 0.06, 0.18); tone(220, 'sawtooth', 0.6, 0.08, 0.35, 300); tone(277, 'sawtooth', 0.6, 0.06, 0.35, 370); },
+      bater: () => { tone(2400, 'square', 0.4, 0.07, 0, 2900); noise(0.4, 0.25, 0.1); [523, 659, 784, 1047].forEach((f, i) => tone(f, 'square', 0.3, 0.06, 0.4 + i * 0.1)); },
+      win: () => { for (let i = 0; i < 3; i++) tone(2400, 'square', 0.1, 0.06, i * 0.2); tone(196, 'sawtooth', 1.2, 0.08, 0.6, 262); tone(247, 'sawtooth', 1.2, 0.06, 0.6, 330); },
+      red3: () => { tone(2400, 'square', 0.15, 0.05); },
+    },
+  };
+  FX.pack = null;
+  FX.sound = (name, delay) => {
+    if (FX.muted) return; const fn = (FX.pack && PACKS[FX.pack] && PACKS[FX.pack][name]) || SOUNDS[name]; if (!fn) return;
+    if (delay) setTimeout(fn, delay); else fn();
+  };
   FX.toggleMute = () => { FX.muted = !FX.muted; ls.set('fxmute', FX.muted); if (!FX.muted) FX.sound('flip'); return FX.muted; };
   FX.buzz = (p) => { try { if (navigator.vibrate) navigator.vibrate(p); } catch (e) {} };
 
@@ -113,7 +138,8 @@
       const el = document.createElement('div'); el.id = 'tb'; el.className = me ? 'me' : '';
       const av = FX.avHtml && FX.avatars ? FX.avHtml(FX.avatars()[v.turn], 30) : '';
       el.innerHTML = av + '<span></span>'; el.lastChild.textContent = me ? 'Sua vez!' : 'Vez de ' + p.name;
-      const t = R(q('.felt')); el.style.top = (t ? t.top + t.height * 0.5 : innerHeight * 0.4) + 'px';
+      // no celular o aviso fica na borda de baixo da mesa, para não cobrir o monte, o lixo e os jogos
+      const t = R(q('.felt')); el.style.top = (t ? t.top + t.height * (innerWidth <= 600 ? 0.97 : 0.5) : innerHeight * 0.4) + 'px';
       document.body.appendChild(el);
       el.animate([{ transform: 'translate(-50%,-50%) translateY(-24px) scale(.9)', opacity: 0 }, { transform: 'translate(-50%,-50%) scale(1)', opacity: 1, offset: 0.18 }, { transform: 'translate(-50%,-50%) scale(1)', opacity: 1, offset: 0.8 }, { transform: 'translate(-50%,-50%) translateY(-14px)', opacity: 0 }], { duration: me ? 1700 : 1300, easing: 'ease-out', fill: 'forwards' }).onfinish = () => el.remove();
       if (me) { FX.sound('turn'); FX.buzz(200); } else FX.sound('tick');

@@ -14,7 +14,7 @@
     BONUS_HORAS: 4, BONUS_MOEDAS: 60, BONUS_ACUMULA: 1,
     // Giro da Sorte: só duplas (4 cadeiras pagam; a casa paga as dos robôs). Prêmio total = entrada × roleta,
     // dividido pela dupla vencedora. Média 3,717x sobre 4 entradas: a casa devolve 92,9%.
-    GIRO_ENTRADAS: [50, 100, 200, 500], GIRO_ALVO: 1500, GIRO_CADEIRAS: 4, GIRO_ROBO: 'dificil', GIRO_VANTAGEM: 100, // a dupla dos robôs começa com 100 pontos
+    GIRO_ENTRADAS: [50, 100, 200, 500], GIRO_ALVO: 1500, GIRO_CADEIRAS: 4, GIRO_ROBO: 'normal', GIRO_VANTAGEM: 0, // 17/10: com o Difícil novo (vence o Normal ~80%), o Giro usa robôs Normal sem vantagem para devolver ~93%
     GIRO_PESOS: [[2, 55.1], [3, 28], [5, 10], [10, 5], [25, 1.5], [100, 0.4]],
   };
   const H20 = 20 * 3600 * 1000;
@@ -32,7 +32,8 @@
   const weekKey = (t) => { const d = new Date(t); const wd = (d.getDay() + 6) % 7; d.setHours(12, 0, 0, 0); d.setDate(d.getDate() - wd); return dayKey(d.getTime()); };
 
   /* ---------- tabelas (iguais ao spec) ---------- */
-  const PAGA = { facil: 40, normal: 60, dificil: 60, vantagem: 80, vantagemVenceu: 20 };
+  // Difícil paga 80 desde 17/10: a medição mostrou o Difícil vencendo o Normal em mais de 60% (a spec manda subir). Mestre paga o mesmo para não passar do teto diário.
+const PAGA = { facil: 40, normal: 60, dificil: 80, mestre: 80, vantagem: 80, vantagemVenceu: 20 };
   const EXTRA = { venceu: 30, bateu: 20, limpa: 10, limpaMax: 5, red: 5, redMax: 4, jogo: 60, familia: 20, familiaDia: 3 };
   const TETO_RODADAS = 8;
   const DUR_MIN = 240 * 1000;
@@ -61,6 +62,17 @@
     ] },
   };
   const TAM = ['pequena', 'media', 'grande'];
+  // Conquistas: diamantes uma vez na vida. ok(ev, profile) lê o que a rodada trouxe e o perfil (FX.profile).
+  const CONQUISTAS = [
+    { id: 'bateu1', txt: 'Primeira batida', gems: 2, ok: (ev, p) => ev.bater >= 1 || (p.baters || 0) >= 1 },
+    { id: 'preta1', txt: 'Primeira canastra preta', gems: 5, ok: (ev) => ev.canB >= 1 },
+    { id: 'bateu50', txt: '50 batidas', gems: 3, ok: (ev, p) => (p.baters || 0) >= 50 },
+    { id: 'can100', txt: '100 canastras', gems: 3, ok: (ev, p) => (p.canastras || 0) >= 100 },
+    { id: 'mm_ouro', txt: 'Venceu um Mata-mata Ouro', gems: 5, ok: (ev) => !!ev.mmOuro },
+    { id: 'cinco', txt: '5 pessoas de verdade na mesma mesa', gems: 3, ok: (ev) => (ev.humanos || 0) >= 5 },
+    { id: 'presentes30', txt: '30 presentes do dia abertos', gems: 5, ok: (ev) => (ev.presentes || 0) >= 30 },
+    { id: 'estrelas144', txt: 'Todas as 144 estrelas', gems: 10, ok: (ev) => (ev.estrelas || 0) >= 144 },
+  ];
   // títulos fixados em níveis 5/10/20/35 (FX.title)
   const TITULO_NIVEIS = [5, 10, 20, 35];
 
@@ -91,7 +103,7 @@
     const E = {
       CFG, FRASE, PAGA, EXTRA, MISSOES, TETO_RODADAS, hash, dayKey, weekKey,
       onChange: null,
-      frozen: false,
+      frozen: false, bloqueada: false,
     };
     const changed = () => { if (typeof E.onChange === 'function') try { E.onChange(); } catch (e) {} };
 
@@ -113,6 +125,7 @@
 
     // Lançamento novo: relê o livro, confere a chave única e só então grava com o hash encadeado.
     function post(code, coins, gems, ref, allowNeg) {
+      if (E.bloqueada) return null; // segunda aba aberta: só joga, não grava
       const st = state(); const L = st.ledger;
       if (hasIn(L, code)) return null;
       const t = now();
@@ -186,7 +199,8 @@
       const n = E.giftCount(); let big = null;
       if (n % 7 === 0) big = E.grant('presente_grande:' + n, 200, 2, 'presente grande');
       const faltam = 7 - (n % 7);
-      return { coins: 60, big: !!big, n, faltam: faltam === 7 ? 7 : faltam,
+      const conq = E.conquistar({ presentes: n });
+      return { coins: 60, big: !!big, n, faltam: faltam === 7 ? 7 : faltam, conq,
         msg: big ? 'Presente grande! 200 moedas e 2 diamantes.' : 'Presente de hoje: 60 moedas. Faltam ' + faltam + ' para o presente grande.' };
     };
 
@@ -232,7 +246,7 @@
       const mode = ctx.mode || 'livre';
       const run = v.runId || ctx.runId || 'semid';
       const key = 'rodada:' + run + ':' + v.round;
-      const out = { key, coins: 0, lines: [], msg: '', missions: [], paid: false };
+      const out = { key, coins: 0, lines: [], msg: '', missions: [], conquistas: [], paid: false };
       if (E.has(key) || E.has('nopay:' + run + ':' + v.round)) { out.repeat = true; return out; }
       if (mode === 'treino' || mode === 'premio' || mode === 'mm') { E.mark('nopay:' + run + ':' + v.round, mode); return out; }
       const t = v.myTeam; const rr = v.roundResult;
@@ -250,6 +264,7 @@
       const st0 = v.roundStartedAt || v.startedAt || ctx.roundStartedAt; const dur = st0 ? now() - st0 : 0;
       const turnosOk = ctx.online ? ((v.turnos && v.turnos[v.seat]) || 0) >= 0.6 * (ctx.turnosEsperados || 0) : true;
       out.missions = E.progress(ev);
+      out.conquistas = E.conquistar({ bater: ev.bater, canB: rs.canB || 0, humanos: ctx.humanosReais || 0 }, ctx.profile);
       if (dur < DUR_MIN || !turnosOk) {
         E.mark('nopay:' + run + ':' + v.round, 'curta');
         out.msg = 'Essa rodada foi rápida demais para valer moeda. As estrelas valem.'; return out;
@@ -261,7 +276,7 @@
       const vant = v.vantagem && v.vantagem[1 - t] > 0;
       const lvl = ctx.lvl || 'normal';
       let base = vant ? PAGA.vantagem : (PAGA[lvl] || PAGA.normal);
-      const nome = vant ? 'Robôs na frente' : 'contra ' + ({ facil: 'Fácil', normal: 'Normal', dificil: 'Difícil' }[lvl] || 'Normal');
+      const nome = vant ? 'Robôs na frente' : 'contra ' + ({ facil: 'Fácil', normal: 'Normal', dificil: 'Difícil', mestre: 'Mestre' }[lvl] || 'Normal');
       out.lines.push(['Rodada ' + nome, base]);
       if (vant && venceu) { base += PAGA.vantagemVenceu; out.lines.push(['Virou a vantagem', PAGA.vantagemVenceu]); }
       let c = base;
@@ -402,6 +417,64 @@
       const g = v && E.giroMult(v.runId); if (!g || v.phase !== 'gameEnd' || v.winner !== v.myTeam) return null;
       const total = g.entrada * g.mult; const parte = Math.floor(total / 2);
       return E.grant('giro_premio:' + v.runId, parte, 0, 'Giro da Sorte ' + g.mult + 'x') ? { premio: parte, total, mult: g.mult } : null;
+    };
+
+    /* ---------- conquistas (uma vez na vida, só diamantes) ---------- */
+    E.CONQUISTAS = CONQUISTAS;
+    // ev: { bater, canB, humanos, mmOuro, presentes, estrelas }, profile: FX.profile() (baters, canastras). Devolve as novas.
+    E.conquistar = (ev, profile) => {
+      ev = ev || {}; profile = profile || {}; const got = [];
+      CONQUISTAS.forEach((c) => {
+        if (E.has('conquista:' + c.id) || !c.ok(ev, profile)) return;
+        const e = E.grant('conquista:' + c.id, 0, c.gems, c.txt); if (e) got.push({ txt: c.txt, gems: c.gems });
+      });
+      return got;
+    };
+
+    /* ---------- Campeonato da Família (mesa online; só paga com ≥ 2 pessoas de verdade) ---------- */
+    // r: { id, nome, humanos, pos, confere } — pos = colocação dela na tabela; confere = a tabela bateu com o que este celular viu.
+    E.campFim = (r) => {
+      if (!r || !r.id || E.has('camp:' + r.id)) return null;
+      E.mark('camp:' + r.id, r.nome || '');
+      const out = { coins: 0, gems: 0, lines: [], taca: false };
+      if ((r.humanos || 0) < 2) { out.lines.push('Campeonato com uma pessoa só: valeu como jogo livre.'); return out; }
+      const d = dayKey(now());
+      const e = E.grant('camp_part:' + d, 100, 0, r.nome || 'Campeonato da Família'); if (e) { out.coins += 100; out.lines.push('Participou do Campeonato: +100 moedas'); }
+      if (r.pos === 1 && r.confere !== false) {
+        const g = r.humanos >= 3 ? 1 : 0;
+        const c = E.grant('camp_camp:' + d, 300, g, r.nome || 'Campeonato da Família'); if (c) { out.coins += 300; out.gems += g; out.lines.push('Campeã da Família: +300 moedas' + (g ? ' e +1 diamante' : '')); }
+      }
+      E.mark('taca:familia:' + r.id, (r.pos || 0) + '|' + String(r.nome || '').slice(0, 30)); out.taca = true;
+      out.lines.push(r.pos === 1 ? 'Taça da Família dourada!' : 'Taça da Família de prata (' + (r.pos || '-') + 'º lugar)');
+      return out;
+    };
+
+    /* ---------- levar meu jogo para outro celular ---------- */
+    // Código em texto com o livro inteiro, a data da exportação e o id do aparelho dentro da cadeia (um lançamento 'exportado').
+    const b64 = (s) => (typeof btoa === 'function' ? btoa(unescape(encodeURIComponent(s))) : Buffer.from(s, 'utf8').toString('base64'));
+    const unb64 = (s) => (typeof atob === 'function' ? decodeURIComponent(escape(atob(s))) : Buffer.from(s, 'base64').toString('utf8'));
+    E.exportar = (deviceId) => {
+      E.mark('exportado:' + now(), String(deviceId || '').slice(0, 20));
+      const st = state(); const txt = JSON.stringify({ v: 1, exportado_em: now(), dev: String(deviceId || ''), st });
+      return 'SAMBA1.' + b64(txt) + '.' + hash(txt + SAL);
+    };
+    // Importa só em carteira nova: recusa se o livro local já tem mais de 5 lançamentos ou é mais novo que o código.
+    E.importar = (code) => {
+      const RECUSA = 'O código serve para levar o jogo para um celular novo, não para voltar no tempo.';
+      try {
+        const m = /^SAMBA1\.([A-Za-z0-9+/=]+)\.([0-9a-f]{8})$/.exec(String(code || '').trim()); if (!m) return { error: 'Esse código não é de um jogo do Samba.' };
+        const txt = unb64(m[1]); if (hash(txt + SAL) !== m[2]) return { error: 'O código está incompleto ou foi alterado.' };
+        const o = JSON.parse(txt); const L = o.st && o.st.ledger;
+        if (!Array.isArray(L) || verify(L) >= 0) return { error: 'O código está incompleto ou foi alterado.' };
+        const loc = state().ledger;
+        if (loc.length > 5) return { error: RECUSA };
+        // carteira que já tem jogo (algo além da carteira inicial) e é mais nova que o código: não volta no tempo
+        const jogou = loc.some((e) => !/^(inicial|veterano|apagada)$/.test(e.code));
+        if (jogou && loc[loc.length - 1].t > o.exportado_em) return { error: RECUSA };
+        if (now() < o.exportado_em - 60000) return { error: RECUSA };
+        const st = o.st; delete st.pinH; write(st); E.mark('importado:' + now(), String(o.dev || '').slice(0, 20)); changed();
+        return { ok: true, coins: E.wallet().coins, gems: E.wallet().gems };
+      } catch (e) { return { error: 'Não deu para ler o código.' }; }
     };
 
     E.diagnostico = () => { const w = E.wallet(); const c = E.campaign(); return JSON.stringify({ w: [w.coins, w.gems, w.ok], n: state().ledger.length, t: c.tries, a: c.abandons, v: c.wins }); };

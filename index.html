@@ -137,7 +137,7 @@ table{width:100%;border-collapse:collapse}td,th{padding:5px 4px;text-align:right
 .pl{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid #ffffff22}
 
 /* ---- jogo numa tela só: sem rolagem, cartas proporcionais à largura ---- */
-#app.wide{height:100vh;height:100dvh;max-height:100dvh;display:flex;flex-direction:column;overflow:hidden;padding:6px 8px calc(6px + env(safe-area-inset-bottom));--cw:min(44px,calc((100vw - 20px)/10 - 3px))}
+#app.wide{height:100vh;height:100dvh;max-height:100dvh;display:flex;flex-direction:column;overflow:hidden;padding:max(6px,env(safe-area-inset-top)) max(8px,env(safe-area-inset-right)) calc(6px + env(safe-area-inset-bottom)) max(8px,env(safe-area-inset-left));--cw:min(44px,calc((100vw - 20px)/10 - 3px))}
 #app.wide .top{flex:none;font-size:12px;gap:6px;flex-wrap:nowrap}
 #app.wide .top .score{padding:3px 8px;font-size:12px;white-space:nowrap}
 #app.wide .top button{padding:4px 8px!important;font-size:14px}
@@ -371,9 +371,53 @@ body.verso-renda .card.back{background:radial-gradient(circle,transparent 3px,#f
 body.verso-bordado .card.back{background:repeating-linear-gradient(45deg,#d62828 0 3px,#fff 3px 6px),#fff}
 body.verso-xadrez .card.back{background:conic-gradient(#c62839 25%,#fff 0 50%,#c62839 0 75%,#fff 0) 0 0/12px 12px}
 body.verso-flores .card.back{background:radial-gradient(circle,#ffd166 2px,#ff5d8f 3px,transparent 5px) 0 0/12px 12px,#2d6a4f}
+body.verso-foto .card.back{background:var(--foto) center/cover,linear-gradient(135deg,#9c7d1e,#f2c14e)}
+body.mesa-nome .felt::after{content:var(--nm);position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) rotate(-8deg);font:800 clamp(28px,9vw,64px)/1 Georgia,serif;color:#fff;opacity:.10;pointer-events:none;white-space:nowrap;z-index:1}
+.av.mold-trofeu{border:3px solid #f2c14e!important;box-shadow:0 0 0 2px #9c7d1e,0 0 12px #f2c14e}
+.jg{display:flex;align-items:center;gap:6px;padding:6px 8px;margin:4px 0;border-radius:10px;background:#00000030;font-size:15px}.jg>span{flex:1;min-width:0}.jg>span:last-child{text-align:right}.jg i{opacity:.6;font-style:normal}.jg .ven{font-weight:800;color:var(--gold)}.jg .per{opacity:.55}.jg .eu{text-decoration:underline}
 body.verso-dourado .card.back{background:linear-gradient(135deg,#9c7d1e,#f2c14e,#9c7d1e);border-color:#fff3c4}
 .av.mold-bronze{border:3px solid #cd7f32!important}.av.mold-prata{border:3px solid #d9d9d9!important}.av.mold-ouro{border:3px solid #f2c14e!important;box-shadow:0 0 10px #f2c14e}
 .av.mold-flores{border:3px dashed #ff5d8f!important}.av.mold-coracao{border:3px solid #e63946!important;box-shadow:0 0 8px #e63946}.av.mold-coroa{border:3px double #f2c14e!important;box-shadow:0 0 14px #f2c14e}
+/* ---- celular (auditoria 17/10): placar sempre à vista, cartas grandes, ninguém sentado em cima dos jogos ---- */
+#app.wide .top .placar{cursor:pointer}
+.comodos{display:flex;align-items:center;justify-content:center;margin-top:12px}.comodos span{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:22px;border:3px solid #ffffff55;background:#ffffff1a}.comodos span.ok{border-color:#f2c14e;background:#f2c14e44;box-shadow:0 0 10px #f2c14e88}.comodos span.ab{border-color:#fff;background:#ffffff2e}.comodos span.fe{opacity:.4;filter:grayscale(1)}.comodos i{width:12px;height:3px;background:#ffffff44;display:block}
+@media(max-width:600px){
+#app.wide .top{flex-wrap:wrap;row-gap:4px}
+#app.wide .top .placar{order:-1;flex:1 1 100%;text-align:center;font-size:19px;padding:4px 10px;display:flex;justify-content:center;align-items:center;gap:6px;flex-wrap:wrap}
+#app.wide .top .placar .pt{font-size:22px}
+#app.wide .top .placar .vant{font-size:12px;color:var(--gold)}
+#app.wide .top>.score:not(.placar){flex:1 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;font-size:12px}
+#app.wide .top .tbtn{flex:none;max-width:100%;overflow-x:auto;scrollbar-width:none}
+#app.wide .top .tbtn button{padding:5px 8px!important;font-size:15px}
+}
+/* mão: o tamanho das cartas é escolhido pelo fitMao() (o maior que cabe deixando a mesa com altura boa); linhas se sobrepõem de baixo para cima, a figura fica no canto de cima */
+#app.wide{--cw:62px}
+#app.wide .hand{display:flex;flex-wrap:wrap;align-content:flex-start;gap:0;padding:14px 2px calc(var(--cw) * .66) 2px;min-height:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
+#app.wide .hand .card{width:var(--cw);height:calc(var(--cw) * 1.42);margin-right:calc(var(--cw) * -.44);margin-bottom:calc(var(--cw) * -.66);justify-content:flex-start;align-items:flex-start;padding:calc(var(--cw) * .05) 0 0 calc(var(--cw) * .07);border-radius:8px;box-shadow:-2px 0 5px #0005}
+#app.wide .hand .card b{font-size:calc(var(--cw) * .44);line-height:1}
+#app.wide .hand .card i{font-size:calc(var(--cw) * .42);line-height:1;margin-top:1px}
+#app.wide .hand .card.jk b{font-size:calc(var(--cw) * .42)}
+#app.wide .hand .card.jk i{font-size:calc(var(--cw) * .13);writing-mode:vertical-rl;margin-top:3px;letter-spacing:0}
+#app.wide .hand .card.sel{transform:translateY(-13px);z-index:6}
+@media(max-width:600px){
+#app.wide .status{font-size:13px;line-height:1.25;max-height:2.6em;overflow:hidden}
+#app.wide .top .placar .verc{flex:1 1 100%;text-align:center;font-size:11px;opacity:.7;margin-top:-4px}
+#tb{font-size:14px!important;padding:4px 12px 4px 5px!important;gap:6px!important;opacity:.95;pointer-events:none}
+#tb .av{width:22px!important;height:22px!important;font-size:13px!important}
+#toast{top:auto!important;bottom:calc(14px + env(safe-area-inset-bottom));max-width:94vw;font-size:15px}
+/* assentos na borda da mesa; mortos no canto de baixo */
+#app.wide .seat{overflow:hidden;justify-content:center;box-sizing:border-box}
+#app.wide .seat b{overflow:hidden;text-overflow:ellipsis;min-width:0;flex:0 1 auto}
+#app.wide .top .tbtn .themebtn,#app.wide .top .tbtn #logbtn{display:none}
+#app.wide .tw.n6 .seat .av{display:none}
+#app.wide .tw.n6 .seat{padding:2px 4px;gap:2px}
+#app.wide .mortos{top:auto;bottom:-3px}
+/* jogos da mesa e montes maiores (a mesa encolhe sozinha quando enche: fitZones) */
+#app.wide{--u:1.9px}
+#app.wide .pile .card{width:48px;height:70px}
+#app.wide .pile .card b,#app.wide .pile .card i{font-size:22px}
+#app.wide .pile{font-size:12px}
+}
 </style>
 </head>
 <body>
@@ -389,14 +433,16 @@ body.verso-dourado .card.back{background:linear-gradient(135deg,#9c7d1e,#f2c14e,
 </div>
 
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
-<script src="engine.js?v=20261017b"></script>
-<script src="fx.js?v=20261017b"></script>
-<script src="eco.js?v=20261017b"></script>
-<script src="fases.js?v=20261017b"></script>
-<script src="tutorial.js?v=20261017b"></script>
-<script src="voz.js?v=20261017b"></script>
-<script src="cloud-config.js?v=20261017b"></script>
-<script src="cloud.js?v=20261017b"></script>
+<script src="engine.js?v=20261019e"></script>
+<script src="fx.js?v=20261019e"></script>
+<script src="eco.js?v=20261019e"></script>
+<script src="fases.js?v=20261019e"></script>
+<script src="mapa.js?v=20261019e"></script>
+<script src="torneios.js?v=20261019e"></script>
+<script src="tutorial.js?v=20261019e"></script>
+<script src="voz.js?v=20261019e"></script>
+<script src="cloud-config.js?v=20261019e"></script>
+<script src="cloud.js?v=20261019e"></script>
 <script>
 'use strict';
 const $ = (s) => document.querySelector(s);
@@ -446,6 +492,11 @@ function avHtml(a, size) {
   return a.startsWith('data:') ? `<img class="av" src="${a}" alt="" style="width:${size}px;height:${size}px">`
     : `<span class="av" style="width:${size}px;height:${size}px;font-size:${Math.round(size * .62)}px">${a}</span>`;
 }
+// Moldura e título comprados na Loja: viajam no 'hello' e aparecem para todos na mesa (só ids conhecidos passam).
+const enfeiteOk = (id, pre) => (typeof id === 'string' && id.length < 24 && id.startsWith(pre) && /^[a-z_]+$/.test(id) ? id : null);
+const meuEnfeite = (slot) => (window.Eco ? enfeiteOk(window.Eco.equipped()[slot], slot === 'moldura' ? 'f_' : 't_') : null);
+function avMold(a, size, mold) { const h = avHtml(a, size); return mold ? h.replace('class="av"', 'class="av mold-' + mold.slice(2) + '"') : h; }
+const tituloTxt = (id) => ({ t_rainha: 'Rainha do Lixo', t_mao: 'Mão de Canastra', t_tranca: 'Trancadora', t_dona_mesa: 'Dona da Mesa', t_dona: 'Dona da Casa' }[id] || '');
 function photoToAvatar(file, cb) {
   const r = new FileReader();
   r.onload = () => {
@@ -702,13 +753,13 @@ function refreshFriendsUI() {
 })();
 
 /* ---------- rede: anfitrião (jogador 0) e convidados ---------- */
-const Net = { local: false, ctx: { mode: 'livre' }, spec: null, acc: null, opts: { timer: 60, bot: 'normal', msg: 6, lvl: 'normal', entrada: 50 }, deadline: null, timerId: null, turnTimer: null, viewAt: 0, chat: [], lastAv: null, host: false, code: null, peer: null, conn: null, conns: {}, lobby: [], g: null, botTimer: null, view: null, retry: 0 };
+const Net = { local: false, ctx: { mode: 'livre' }, spec: null, acc: null, opts: { timer: 60, bot: 'normal', msg: 6, lvl: 'dificil', entrada: 50 }, deadline: null, timerId: null, turnTimer: null, viewAt: 0, chat: [], lastAv: null, host: false, code: null, peer: null, conn: null, conns: {}, lobby: [], g: null, botTimer: null, view: null, retry: 0 };
 
 function randCode() { const a = 'ABCDEFGHJKLMNPQRSTUVWXYZ'; let c = ''; for (let i = 0; i < 4; i++) c += a[(Math.random() * a.length) | 0]; return c; }
 
 function persist() {
   if (Net.host && Net.local) { const k = RUNKEY[Net.ctx.mode]; if (k) ls.set(k, { spec: Object.assign({}, Net.spec, { g: null }), g: Net.g, acc: Net.acc, ctx: Net.ctx }); return; }
-  if (Net.host) ls.set('host', { code: Net.code, lobby: Net.lobby.map((p) => ({ ...p, connected: false })), g: Net.g, opts: Net.opts }); }
+  if (Net.host) ls.set('host', { code: Net.code, lobby: Net.lobby.map((p) => ({ ...p, connected: false })), g: Net.g, opts: Net.opts, camp: Net.camp || null }); }
 
 function hostStart(code, resume) {
   Net.host = true; Net.local = false; Net.ctx = { mode: 'livre' }; Net.code = code || randCode();
@@ -741,7 +792,7 @@ function hostMsg(conn, m) {
       p = { pid: m.pid, name: m.name || 'Convidado', bot: false, connected: true, avatar: safeAv(m.avatar) };
       if (bi >= 0) Net.lobby.splice(bi, 1, p); else Net.lobby.push(p); // quem entra assume o lugar de um robô
     }
-    p.connected = true; p.name = m.name || p.name; p.avatar = safeAv(m.avatar); p.peerId = typeof m.peerId === 'string' && m.peerId.length < 80 ? m.peerId : null; Net.conns[p.pid] = conn;
+    p.connected = true; p.name = m.name || p.name; p.avatar = safeAv(m.avatar); p.mold = enfeiteOk(m.mold, "f_"); p.titulo = enfeiteOk(m.titulo, "t_"); p.peerId = typeof m.peerId === 'string' && m.peerId.length < 80 ? m.peerId : null; Net.conns[p.pid] = conn;
     Net.lastAv = null; conn.send({ t: 'chatlog', list: Net.chat });
     persist(); broadcast();
   } else if (m.t === 'chat') {
@@ -755,7 +806,7 @@ function hostMsg(conn, m) {
 
 function hostAct(seat, a) {
   if (a.a === 'addBot' && seat === 0 && !Net.g && Net.lobby.length < 6) {
-    const names = ['Dona Nit', 'Zé', 'Marlene', 'Seu Tião', 'Lúcia'];
+    const names = nomesRobos(); // Loja: Batizar os robôs
     Net.lobby.push({ pid: 'bot' + Date.now(), name: names[Net.lobby.length - 1] || 'Robô', bot: true, connected: true, avatar: BOT_AV[(Net.lobby.length - 1) % BOT_AV.length] });
   } else if (a.a === 'removeBot' && seat === 0 && !Net.g) {
     const i = Net.lobby.map((p) => p.bot).lastIndexOf(true); if (i > 0) Net.lobby.splice(i, 1);
@@ -763,22 +814,32 @@ function hostAct(seat, a) {
     Net.lobby.splice(1, 0, Net.lobby.pop());
   } else if (a.a === 'start' && seat === 0 && !Net.g) {
     if (Net.lobby.length % 2 || Net.lobby.length < 2) { toast('O jogo é com 2, 4 ou 6 jogadores (pode completar com robô).'); return; }
-    Net.g = S.newGame(Net.lobby.map((p) => ({ name: p.name, bot: p.bot })));
+    const c = Net.opts.camp;
+    if (c && c.formato === 'todos' && Net.lobby.length !== 4) { toast('"Cada um com cada um" é com 4 na mesa.'); return; }
+    if (c) Net.camp = { id: Date.now().toString(36), nome: c.nome || 'Campeonato da Família', formato: c.formato, jogo: 0, total: c.formato === 'todos' ? 3 : 1, base: Net.lobby.map((p) => p.pid), jogos: [], fim: null };
+    else Net.camp = null;
+    novoJogo();
   } else if (a.a === 'next' && seat === 0 && Net.g) {
     const r = S.nextRound(Net.g); if (r.error) return toast(r.error); Net.g = r.state;
+  } else if (a.a === 'campnext' && seat === 0 && Net.camp && !Net.camp.fim && Net.g && Net.g.phase === 'gameEnd') {
+    Net.camp.jogo++; novoJogo();
   } else if (a.a === 'again' && seat === 0 && Net.g && Net.g.phase === 'gameEnd') {
-    Net.g = S.newGame(Net.lobby.map((p) => ({ name: p.name, bot: p.bot })));
-  } else if (a.a === 'robovez' && Net.g && Net.lateId != null && Net.g.phase === 'playing' && Date.now() - (Net.deadline || 0) > 60000) {
-    const r = S.timeoutMove(Net.g, Net.g.turn); if (r.error) return; Net.g = r.state; Net.lateId = null; Net.timerId = null;
+    if (Net.camp) { Net.camp = null; Net.opts.camp = null; } // campeonato encerrado: volta ao jogo livre
+    novoJogo();
+  } else if (a.a === 'robovez' && Net.g && Net.lateId != null && Net.g.phase === 'playing') {
+    clearTimeout(Net.turnTimer); return autoVez(null);
   } else if (a.a === 'nudge' && Net.g && Net.lateId != null) {
     Net.nudge = (Net.nudge || 0) + 1;
   } else if (a.a === 'setopts' && seat === 0) {
     if (a.timer != null && Net.g && Net.g.phase === 'playing') { Net.timerId = null; Net.lateId = null; }
-    if ([0, 20, 30, 45, 60, 90, 120].includes(a.timer)) Net.opts.timer = a.timer;
+    if ([0, 20, 30, 45, 60, 90, 120].includes(a.timer) && !Net.local) Net.opts.timer = a.timer; // contra robôs não há relógio
     if (['rapido', 'normal', 'lento', 'muito'].includes(a.bot)) Net.opts.bot = a.bot;
     if ([3, 5, 8, 12, 20].includes(a.msg)) Net.opts.msg = a.msg;
-    if (['facil', 'normal', 'dificil'].includes(a.lvl) && Net.ctx.mode === 'livre') Net.opts.lvl = a.lvl;
+    if (['facil', 'normal', 'dificil', 'mestre'].includes(a.lvl) && Net.ctx.mode === 'livre') Net.opts.lvl = a.lvl;
     if (EC && EC.ENTRADAS.includes(a.entrada) && !Net.g) Net.opts.entrada = a.entrada;
+    if ([1, 3000, 5000, 10000].includes(a.target) && !Net.g) Net.opts.target = a.target;
+    if ([0, 1000, 2000, 3000].includes(a.vant) && !Net.g) Net.opts.vant = a.vant;
+    if (a.camp !== undefined && !Net.g) Net.opts.camp = a.camp && ['todos', 'duplas'].includes(a.camp.formato) ? { formato: a.camp.formato, nome: String(a.camp.nome || '').replace(/[<>&"]/g, '').trim().slice(0, 30) } : null;
   } else if (Net.g && ['draw', 'takePile', 'meld', 'addTo', 'discard'].includes(a.a)) {
     const r = S.act(Net.g, seat, a);
     if (r.error) { if (seat === 0) toast(r.error); else sendTo(seat, { t: 'err', msg: r.error }); return; }
@@ -789,11 +850,12 @@ function hostAct(seat, a) {
 }
 
 function viewOf(seat) {
-  if (!Net.g) return { phase: 'lobby', opts: Net.opts, humanos: Net.lobby.filter((p) => !p.bot).length, code: Net.code, seat, players: Net.lobby.map((p) => ({ name: p.name, bot: p.bot, connected: p.connected })) };
+  if (!Net.g) return { phase: 'lobby', opts: Net.opts, humanos: Net.lobby.filter((p) => !p.bot).length, code: Net.code, seat, players: Net.lobby.map((p, i) => ({ name: p.name, bot: p.bot, connected: p.connected, mold: i ? p.mold : meuEnfeite("moldura"), titulo: i ? p.titulo : meuEnfeite("titulo") })) };
   const v = S.viewFor(Net.g, seat);
   v.online = Net.lobby.map((p) => p.connected); v.code = Net.code; v.opts = Net.opts;
   v.late = Net.lateId != null && Net.g.phase === 'playing' && Net.lateId === Net.g.round * 100000 + (Net.g.turnNo || 0); v.nudge = Net.nudge || 0;
-  v.ctx = Net.ctx; v.local = Net.local;
+  v.camp = Net.camp ? { id: Net.camp.id, nome: Net.camp.nome, formato: Net.camp.formato, jogo: Net.camp.jogo, total: Net.camp.total, jogos: Net.camp.jogos, fim: Net.camp.fim } : null;
+  v.ctx = Net.ctx; v.local = Net.local; v.molds = Net.lobby.map((p, i) => (i ? p.mold || null : meuEnfeite("moldura")));
   const humanos = Net.lobby.filter((p) => !p.bot).length;
   v.opts = Object.assign({}, Net.opts, { entrada: !Net.local && humanos >= 2 ? Net.opts.entrada : 0 });
   v.peerIds = Net.local ? [] : Net.lobby.map((p, i) => (i === 0 ? (Net.peer && Net.peer.id) || null : p.connected && !p.bot ? p.peerId || null : null));
@@ -822,25 +884,110 @@ function broadcast() {
 // Relógio da vez dos jogadores humanos: quando acaba, o jogo compra e descarta sozinho.
 function armTimer() {
   const g = Net.g;
-  if (!g || g.phase !== 'playing' || !Net.opts.timer || g.players[g.turn].bot) { clearTimeout(Net.turnTimer); Net.deadline = null; Net.timerId = null; return; }
+  // relógio só existe com outra pessoa de verdade na mesa (contra robôs ninguém tem pressa)
+  if (!g || g.phase !== 'playing' || !Net.opts.timer || g.players[g.turn].bot || !temOutraPessoa()) { clearTimeout(Net.turnTimer); Net.deadline = null; Net.timerId = null; Net.lateId = null; return; }
   const id = g.round * 100000 + (g.turnNo || 0);
   if (id === Net.timerId && Net.deadline) return;
   clearTimeout(Net.turnTimer); Net.timerId = id; Net.lateId = null; Net.deadline = Date.now() + Net.opts.timer * 1000;
   Net.turnTimer = setTimeout(() => {
     const g2 = Net.g;
     if (!g2 || g2.phase !== 'playing' || g2.round * 100000 + (g2.turnNo || 0) !== id) return;
-    // tempo acabou: a mesa espera a pessoa e todos recebem o alerta
+    // tempo acabou: a mesa avisa todo mundo e, depois de mais 30 s, o jogo compra e descarta pela pessoa (nunca fica parado)
     Net.lateId = id; broadcast();
+    Net.turnTimer = setTimeout(() => autoVez(id), LATE_GRACE * 1000);
   }, Net.opts.timer * 1000);
   broadcast();
+}
+// Sala de espera: "Tamanho do jogo" (qualquer mesa) e o Campeonato da Família (nome e formato).
+const TAMANHOS = [[1, 'Uma rodada', 'uns 10 min'], [3000, 'Até 3.000', 'uns 20 min'], [5000, 'Até 5.000', 'uns 35 min'], [10000, 'Jogo inteiro, 10.000', 'uns 50 min']];
+const VANTS = [[0, 'Nenhuma'], [1000, '1.000'], [2000, '2.000'], [3000, '3.000']];
+function vantHtml(v, host) {
+  const o = v.opts || {}; const tg = o.target || 10000; const vt = o.vant | 0;
+  if (tg === 1) return ''; // em uma rodada só a vantagem não pesa na regra
+  const aviso = (v.players || []).every((p, i) => i % 2 === 0 || p.bot) ? '' : '<p class="hint" style="margin:4px 0">Só vale quando o time de baixo é de robôs.</p>';
+  if (!host) return vt ? `<p class="hint" style="margin:6px 0 0">Robôs começam na frente: ${vt.toLocaleString('pt-BR')} pontos.</p>` : '';
+  return `<b>Vantagem dos robôs</b> <span class="hint">(começam o jogo na frente)</span><div class="avs t">${VANTS.map(([x, nm]) => `<button type="button" class="${vt === x ? 'on' : ''}" data-vant="${x}">${nm}</button>`).join('')}</div>${aviso}`;
+}
+function campLobbyHtml(v, host) {
+  const o = v.opts || {}; const c = o.camp; const tg = o.target || 10000; const n = (v.players || []).length;
+  const tam = (TAMANHOS.find((x) => x[0] === tg) || TAMANHOS[3]);
+  if (!host) return `<div class="card-box">${c ? `<b>🏆 ${escH(c.nome || 'Campeonato da Família')}</b><br><span class="hint">${c.formato === 'todos' ? 'Cada um com cada um: 3 jogos de uma rodada, cada um joga uma vez com cada um. Uns 40 min.' : 'Em duplas até 5.000. Uns 35 min.'}</span>` : `<b>Tamanho do jogo:</b> ${tam[1]} (${tam[2]})${vantHtml(v, false)}`}</div>`;
+  const vale = c && c.formato === 'todos' && n !== 4 ? '<p class="warn">"Cada um com cada um" precisa de 4 na mesa.</p>' : '';
+  return `<div class="card-box">${c ? '' : `<b>Tamanho do jogo</b><div class="avs t">${TAMANHOS.map(([t, nm, tp]) => `<button type="button" class="${tg === t ? 'on' : ''}" data-target="${t}">${nm}<br><small>${tp}</small></button>`).join('')}</div>${vantHtml(v, true)}`}
+   <b>🏆 Campeonato da Família</b><p class="hint" style="margin:4px 0">Só vale com pelo menos 2 pessoas de verdade. Robô completa a mesa, mas não ganha prêmio. Campeã: 300 moedas e a Taça da Família.</p>
+   ${c ? `<input id="campnome" maxlength="30" placeholder="Nome (ex.: Natal 2026)" value="${escH(c.nome)}" style="margin:6px 0">` : ''}
+   <div class="avs t"><button type="button" class="${!c ? 'on' : ''}" data-campf="off">Sem campeonato</button><button type="button" class="${c && c.formato === 'todos' ? 'on' : ''}" data-campf="todos">Cada um com cada um<br><small>4 pessoas · uns 40 min</small></button><button type="button" class="${c && c.formato === 'duplas' ? 'on' : ''}" data-campf="duplas">Em duplas até 5.000<br><small>4 ou 6 · uns 35 min</small></button></div>${vale}</div>`;
+}
+// Tabela do campeonato (no fim de cada jogo): vitória 3, cada batida +1, saldo desempata.
+function campTabelaHtml(v) {
+  const C = v.camp; if (!C || !TO || !C.jogos || !C.jogos.length) return '';
+  const tab = C.fim ? C.fim.tabela : TO.tabelaFamilia(C.jogos);
+  return `<div class="eco-res"><b>🏆 ${escH(C.nome)} · ${C.fim ? 'tabela final' : 'jogo ' + (C.jogo + 1) + ' de ' + C.total}</b>${tab.map((r) => `<small>${C.fim && r.posP === 1 ? '🥇 ' : C.fim && r.posP ? r.posP + 'º ' : ''}${escH(r.name)}${r.bot ? ' (robô)' : ''} · ${r.pts} pts · ${r.v} vitória${r.v === 1 ? '' : 's'} · saldo ${r.saldo > 0 ? '+' : ''}${fmt(r.saldo)}</small>`).join('')}</div>`;
+}
+// Cada celular guarda o placar que viu no fim de cada jogo e, no fim do campeonato, confere e recebe o prêmio.
+function campOnView(v) {
+  const C = v.camp; if (!C || v.phase !== 'gameEnd' || !TO || !EC) return null;
+  const vistos = ls.get('camp-vistos', {}); vistos[C.id] = vistos[C.id] || {};
+  if (vistos[C.id][C.jogo] === undefined) { vistos[C.id][C.jogo] = TO.assinatura({ players: v.players, scores: v.scores }); ls.set('camp-vistos', vistos); }
+  if (!C.fim || EC.has('camp:' + C.id)) return null;
+  const me = C.fim.tabela.find((r) => r.name === v.players[v.seat].name && !r.bot);
+  const r = EC.campFim({ id: C.id, nome: C.nome, humanos: C.fim.pessoas, pos: me ? me.posP : 0, confere: TO.campConfere(vistos[C.id], C.jogos) });
+  if (r && r.lines.length) { toast(r.lines.join(' · ')); if (window.FX && me && me.posP === 1) { FX.sound('win'); confetti(4000); } }
+  return r;
+}
+// Começa um jogo na mesa online: livre (no tamanho escolhido) ou o próximo jogo do Campeonato da Família.
+function novoJogo() {
+  const C = Net.camp;
+  if (C && C.formato === 'todos' && TO) { const byPid = new Map(Net.lobby.map((p) => [p.pid, p])); const ord = TO.rotacao(C.base, C.jogo).map((id) => byPid.get(id)).filter(Boolean); if (ord.length === Net.lobby.length) Net.lobby = ord; }
+  const opts = C ? { target: C.formato === 'todos' ? 1 : 5000, mode: 'familia' } : { target: Net.opts.target || 10000 };
+  if (opts.target === 1 || opts.target === 3000 || opts.target === 5000) opts.mode = 'familia';
+  const vt = Net.opts.vant | 0;
+  if (vt && !C && opts.target > 1 && Net.lobby.length >= 2 && Net.lobby.every((p, i) => i % 2 === 0 || p.bot)) opts.scores = [0, vt]; // robôs começam na frente: a dificuldade que se vê no placar // jogo curto: monte acabando fecha a rodada, não o jogo
+  Net.g = S.newGame(Net.lobby.map((p) => ({ name: p.name, bot: p.bot })), opts);
+  Net.lastAv = null;
+}
+// Fim de jogo do campeonato: anota o resultado no instante do motor (antes de guardar e de desenhar).
+function campAnota() {
+  const C = Net.camp, g = Net.g; if (!C || !g || g.phase !== 'gameEnd' || C.jogos.length > C.jogo || !TO) return;
+  C.jogos.push({ players: Net.lobby.map((p, i) => ({ name: p.name, team: i % 2, bot: !!p.bot })), scores: g.scores.slice(), winner: g.winner, bater: (g.gstats || []).map((s) => s.bater || 0) });
+  if (C.jogos.length >= C.total) C.fim = TO.campFechar(C.jogos);
+}
+const LATE_GRACE = 30;
+// Tela acesa durante a partida: se o celular de quem criou a mesa apaga, o navegador congela o jogo de todos.
+let wakeLock = null;
+async function manterAcesa() {
+  const jogando = !!(Net.g && Net.host) || !!(Net.view && Net.view.phase === 'playing');
+  try {
+    if (jogando && !wakeLock && navigator.wakeLock && document.visibilityState === 'visible') { wakeLock = await navigator.wakeLock.request('screen'); wakeLock.addEventListener('release', () => { wakeLock = null; }); }
+    else if (!jogando && wakeLock) { wakeLock.release(); wakeLock = null; }
+  } catch (e) { wakeLock = null; }
+}
+setInterval(manterAcesa, 5000);
+// Voltou para o app: o anfitrião retoma na hora (robô, relógio e mesa), sem esperar o vigia de 15 s.
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState !== 'visible') return;
+  manterAcesa();
+  if (Net.host && Net.g) { if (Net.lateId != null && Net.deadline && Date.now() - Net.deadline > LATE_GRACE * 1000) autoVez(null); else { broadcast(); armTimer(); scheduleBot(); } }
+});
+const temOutraPessoa = () => !Net.local && Net.lobby.some((p, i) => i && !p.bot && p.connected);
+// Joga a vez de quem não jogou (compra e descarta a carta menos útil) e segue a mesa.
+function autoVez(id) {
+  const g = Net.g; if (!Net.host || !g || g.phase !== 'playing') return;
+  if (id != null && g.round * 100000 + (g.turnNo || 0) !== id) return;
+  const seat = g.turn; const r = S.timeoutMove(g, seat); if (r.error) return;
+  Net.timeouts = Net.timeouts || []; Net.timeouts[seat] = (Net.timeouts[seat] || 0) + 1;
+  Net.g = r.state; Net.lateId = null; Net.timerId = null;
+  afterMove(); persist(); broadcast(); armTimer(); scheduleBot();
 }
 function scheduleBot() {
   clearTimeout(Net.botTimer);
   const g = Net.g;
   if (!g || g.phase !== 'playing' || !g.players[g.turn].bot) return;
   Net.botTimer = setTimeout(() => {
-    const r = S.botMove(Net.g, Net.g.turn, (Net.lobby[Net.g.turn] && Net.lobby[Net.g.turn].lvl) || Net.opts.lvl);
+    let r = S.botMove(Net.g, Net.g.turn, (Net.lobby[Net.g.turn] && Net.lobby[Net.g.turn].lvl) || Net.opts.lvl);
+    if (r.error) r = S.timeoutMove(Net.g, Net.g.turn); // rede de segurança: robô sem ideia compra e descarta, a mesa nunca para
     if (!r.error) { Net.g = r.state; afterMove(); persist(); broadcast(); armTimer(); }
+    else console.warn('robô sem jogada', r.error);
     scheduleBot();
   }, { rapido: 1500, normal: 2500, lento: 3600, muito: 5000 }[Net.opts.bot] || 2500);
 }
@@ -885,7 +1032,7 @@ function join(code, retry) {
   };
   peer.on('open', () => {
     const conn = peer.connect(PREFIX + code, { reliable: true }); Net.conn = conn;
-    conn.on('open', () => { Net.rejoin = 0; showRejoin(0); ls.set('sala', code); conn.send({ t: 'hello', pid, name: myName, avatar: myAvatar, peerId: peer.id }); });
+    conn.on('open', () => { Net.rejoin = 0; showRejoin(0); ls.set('sala', code); conn.send({ t: 'hello', pid, name: myName, avatar: myAvatar, peerId: peer.id, mold: meuEnfeite('moldura'), titulo: meuEnfeite('titulo') }); });
     conn.on('data', (m) => { if (m.t === 'view') onView(m.v); else if (m.t === 'avs' && Array.isArray(m.list)) { avatars = m.list.slice(0, 6).map(safeAv); if (Net.view) render(Net.view); } else if (m.t === 'chat' && m.m) onChat(m.m); else if (m.t === 'chatlog' && Array.isArray(m.list)) { chatLog = []; m.list.forEach((x) => onChat({ ...x })); unread = 0; updateBadges(); } else if (m.t === 'err') { toast(m.msg); if (!Net.view) goHome(); } });
     conn.on('close', lost);
     conn.on('error', lost);
@@ -990,6 +1137,17 @@ function enableDrag(v) {
   });
 }
 const teamName = (v, t) => v.players.filter((p) => p.team === t).map((p) => p.name).join(', ');
+// Onde cada um senta. No celular os outros ficam em fila na borda de cima da mesa (na ordem da vez, da esquerda
+// para a direita) e você na borda de baixo: ninguém fica por cima dos jogos. Na tela grande, a mesa redonda de sempre.
+const celular = () => innerWidth <= 600;
+// Tabela de contas da rodada: aberta em tela alta, fechada em tela baixa (o placar grande no topo fica sempre); quem tocou no placar manda.
+const contasAbertas = () => { const x = ls.get('contas', null); return x === null ? innerHeight >= 780 : !!x; };
+function seatPos(r, n, th) {
+  // fatias iguais da largura: cada assento cabe na sua, sem encostar no vizinho
+  if (celular()) return r === 0 ? 'left:50%;top:calc(100% - 11px);max-width:46%' : `left:${(100 * (r - 0.5)) / (n - 1)}%;top:11px;width:calc(${100 / (n - 1)}% - 4px);max-width:170px`;
+  const x = Math.min(84, Math.max(16, 50 - 47 * Math.sin(th))), y = 53 + 41 * Math.cos(th);
+  return `left:${x}%;top:${y}%`;
+}
 
 function render(v) { renderInner(v); bindChrome(); if (window.Voz && v && !v.local && v.phase === 'playing') Voz.decorate(); }
 function renderInner(v) {
@@ -1043,18 +1201,34 @@ const isStandalone = () => (window.matchMedia && matchMedia('(display-mode: stan
 if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(() => {});
 const cdHtml = (v) => (v.timeLeft != null && v.phase === 'playing' ? ` <span id="cd" class="cd ${v.timeLeft <= 10 ? 'low' : ''}">⏱ ${v.timeLeft}s</span>` : '');
 function optsHtml(v, host) {
-  const o = Object.assign({ timer: 60, bot: 'rapido', msg: 6, lvl: 'normal' }, v.opts || {});
-  const LV = [['facil', 'Fácil'], ['normal', 'Normal'], ['dificil', 'Difícil']];
+  const o = Object.assign({ timer: 60, bot: 'rapido', msg: 6, lvl: 'dificil' }, v.opts || {});
+  const LV = [['facil', 'Fácil'], ['normal', 'Normal'], ['dificil', 'Difícil'], ['mestre', 'Mestre']];
   const T = [[0, 'Sem limite'], [20, '20 s'], [30, '30 s'], [45, '45 s'], [60, '60 s'], [90, '90 s'], [120, '2 min']];
   const B = [['rapido', 'Rápido'], ['normal', 'Normal'], ['lento', 'Lento'], ['muito', 'Bem lento']];
   const M = [3, 5, 8, 12, 20];
   if (!host) return `<div class="card-box"><b>Tempo por jogada:</b> ${(T.find((x) => x[0] === o.timer) || T[0])[1]} · <b>Robôs:</b> ${(LV.find((x) => x[0] === o.lvl) || LV[1])[1]}, ${(B.find((x) => x[0] === o.bot) || B[0])[1].toLowerCase()} · <b>Avisos na tela:</b> ${o.msg} s</div>`;
-  return `<div class="card-box"><b>Tempo por jogada</b><div class="avs t">${T.map(([t, n]) => `<button type="button" class="${o.timer === t ? 'on' : ''}" data-timer="${t}">${n}</button>`).join('')}</div>
+  const pessoas = v.players ? v.players.filter((p) => !p.bot).length : 1;
+  const relogio = !v.local && pessoas >= 2
+    ? `<b>Tempo por jogada</b><div class="avs t">${T.map(([t, n]) => `<button type="button" class="${o.timer === t ? 'on' : ''}" data-timer="${t}">${n}</button>`).join('')}</div>`
+    : '<p class="hint" style="margin:0 0 8px">Contra robôs não tem relógio: jogue no seu tempo. O relógio aparece quando outra pessoa entra na mesa.</p>';
+  return `<div class="card-box">${relogio}
    ${v.ctx && v.ctx.mode && v.ctx.mode !== 'livre' ? '' : `<b>Nível dos robôs</b><div class="avs t">${LV.map(([k, n]) => `<button type="button" class="${o.lvl === k ? 'on' : ''}" data-lvl="${k}">${n}</button>`).join('')}</div>`}
    <b>Ritmo dos robôs</b> <span class="hint">(velocidade da jogada deles)</span><div class="avs t">${B.map(([k, n]) => `<button type="button" class="${o.bot === k ? 'on' : ''}" data-bot="${k}">${n}</button>`).join('')}</div>
    <b>Avisos das jogadas ficam na tela por</b><div class="avs t">${M.map((m) => `<button type="button" class="${o.msg === m ? 'on' : ''}" data-msg="${m}">${m} s</button>`).join('')}</div>
    <p class="hint" style="margin:6px 0 0">Os robôs podem jogar rápido: cada jogada aparece num aviso amarelo e some sozinha depois desse tempo. O histórico completo fica no painel de baixo.</p>
-   <p class="hint" style="margin:6px 0 0">Quando o tempo acaba, o jogo compra e descarta sozinho. Você pode mudar antes de cada rodada.</p></div>`;
+   <p class="hint" style="margin:6px 0 0">O relógio só vale quando há outra pessoa na mesa. Quando o tempo acaba, a mesa avisa e, ${LATE_GRACE} segundos depois, o jogo compra e descarta pela pessoa. Pode mudar a qualquer hora.</p></div>`;
+}
+// Tempo e ritmo no meio da partida: a janela se redesenha a cada toque (mostra o que ficou valendo) e o jogo segue por baixo.
+function tempoModal() {
+  const m = document.createElement('div'); m.className = 'modal';
+  const paint = () => {
+    const v = Net.view || { opts: Net.opts };
+    m.innerHTML = '<div><h2>Tempo e ritmo</h2>' + optsHtml(Object.assign({}, v, { ctx: Net.ctx }), true) + '<button style="width:100%;margin-top:10px" id="tmx">Fechar</button></div>';
+    m.querySelector('#tmx').onclick = () => m.remove();
+    bindOpts(m);
+  };
+  m.addEventListener('click', (e) => { if (e.target.closest('[data-timer],[data-lvl],[data-msg],[data-bot]')) setTimeout(paint, 60); });
+  paint(); document.body.appendChild(m);
 }
 function bindOpts(root) {
   root.querySelectorAll('[data-timer]').forEach((b) => (b.onclick = () => send({ a: 'setopts', timer: +b.dataset.timer })));
@@ -1062,6 +1236,10 @@ function bindOpts(root) {
   root.querySelectorAll('[data-msg]').forEach((b) => (b.onclick = () => send({ a: 'setopts', msg: +b.dataset.msg })));
   root.querySelectorAll('[data-entrada]').forEach((b) => (b.onclick = () => send({ a: 'setopts', entrada: +b.dataset.entrada })));
   root.querySelectorAll('[data-bot]').forEach((b) => (b.onclick = () => send({ a: 'setopts', bot: b.dataset.bot })));
+  root.querySelectorAll('[data-target]').forEach((b) => (b.onclick = () => send({ a: 'setopts', target: +b.dataset.target })));
+  root.querySelectorAll('[data-vant]').forEach((b) => (b.onclick = () => send({ a: 'setopts', vant: +b.dataset.vant })));
+  root.querySelectorAll('[data-campf]').forEach((b) => (b.onclick = () => { const nm = root.querySelector('#campnome'); send({ a: 'setopts', camp: b.dataset.campf === 'off' ? null : { formato: b.dataset.campf, nome: nm ? nm.value : '' } }); }));
+  const cn = root.querySelector('#campnome'); if (cn) cn.onchange = () => { const o = Net.view && Net.view.opts && Net.view.opts.camp; if (o) send({ a: 'setopts', camp: { formato: o.formato, nome: cn.value } }); };
 }
 setInterval(() => {
   const el = document.getElementById('cd'), v = Net.view;
@@ -1100,7 +1278,7 @@ function renderHome(app) {
   $('#entrar').onclick = () => nome() && join($('#cod').value);
   $('#treino').onclick = () => { if (nome()) soloModal(); };
   $('#regras').onclick = () => { showRules = true; rulesModal(); };
-  if (saved && saved.g && $('#retomar')) $('#retomar').onclick = () => { if (!nome()) return; Net.lobby = saved.lobby; Net.g = saved.g; Net.opts = saved.opts || Net.opts; Net.lobby[0].name = myName; hostStart(saved.code, true); const w = setInterval(() => { if (Net.peer && Net.peer.open) { clearInterval(w); scheduleBot(); } }, 300); };
+  if (saved && saved.g && $('#retomar')) $('#retomar').onclick = () => { if (!nome()) return; Net.lobby = saved.lobby; Net.g = saved.g; Net.opts = saved.opts || Net.opts; Net.camp = saved.camp || null; Net.lobby[0].name = myName; hostStart(saved.code, true); const w = setInterval(() => { if (Net.peer && Net.peer.open) { clearInterval(w); scheduleBot(); } }, 300); };
 }
 
 function renderLobby(app, v) {
@@ -1111,9 +1289,10 @@ function renderLobby(app, v) {
   app.innerHTML = `<div class="center card-box"><div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap">${friendsBtn}${chromeBtns}</div><div class="hint">Código da mesa</div><div class="code">${v.code}</div>
    ${host ? `<a href="${wa}" target="_blank" rel="noopener"><button style="width:100%;margin-top:8px">Chamar a turma no WhatsApp</button></a>` : ''}</div>
    <div class="card-box"><h2 style="font-size:20px">Na mesa (${v.players.length}/6)</h2>
-   ${v.players.map((p, i) => `<div class="pl"><span style="display:flex;gap:10px;align-items:center">${avHtml(avatars[i], 34)}<span>${p.name}${i === v.seat ? ' (você)' : ''}${i === 0 ? ' · anfitrião' : ''}${four ? ` · time ${i % 2 ? 'B' : 'A'}` : ''}</span></span><span>${p.connected ? '🟢' : '⚪ saiu'}</span></div>`).join('')}
+   ${v.players.map((p, i) => `<div class="pl"><span style="display:flex;gap:10px;align-items:center">${avMold(avatars[i], 34, p.mold)}<span>${p.name}${p.titulo ? ` <small class="hint">· ${escH(tituloTxt(p.titulo))}</small>` : ""}${i === v.seat ? ' (você)' : ''}${i === 0 ? ' · anfitrião' : ''}${four ? ` · time ${i % 2 ? 'B' : 'A'}` : ''}</span></span><span>${p.connected ? '🟢' : '⚪ saiu'}</span></div>`).join('')}
    ${four ? '<p class="hint">Os times alternam: 1º, 3º e 5º jogam juntos contra 2º, 4º e 6º. O jogo é com 2, 4 ou 6 pessoas.</p>' : '<p class="hint">Com 2 jogadores é um contra um. Para 4 ou 6, adicione pessoas ou robôs.</p>'}</div>
    ${entradaHtml(v, host)}
+   ${campLobbyHtml(v, host)}
    ${optsHtml(v, host)}
    ${host ? `<div class="bar"><button class="sec" id="bot">+ Robô</button><button class="sec" id="rbot">− Robô</button>${v.players.length > 2 ? '<button class="sec" id="swap">Trocar times</button>' : ''}</div>
    <button id="start" style="width:100%;font-size:20px;padding:16px">Começar o jogo</button>` : '<p class="center hint">Aguardando a anfitriã começar…</p>'}
@@ -1170,6 +1349,28 @@ function zoneHtml(v, team, mine, tap, emptyTxt) {
 }
 // Jogos baixados ficam na frente de quem os baixou (ou do parceiro), vistos de cima: eu embaixo.
 // Encolhe as cartas da mesa até todos os jogos aparecerem sem rolar (como numa mesa de baralho).
+// Cartas da mão no celular: o maior tamanho que cabe sem espremer a mesa (mesa com pelo menos ~36% da altura).
+// Contas da rodada no celular: janela por cima (não espreme a mesa).
+function contasModal(v) {
+  const m = document.createElement('div'); m.className = 'modal';
+  m.innerHTML = '<div><h2>Contas da rodada</h2>' + scoreTable(v) + '<p class="hint">Jogos: pontos das cartas baixadas. Canastras: +500 limpa, +300 suja. Mão: cartas que ainda estão com o time. Rodada agora: o que o time faria se a rodada acabasse agora.</p><button style="width:100%" id="cmx">Fechar</button></div>';
+  m.querySelector('#cmx').onclick = () => m.remove(); m.onclick = (e) => { if (e.target === m) m.remove(); }; document.body.appendChild(m);
+}
+function fitMao() {
+  const app = $('#app'); const hand = app && app.querySelector('.hand'); if (!hand || !app.classList.contains('wide')) return;
+    const dock = hand.parentElement, tw = app.querySelector('.tw'); const W = hand.clientWidth || innerWidth - 16; const n = hand.children.length;
+  const cs = (e) => getComputedStyle(e); const alt = (e) => e.getBoundingClientRect().height + parseFloat(cs(e).marginTop) + parseFloat(cs(e).marginBottom);
+  let fixo = 0; [...app.children].forEach((e) => { if (e !== tw && e !== dock) fixo += alt(e); }); let semMao = 0; [...dock.children].forEach((e) => { if (e !== hand) semMao += alt(e); });
+  const pad = parseFloat(cs(app).paddingTop) + parseFloat(cs(app).paddingBottom);
+  const minMesa = Math.max(200, Math.min(300, innerHeight * 0.36)) + parseFloat(cs(tw).marginTop) + parseFloat(cs(tw).marginBottom);
+  const dispo = Math.max(110, app.clientHeight - pad - fixo - semMao - minMesa);
+  let pick = 40;
+  for (const cw of [60, 56, 52, 48, 44, 40]) {
+    const step = Math.round(cw * 0.56), ch = cw * 1.42, por = Math.max(1, Math.floor((W - cw) / step) + 1), lin = Math.ceil(n / por);
+    if (ch + (lin - 1) * ch * 0.54 + 14 <= dispo) { pick = cw; break; }
+  }
+  app.style.setProperty('--cw', pick + 'px'); hand.style.maxHeight = dispo + 'px';
+}
 function fitZones() {
   document.querySelectorAll('#app.wide .sz').forEach((z) => {
     const felt = z.closest('.felt'); if (!felt) return;
@@ -1177,7 +1378,7 @@ function fitZones() {
     const opp = z.classList.contains('opp');
     const maxH = felt.clientHeight * (+z.dataset.mh || (opp ? 0.33 : 0.38)), maxW = felt.clientWidth * (+z.dataset.mw || (opp ? 0.28 : 0.68));
     // mede o tamanho natural e vai encolhendo as cartas até caber na área
-    z.style.maxHeight = 'none'; z.style.maxWidth = maxW + 'px'; g.style.maxHeight = 'none'; g.style.overflow = 'visible';
+    z.style.maxHeight = 'none'; z.style.maxWidth = maxW + 'px'; z.style.width = maxW + 'px'; // largura fixa: os jogos quebram em linhas e as cartas ficam do maior tamanho que cabe g.style.maxHeight = 'none'; g.style.overflow = 'visible';
     let k = 1; z.style.setProperty('--ms', k);
     const over = () => z.getBoundingClientRect().height > maxH + 1 || g.scrollWidth > maxW + 1;
     while (over() && k > 0.3) { k = Math.round((k - 0.04) * 100) / 100; z.style.setProperty('--ms', k); }
@@ -1191,10 +1392,10 @@ function seatZones(v, tap) {
   const redHtml = (rs) => (rs.length ? `<div class="rd3" title="3 vermelhos">${rs.map((c) => cardHtml(c, 'mini')).join('')}<span class="tag">3♥ ×${rs.length}</span></div>` : '');
   const two = true; // faixa larga do adversário logo abaixo dele, em qualquer tamanho de mesa
   let h = '';
-  if (mine.length || rm.length) h += `<div class="sz mine" data-mh="0.3" data-mw="0.72" style="left:50%;bottom:28px;top:auto;transform:translateX(-50%);max-width:72%"><div class="zg"><div class="zl">Jogos do seu time</div>${redHtml(rm)}${mine.map((m) => meldHtml(m, true, tap)).join('')}</div></div>`;
+  if (mine.length || rm.length) h += `<div class="sz mine" data-mh="0.38" data-mw="0.9" style="left:50%;bottom:28px;top:auto;transform:translateX(-50%);max-width:72%"><div class="zg"><div class="zl">Jogos do seu time</div>${redHtml(rm)}${mine.map((m) => meldHtml(m, true, tap)).join('')}</div></div>`;
   if (opp.length || ro.length) {
     h += two
-      ? `<div class="sz opp" data-mh="0.24" data-mw="0.8" style="left:50%;top:17%;transform:translateX(-50%);max-width:80%"><div class="zg"><div class="zl">Jogos dos adversários</div>${redHtml(ro)}${opp.map((m) => meldHtml(m, false)).join('')}</div></div>`
+      ? `<div class="sz opp" data-mh="0.34" data-mw="0.94" style="left:50%;top:3%;transform:translateX(-50%);max-width:80%"><div class="zg"><div class="zl">Jogos dos adversários</div>${redHtml(ro)}${opp.map((m) => meldHtml(m, false)).join('')}</div></div>`
       : `<div class="sz opp" data-mh="0.33" data-mw="0.28" style="left:19%;top:8%;transform:translateX(-50%);max-width:27%"><div class="zg col"><div class="zl">Jogos dos adversários</div>${redHtml(ro)}${opp.map((m) => meldHtml(m, false)).join('')}</div></div>`;
   }
   return h;
@@ -1272,12 +1473,12 @@ function renderGame(app, v) {
   const zoneSel = mySeats.includes(zoneSeat) ? zoneSeat : v.seat;
   const lockMsg = v.pileLocked ? (v.lockType === 'black' ? '🔒 3 preto: você não pode pegar o lixo' : '🔒 Coringa: lixo trancado até voltar a quem jogou') : '';
   const canGroup = (draw || play) && sel.size >= 3;
-  app.innerHTML = `<div class="top"><div class="score">Rodada ${v.round} · ${desc ? 'já desceu' : need.canastra ? 'descer: canastra' : 'descer: ' + need.min + ' pts'}</div><div class="score">${[v.myTeam, 1 - v.myTeam].map((t) => `<span class="tn ${t === v.myTeam ? 'n' : 'e'}">${t === v.myTeam ? 'Nós' : 'Eles'}</span> <b class="pt">${v.scores[t]}</b>${v.vantagem && v.vantagem[t] ? ` <span class="vant">(${v.vantagem[t]} vantagem)</span>` : ''}`).join(' <span class="vs">×</span> ')}</div><span style="display:flex;gap:6px">${v.local ? '<button class="sec" id="sair" title="Voltar ao início">🏠</button>' : ''}${!v.local && window.Voz ? `<button class="sec vozb ${Voz.mic ? 'on' : ''}" id="vmic" title="Microfone">${Voz.mic ? '🎤' : '🔇🎤'}</button><button class="sec vozb ${Voz.cam ? 'on' : ''}" id="vcam" title="Câmera">📷</button>${Voz.precisaToque ? '<button id="vsom">🔊 Ouvir</button>' : ''}` : ''}${chromeBtns}${v.seat === 0 ? '<button class="sec" id="ajtempo" title="Tempo e ritmo">⏱</button>' : ''}<button class="sec" id="logbtn" title="Histórico">📜</button><button class="sec" id="regras" style="padding:6px 12px">?</button></span></div>
+  app.innerHTML = `<div class="top"><div class="score">Rodada ${v.round} · ${desc ? 'já desceu' : need.canastra ? 'descer: canastra' : 'descer: ' + need.min + ' pts'}</div><div class="score placar" id="placar" title="Ver as contas da rodada">${[v.myTeam, 1 - v.myTeam].map((t) => `<span class="tn ${t === v.myTeam ? 'n' : 'e'}">${t === v.myTeam ? 'Nós' : 'Eles'}</span> <b class="pt">${v.scores[t]}</b>${v.vantagem && v.vantagem[t] ? ` <span class="vant">(${v.vantagem[t]} vantagem)</span>` : ''}`).join(' <span class="vs">×</span> ')}${celular() ? '<small class="verc">toque para ver as contas</small>' : ''}</div><span class="tbtn" style="display:flex;gap:6px">${v.local ? '<button class="sec" id="sair" title="Voltar ao início">🏠</button>' : ''}${!v.local && window.Voz ? `<button class="sec vozb ${Voz.mic ? 'on' : ''}" id="vmic" title="Microfone">${Voz.mic ? '🎤' : '🔇🎤'}</button><button class="sec vozb ${Voz.cam ? 'on' : ''}" id="vcam" title="Câmera">📷</button>${Voz.precisaToque ? '<button id="vsom">🔊 Ouvir</button>' : ''}` : ''}${chromeBtns}${v.seat === 0 ? '<button class="sec" id="ajtempo" title="Tempo e ritmo">⏱</button>' : ''}<button class="sec" id="logbtn" title="Histórico">📜</button><button class="sec" id="regras" style="padding:6px 12px">?</button></span></div>
   <div class="need ${desc ? 'ok' : ''}">${needTxt}</div>
-  ${scoreTable(v)}
-  <div class="tw">
+  ${!celular() && contasAbertas() ? scoreTable(v) : ""}
+  <div class="tw n${v.n}">
 
-    ${v.players.map((p, i) => { const r = (i - v.seat + v.n) % v.n; const th = 2 * Math.PI * r / v.n; const x = Math.min(84, Math.max(16, 50 - 47 * Math.sin(th))), y = 53 + 41 * Math.cos(th); return `<div class="seat ${v.turn === i && v.phase === 'playing' ? 'turn' : ''} ${p.team === v.myTeam ? 'mine' : ''}" data-seat="${i}" style="left:${x}%;top:${y}%">${avHtml(avatars[i], 34)}<b>${i === v.seat ? 'Você' : p.name}</b><br>🂠 ${p.count}${v.online && !v.online[i] ? ' · ⚪ saiu' : ''}</div>`; }).join('')}
+    ${v.players.map((p, i) => { const r = (i - v.seat + v.n) % v.n; const th = 2 * Math.PI * r / v.n; const pos = seatPos(r, v.n, th); return `<div class="seat ${v.turn === i && v.phase === 'playing' ? 'turn' : ''} ${p.team === v.myTeam ? 'mine' : ''}" data-seat="${i}" style="${pos}">${avMold(avatars[i], 34, v.molds && v.molds[i])}<b>${i === v.seat ? 'Você' : p.name}</b><br>🂠 ${p.count}${v.online && !v.online[i] ? ' · ⚪ saiu' : ''}</div>`; }).join('')}
     <div class="mortos"><div class="mt ${v.mortoTaken[v.myTeam] ? 'gone' : ''}"><div class="card mini back"></div>Morto nós${v.mortoTaken[v.myTeam] ? ' (pego)' : ''}</div><div class="mt ${v.mortoTaken[1 - v.myTeam] ? 'gone' : ''}"><div class="card mini back"></div>Morto eles${v.mortoTaken[1 - v.myTeam] ? ' (pego)' : ''}</div></div>
     <div class="felt n2">
       ${seatZones(v, play && sel.size)}
@@ -1287,7 +1488,7 @@ function renderGame(app, v) {
     </div></div>
   ${(() => { const lg = (v.log || []).slice(logOpen ? -30 : -5); return `<div class="log"><div class="lh"><b>O que cada um fez</b><button type="button" class="sec" id="logt">${logOpen ? 'Mostrar menos' : 'Ver tudo'}</button></div>${lg.map((t, i) => `<div class="ll ${i === lg.length - 1 ? 'new' : ''}"></div>`).join('')}</div>`; })()}
   <div class="dock"><div class="bns">${shownBanners.map((b) => `<div class="banner">${b.s != null ? avHtml(avatars[b.s], 30) : ''}<span class="bt"></span></div>`).join('')}</div>
-  ${v.late ? (my ? '<div class="late me">Seu tempo acabou! A mesa está esperando você jogar.</div>' : `<div class="late">O tempo de ${v.players[v.turn].name.replace(/[<>&"]/g, '')} acabou. Esperando…<button type="button" id="nudge">Chamar</button>${(Date.now() - (Net.viewAt || Date.now())) >= 0 ? '<button type="button" id="robovez" class="sec">Robô joga a vez</button>' : ''}</div>`) : ''}
+  ${v.late ? (my ? `<div class="late me">Seu tempo acabou! Jogue agora: em ${LATE_GRACE} segundos o jogo compra e descarta por você.</div>` : `<div class="late">O tempo de ${v.players[v.turn].name.replace(/[<>&"]/g, '')} acabou. Em ${LATE_GRACE} segundos o jogo joga a vez.<button type="button" id="nudge">Chamar</button>${v.seat === 0 ? '<button type="button" id="robovez" class="sec">Jogar a vez agora</button>' : ''}</div>`) : ''}
   ${tutHint ? `<div class="tut">🎓 ${tutHint.replace(/[<>&"]/g, '')}</div>` : ''}
   <div class="status ${my ? 'me' : ''}">${status}${cdHtml(v)}</div>
   ${staged.length || selInfo ? `<div class="stg">${gi.map((x, k) => `<span class="gp ${x.ok ? 'ok' : 'bad'}" data-g="${k}">Jogo ${k + 1}: ${x.ok ? x.pts + ' pts' : 'não vale'} ✕</span>`).join('')}${selInfo ? `<span class="gp ${selInfo.ok ? 'ok' : 'bad'}">Marcadas${withPile ? ' + lixo' : ''}${selInfo.ok && selInfo.n > 1 ? ' (' + selInfo.n + ' jogos)' : ''}: ${selInfo.ok ? selInfo.pts + ' pts' : 'não vale'}</span>` : ''}<span class="gp tot">Total ${allPts}${desc || need.canastra ? '' : ' / ' + need.min}</span></div>` : ''}
@@ -1300,7 +1501,8 @@ function renderGame(app, v) {
   if ($('#vsom')) $('#vsom').onclick = () => Voz.liberarSom();
   if ($('#nudge')) $('#nudge').onclick = () => { send({ a: 'nudge' }); toast('Chamado!'); };
   if ($('#robovez')) $('#robovez').onclick = () => { send({ a: 'robovez' }); toast('Se passou 1 minuto do tempo dela, o robô joga esta vez.'); };
-  if ($('#ajtempo')) $('#ajtempo').onclick = () => { const m = document.createElement('div'); m.className = 'modal'; m.innerHTML = '<div><h2>Tempo e ritmo</h2>' + optsHtml(v, true) + '<button style="width:100%;margin-top:10px">Fechar</button></div>'; m.querySelector('div > button:last-child').onclick = () => m.remove(); document.body.appendChild(m); bindOpts(m); };
+  if ($('#ajtempo')) $('#ajtempo').onclick = tempoModal;
+  if ($("#placar")) $("#placar").onclick = () => { if (celular()) return contasModal(Net.view || v); ls.set("contas", !contasAbertas()); render(v); };
   $('#regras').onclick = () => { showRules = true; rulesModal(); };
   document.querySelectorAll('.banner .bt').forEach((el, i) => (el.textContent = shownBanners[i].t));
   { const lg = (v.log || []).slice(logOpen ? -30 : -5); document.querySelectorAll('.log .ll').forEach((el, i) => (el.textContent = lg[i].t)); }
@@ -1356,6 +1558,7 @@ function renderGame(app, v) {
     send({ a: 'meld', groups, zone: zoneSel }); sel.clear(); staged = [];
   };
   $('#desc').onclick = () => { send({ a: 'discard', id: [...sel][0] }); sel.clear(); };
+  fitMao();
   fitZones();
   if (v.phase === 'roundEnd' || v.phase === 'gameEnd') { const wait = window.FX && FX.prevView && FX.prevView.phase === 'playing' ? 1900 : 0; clearTimeout(window.endT); window.endT = setTimeout(() => endModal(v), wait); }
 }
@@ -1366,14 +1569,14 @@ function endModal(v) {
   const head = v.phase === 'gameEnd' ? (v.winner === -1 ? 'Empate!' : v.winner === v.myTeam ? '🏆 Vitória!' : 'Fim de jogo') + (rr.stockOut ? ' · o monte acabou' : '') : (rr.outSeat != null ? v.players[rr.outSeat].name + ' bateu!' : 'Fim da rodada');
   const m = document.createElement('div'); m.className = 'modal'; m.id = 'endm';
   const loc = !!v.local && host;
-  m.innerHTML = `<div><h2>${head}</h2>${v.phase === 'gameEnd' && v.winner >= 0 ? `<p>Ganhou: <b>${teamName(v, v.winner)}</b></p>` : ''}${ecoEndHtml(v)}${window.FX && !loc ? FX.gainHtml() : ''}
+  m.innerHTML = `<div><h2>${head}</h2>${v.phase === 'gameEnd' && v.winner >= 0 ? `<p>Ganhou: <b>${teamName(v, v.winner)}</b></p>` : ''}${ecoEndHtml(v)}${campTabelaHtml(v)}${window.FX && !loc ? FX.gainHtml() : ''}
    <table><tr><th></th><th>Jogos</th><th>Canastra</th><th>Bater</th><th>3 verm.</th><th>Mão</th><th>Morto</th><th>Rodada</th><th>Total</th></tr>${rows}</table>
-   ${loc ? localEndButtons(v) : optsHtml(v, host) + (host ? `<button style="width:100%;margin-top:14px" id="prox">${v.phase === 'gameEnd' ? 'Jogar de novo' : 'Próxima rodada'}</button>` : '<p class="hint">Aguardando a anfitriã continuar…</p>')}</div>`;
+   ${loc ? localEndButtons(v) : optsHtml(v, host) + (host ? `<button style="width:100%;margin-top:14px" id="prox">${v.phase !== 'gameEnd' ? 'Próxima rodada' : v.camp && !v.camp.fim ? 'Próximo jogo do campeonato (' + (v.camp.jogo + 2) + ' de ' + v.camp.total + ')' : 'Jogar de novo'}</button>` : '<p class="hint">Aguardando a anfitriã continuar…</p>')}</div>`;
   document.body.appendChild(m);
   if (window.FX) FX.countUp(m);
   bindOpts(m);
   if (loc) bindLocalEnd(m, v);
-  else if (host) $('#prox').onclick = () => { m.remove(); send({ a: v.phase === 'gameEnd' ? 'again' : 'next' }); };
+  else if (host) $('#prox').onclick = () => { m.remove(); send({ a: v.phase !== 'gameEnd' ? 'next' : v.camp && !v.camp.fim ? 'campnext' : 'again' }); };
   const old = document.querySelectorAll('#endm'); if (old.length > 1) old[0].remove();
 }
 
@@ -1400,16 +1603,17 @@ m.querySelector('button').onclick = () => m.remove();
 
 /* ---------- moedas, fases, Mesa com Prêmio, Desafio do Dia, loja, banca e treino guiado ---------- */
 // Moedas e diamantes só valem dentro do jogo: não se compram nem viram dinheiro.
-const EC = window.Eco || null, FA = window.Fases || null, TU = window.Tutorial || null;
-const RUNKEY = { fase: 'fase-run', premio: 'premio-run', desafio: 'desafio-run', giro: 'giro-run' };
+const EC = window.Eco || null, FA = window.Fases || null, TU = window.Tutorial || null, TO = window.Torneios || null;
+const RUNKEY = { fase: 'fase-run', premio: 'premio-run', desafio: 'desafio-run', giro: 'giro-run', mm: 'mm-run' };
 const fmt = (n) => (+n || 0).toLocaleString('pt-BR');
 const escH = (t) => String(t == null ? '' : t).replace(/[<>&"]/g, '');
 let ecoMsg = null, tutHint = null; const settled = {};
 if (EC) { try { ecoMsg = EC.init(window.FX ? FX.profile() : {}, (t) => { if (window.FX) FX.setProfile({ ecoClaimedAt: t }); }); } catch (e) { console.warn('eco init', e); } }
 const PREMIO = {
-  bronze: { nome: 'Bronze', insc: 100, premio: 180, lvl: 'facil', vant: 0 },
-  prata: { nome: 'Prata', insc: 300, premio: 540, lvl: 'normal', vant: 0 },
-  ouro: { nome: 'Ouro', insc: 1000, premio: 1800, lvl: 'dificil', vant: 500 },
+  // 19/10: robôs medidos contra uma jogadora de referência (Normal no Bronze, Difícil no Prata e no Ouro); alvo ~50% de vitória
+  bronze: { nome: 'Bronze', insc: 100, premio: 180, adv: ['normal', 'normal'], parc: 'normal', vant: 0 },
+  prata: { nome: 'Prata', insc: 300, premio: 540, adv: ['dificil', 'normal'], parc: 'normal', vant: 0 },
+  ouro: { nome: 'Ouro', insc: 1000, premio: 1800, adv: ['mestre', 'dificil'], parc: 'dificil', vant: 0 },
 };
 // Liberação aos poucos: uma novidade por vez.
 const gate = {
@@ -1417,7 +1621,15 @@ const gate = {
   loja: () => !!EC && !!FA && FA.starsOf(EC, '1.3') >= 1,
   desafio: () => !!EC && !!FA && FA.starsOf(EC, '1.5') >= 1,
   premio: (k) => !!EC && !!FA && (k === 'bronze' ? FA.starsOf(EC, '1.3') >= 1 : k === 'prata' ? FA.salaCompleta(EC, 1) : FA.salaCompleta(EC, 5)),
+  mm: (k) => !!EC && !!FA && !!TO && FA.salaCompleta(EC, TO.NIVEIS[k].abre),
 };
+// Aba única: a segunda aba avisa e não paga nada (o livro é um só por aparelho).
+let segundaAba = false;
+try {
+  const bc = new BroadcastChannel('samba' + NS);
+  bc.onmessage = (e) => { if (e.data === 'oi') bc.postMessage('ja'); else if (e.data === 'ja' && !segundaAba) { segundaAba = true; if (EC) EC.bloqueada = true; infoModal('🪟', 'O Samba já está aberto em outra aba. Jogue por lá: esta aba não guarda moedas nem estrelas.'); } };
+  bc.postMessage('oi');
+} catch (e) {}
 function hms(ms) { const s = Math.ceil(ms / 1000), h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), x = s % 60; return (h ? h + 'h ' : '') + String(m).padStart(2, '0') + 'min ' + String(x).padStart(2, '0') + 's'; }
 function walletHtml() {
   const w = EC.wallet(); const c = EC.cofrinho(), b = EC.bonus();
@@ -1427,14 +1639,19 @@ function walletHtml() {
   return `<div class="card-box wal"><div class="wl"><span>🪙 <b>${fmt(w.coins)}</b></span><span>💎 <b>${fmt(w.gems)}</b></span>${gate.loja() ? '<button class="sec" id="wloja">🛍️ Loja</button>' : ''}</div><div class="hint">${EC.FRASE}</div>${EC.frozen || EC.clockBack() ? '<p class="warn">O relógio do celular voltou. Os ganhos ficam parados até ele acertar.</p>' : ''}${t}</div>`;
 }
 function runSalvo(mode) { const r = ls.get(RUNKEY[mode], null); return r && r.g && r.g.phase !== 'gameEnd' ? r : null; }
+// Faixa dos 6 cômodos na tela inicial: dourado = completo, claro = aberto, escuro = fechado.
+function comodosHtml() {
+  const ic = ['🍳', '🛋️', '🪴', '🌳', '🏊', '🎉'];
+  return `<div class="comodos">${FA.SALAS.map((s, i) => { const cls = FA.salaCompleta(EC, s.n) ? 'ok' : FA.salaAberta(EC, s.n) ? 'ab' : 'fe'; return `<span class="${cls}" title="${escH(s.nome)}">${ic[i]}</span>`; }).join('<i></i>')}</div>`;
+}
 function homeEcoHtml() {
   if (!EC || !FA) return '';
   let h = walletHtml();
-  const prox = FA.proxima(EC); const c = FA.cartao(prox, myName);
+  const prox = FA.proxima(EC); const c = FA.cartao(prox, myName, dificuldadeCasa());
   const rf = runSalvo('fase');
   h += `<div class="card-box"><h2>🏠 A Casa da Tânia</h2>${rf ? `<button class="bigbtn" id="contfase" style="margin-top:10px">Continuar a fase ${escH(rf.ctx.id)}</button>` : ''}
    <p style="font-size:18px;margin:10px 0">Próxima: <b>${escH(c.titulo)}</b><br><span class="hint">${c.tempo}</span></p>
-   <button class="bigbtn" id="hfase">Jogar a fase ${prox.id}</button><button class="sec" id="hmapa" style="width:100%;margin-top:8px">🗺️ Ver o mapa da casa</button></div>`;
+   <button class="bigbtn" id="hmapa">🗺️ Abrir o tabuleiro</button><button class="sec" id="hfase" style="width:100%;margin-top:8px;font-size:18px">▶ Jogar a fase ${prox.id} agora</button>${comodosHtml()}</div>`;
   if (gate.presente()) {
     const ms = EC.missions();
     h += `<div class="card-box">${EC.giftReady() ? '<button class="bigbtn" id="gift">🎁 Abrir o presente do dia</button>' : ''}<h2 style="font-size:20px;margin-top:8px">Missões de hoje</h2>${ms.map((m) => `<div class="mis ${m.done ? 'ok' : ''}"><span>${m.done ? '✅' : '▫️'} ${m.txt}</span><b>${m.coins} 🪙</b></div>`).join('')}<p class="hint">As três juntas dão mais 40 moedas.</p></div>`;
@@ -1448,9 +1665,12 @@ function homeEcoHtml() {
     const rp = runSalvo('premio');
     h += `<div class="card-box"><h2 style="font-size:20px">🏆 Mesa com Prêmio</h2><p class="hint">2 contra 2, até 3.000 pontos, uns 20 minutos.</p>${rp ? '<button class="bigbtn" id="contpremio">Continuar a Mesa com Prêmio</button>' : niveis.map((k) => `<button class="sec" data-premio="${k}" style="width:100%;margin-top:8px;font-size:18px">${PREMIO[k].nome} · entrada ${fmt(PREMIO[k].insc)} 🪙</button>`).join('')}</div>`;
   }
+  if (presenteEspecialPendente()) h += '<div class="card-box"><button class="bigbtn" id="especial">🎁 A Varanda está completa: escolha um presente especial</button></div>';
+  h += mmHomeHtml();
   if (gate.loja()) { const rg = runSalvo('giro'); h += `<div class="card-box"><h2 style="font-size:20px">🎡 Giro da Sorte</h2><p class="hint">Partida rápida em duplas. A roleta escolhe o prêmio total antes de começar.</p>${rg ? '<button class="bigbtn" id="contgiro">Continuar o Giro</button>' : '<button class="bigbtn" id="giro">Jogar o Giro da Sorte</button>'}</div>`; }
   h += `<div class="card-box"><button class="sec" id="tutor" style="width:100%;font-size:18px">🎓 Aprender os toques no celular${EC.has('tutorial') ? '' : ' (+100 🪙 na 1ª vez)'}</button>
-   <div class="row" style="margin-top:8px"><button class="sec" id="tacas">🏆 Minhas Taças</button><button class="sec" id="banca">🏦 Banca da família</button></div></div>`;
+   <div class="row" style="margin-top:8px"><button class="sec" id="tacas">🏆 Minhas Taças</button><button class="sec" id="banca">🏦 Banca da família</button></div>
+   <button class="sec" id="levar" style="width:100%;margin-top:8px">📲 Levar meu jogo para outro celular</button></div>`;
   return h;
 }
 function reiHtml() {
@@ -1478,6 +1698,12 @@ function bindHomeEco() {
   on('contgiro', needName(() => resumeLocal('giro')));
   on('tacas', tacasModal);
   on('banca', bancaModal);
+  on('levar', levarModal);
+  on('mmcont', chaveModal);
+  document.querySelectorAll('[data-mm]').forEach((b) => (b.onclick = needName(() => mmEntrada(b.dataset.mm))));
+  on('especial', presenteEspecialModal);
+  // aviso único aos 1.000 moedas: o jogo mora só neste celular
+  if (EC.wallet().coins >= 1000 && !EC.seen('aviso1000') && !document.querySelector('.modal')) { EC.seen('aviso1000', true); choiceModal('Seu jogo fica só neste celular. Quer guardar uma cópia?', [{ label: '📲 Guardar uma cópia', fn: levarModal }]); }
   const eq = EC.equipped(); const av = document.querySelector('#avnow .av'); if (av && eq.moldura) av.classList.add('mold-' + eq.moldura.slice(2));
   if (ecoMsg) { const mm = ecoMsg; ecoMsg = null; infoModal(mm.kind === 'veterano' ? '🎉' : '📱', mm.msg + (mm.coins ? ' +' + fmt(mm.coins) + ' moedas' + (mm.gems ? ' e +' + mm.gems + ' diamantes.' : '.') : '')); }
 }
@@ -1502,6 +1728,7 @@ if (EC) EC.onChange = () => { if (Net.view === null && !document.querySelector('
 /* --- partidas locais contra robôs (sem PeerJS) --- */
 function themeTemp(t) { const r = document.documentElement.style; r.setProperty('--felt', t.felt); r.setProperty('--felt2', t.felt2); r.setProperty('--rim', t.rim); r.setProperty('--bg', t.bg); }
 function localStart(spec, resume) {
+  if (window.Mapa) Mapa.fechar();
   leaveTable(); clearTimeout(Net.botTimer);
   Net.host = true; Net.local = true; Net.peer = null; Net.code = null; Net.conns = {}; Net.chat = []; Net.lateId = null; Net.deadline = null;
   Net.spec = spec; Net.ctx = Object.assign({}, spec.ctx || {}, { mode: spec.mode, id: spec.id || null });
@@ -1527,6 +1754,7 @@ function sairLocal(v) {
 function afterMove() {
   if (!Net.host || !Net.g) return;
   if (Net.local && Net.ctx.mode === 'treino' && TU) TU.prep(Net.g);
+  if (Net.g.phase === 'gameEnd') campAnota();
   if (Net.g.phase === 'roundEnd' || Net.g.phase === 'gameEnd') doSettle(viewOf(0), true);
 }
 function doSettle(v, host) {
@@ -1547,6 +1775,15 @@ function doSettle(v, host) {
     const c = 60 + (v.winner === t ? 50 : 0) + (bat ? 40 : 0);
     if (EC.grant('desafio:' + ctx.id, c, 0, 'Desafio do Dia')) { EC.mark('taca:desafio:' + ctx.id, v.scores[t]); out.extra.push('Desafio do Dia: +' + c + ' moedas e a taça pequena de hoje'); out.desafioPts = v.scores[t]; }
   }
+  if (ctx.mode === 'mm' && v.phase === 'gameEnd' && TO) {
+    // resultado da partida do Mata-mata gravado no motor: chave e prêmio antes de qualquer tela
+    const tm = mmGet();
+    if (tm && tm.id === ctx.id) {
+      const rr = TO.registrar(tm, v); mmSet(tm);
+      if (rr && !rr.repeat) out.extra.push(rr.venceu ? (rr.fim ? 'Campeã do Mata-mata!' : 'Vocês passaram para ' + (TO.RODADAS[tm.rodada + 1] || 'a próxima fase').toLowerCase() + '!') : 'Vocês caíram: ' + TO.COLOC[tm.coloc].toLowerCase());
+      if (tm.status === 'fim') { const pg = TO.pagar(EC, tm); if (pg && pg.coins) out.extra.push('Prêmio do Mata-mata: +' + fmt(pg.coins) + ' moedas'); if (tm.coloc === 1 && tm.nivel === 'ouro') EC.conquistar({ mmOuro: 1 }); }
+    }
+  }
   if (ctx.mode === 'giro' && v.phase === 'gameEnd') { const gr = EC.giroFim(v); if (gr) out.extra.push('Giro da Sorte ' + gr.mult + 'x: prêmio total ' + fmt(gr.total) + ', dividido pela dupla: +' + fmt(gr.premio) + ' moedas'); }
   if (!v.local && v.phase === 'gameEnd' && v.opts && v.opts.entrada) { const m = EC.mesaFim(v, v.opts.entrada); if (m && m.parte) out.extra.push('Prêmio da mesa: +' + fmt(m.parte) + ' moedas'); }
   settled[k] = out; return out;
@@ -1561,6 +1798,7 @@ function ecoOnView(v) {
     if (r.error) toast('Sem moedas para a entrada desta mesa: você joga, mas não leva o prêmio.'); else if (!r.repeat) toast('Entrada da mesa: −' + v.opts.entrada + ' moedas');
   }
   if (!Net.host && (v.phase === 'roundEnd' || v.phase === 'gameEnd')) doSettle(v, false);
+  try { campOnView(v); } catch (e) { console.warn('campeonato', e); }
 }
 function entradaHtml(v, host) {
   if (!EC) return '';
@@ -1570,15 +1808,21 @@ function entradaHtml(v, host) {
 }
 
 /* --- fases: mapa e cartão --- */
-function mapaModal() {
+// Dificuldade da casa: um degrau mais fácil ou mais difícil nos adversários das fases (estrelas e moedas não mudam).
+const dificuldadeCasa = () => { const d = +ls.get('dificuldade', 0); return d < 0 ? -1 : d > 0 ? 1 : 0; };
+function dificuldadeModal() {
+  const rot = { '-1': 'Mais fáceis', 0: 'Como estão', 1: 'Mais difíceis' };
   const m = document.createElement('div'); m.className = 'modal';
-  m.innerHTML = `<div><div style="display:flex;justify-content:space-between;align-items:center"><h2>A Casa da Tânia</h2><button class="sec" id="mpx">Fechar</button></div>${FA.SALAS.map((s) => { const aberta = FA.salaAberta(EC, s.n); return `<div class="sala"><h3>${s.n}. ${s.nome} ${aberta ? '' : '🔒'}</h3><div class="br">${aberta ? FA.barra(EC, s.n) : 'Abre quando vencer o chefe do cômodo anterior'}</div>${aberta ? `<div class="fgrid">${FA.FASES.filter((f) => f.sala === s.n).map((f) => { const st = FA.starsOf(EC, f.id); return `<button data-f="${f.id}" class="${f.chefe ? 'chefe' : ''}" ${FA.aberta(EC, f.id) ? '' : 'disabled'}>${f.id} ${escH(f.nome)}<i>${'★'.repeat(st)}${'☆'.repeat(3 - st)}</i></button>`; }).join('')}</div>` : ''}</div>`; }).join('')}</div>`;
-  m.querySelector('#mpx').onclick = () => m.remove();
-  m.querySelectorAll('[data-f]').forEach((b) => (b.onclick = () => { m.remove(); faseModal(b.dataset.f); }));
-  document.body.appendChild(m);
+  m.innerHTML = '<div><h2>🎚️ Robôs das fases</h2><p class="hint">Escolha o quanto os adversários jogam bem. As estrelas e as moedas são as mesmas em qualquer escolha. Vale a partir da próxima fase.</p><div id="dfb" style="display:grid;gap:10px;margin-top:10px"></div><button class="sec" id="dfx" style="width:100%;margin-top:10px">Fechar</button></div>';
+  [[-1, 'Mais fáceis', 'um degrau abaixo'], [0, 'Como estão', 'o desafio normal da casa'], [1, 'Mais difíceis', 'um degrau acima: para quem já domina']].forEach(([v, nome, dica]) => { const b = document.createElement('button'); b.className = dificuldadeCasa() === v ? '' : 'sec'; b.innerHTML = (dificuldadeCasa() === v ? '✓ ' : '') + nome + '<br><small>' + dica + '</small>'; b.onclick = () => { ls.set('dificuldade', v); toast('Robôs das fases: ' + rot[v]); m.remove(); }; m.querySelector('#dfb').appendChild(b); });
+  m.querySelector('#dfx').onclick = () => m.remove(); document.body.appendChild(m);
+}
+function mapaModal() {
+  if (!window.Mapa) return;
+  Mapa.abrir({ FA, EC, avatar: (px) => avHtml(myAvatar, px), aviso: toast, dificuldade: dificuldadeModal, ultimo: ls.get('mapa-ultimo', null), guardaUltimo: (id) => ls.set('mapa-ultimo', id), aoEscolher: (id) => faseModal(id) });
 }
 function faseModal(id) {
-  const f = FA.byId(id); if (!f) return; const c = FA.cartao(f, myName); const st = FA.starsOf(EC, id);
+  const f = FA.byId(id); if (!f) return; const c = FA.cartao(f, myName, dificuldadeCasa()); const st = FA.starsOf(EC, id);
   const m = document.createElement('div'); m.className = 'modal';
   m.innerHTML = `<div><h2>${escH(c.titulo)}</h2><div class="stars">${[1, 2, 3].map((k) => `<span class="${k <= st ? '' : 'off'}">★</span>`).join('')}</div>
    <p class="hint">${c.tempo}</p><p style="font-size:18px">${escH(c.quem)}</p>${c.vantagem ? `<p class="warn">${c.vantagem}</p>` : ''}${c.longa ? `<p class="hint">${c.longa}</p>` : ''}
@@ -1589,11 +1833,12 @@ function faseModal(id) {
   document.body.appendChild(m);
 }
 function startFase(id) {
-  const cfg = FA.config(id, myName); if (!cfg) return;
+  const cfg = FA.config(id, myName, dificuldadeCasa()); if (!cfg) return;
   EC.camp('tries', id);
   localStart({ mode: 'fase', id, players: cfg.players, opts: cfg.opts, ctx: cfg.ctx });
 }
-function nextFaseId(id) { const i = FA.FASES.findIndex((f) => f.id === id); for (let k = i + 1; k < FA.FASES.length; k++) if (FA.aberta(EC, FA.FASES[k].id)) return FA.FASES[k].id; return null; }
+// Próxima fase: o chefe se acabou de abrir; senão a primeira aberta sem estrela; senão a primeira aberta sem as 3. Nunca some.
+const nextFaseId = (id) => FA.depois(EC, id);
 
 /* --- Mesa com Prêmio e Desafio do Dia --- */
 function premioModal(k) {
@@ -1608,9 +1853,9 @@ function premioModal(k) {
   if (go) go.onclick = () => {
     if (!gratis && EC.wallet().coins < p.insc) return toast('Faltam moedas para esta entrada.');
     m.remove();
-    const ps = [{ name: myName, bot: false }, { name: 'Cida', bot: true, lvl: p.lvl }, { name: 'Rita', bot: true, lvl: p.lvl }, { name: 'Beto', bot: true, lvl: p.lvl }];
+    const ps = [{ name: myName, bot: false }, { name: 'Cida', bot: true, lvl: p.adv[0] }, { name: 'Rita', bot: true, lvl: p.parc }, { name: 'Beto', bot: true, lvl: p.adv[1] }];
     const opts = { target: 3000, mode: 'torneio' }; if (p.vant) opts.scores = [0, p.vant];
-    localStart({ mode: 'premio', id: k, players: ps, opts, ctx: { lvl: p.lvl }, onStart: (g) => { if (gratis) EC.mark('casapaga:' + k, g.runId); else EC.spend('inscricao:premio_' + k + ':' + g.runId, p.insc, 0, 'Mesa com Prêmio ' + p.nome); } });
+    localStart({ mode: 'premio', id: k, players: ps, opts, ctx: { lvl: p.adv[0] }, onStart: (g) => { if (gratis) EC.mark('casapaga:' + k, g.runId); else EC.spend('inscricao:premio_' + k + ':' + g.runId, p.insc, 0, 'Mesa com Prêmio ' + p.nome); } });
   };
   document.body.appendChild(m);
 }
@@ -1645,14 +1890,20 @@ function ecoEndHtml(v) {
   (st.r ? st.r.missions : []).forEach((m) => linhas.push('Missão: ' + m.txt + (m.coins ? ' +' + m.coins : '') + (m.gems ? ' +' + m.gems + ' 💎' : '')));
   if (st.fase) st.fase.lines.forEach((l) => linhas.push(l));
   st.extra.forEach((l) => linhas.push(l));
-  if (coins || stars || linhas.length) h += `<div class="eco-res"><b>Você ganhou ${fmt(coins)} moedas${stars ? ' e ' + stars + (stars > 1 ? ' estrelas' : ' estrela') : ''}.</b>${linhas.map((l) => `<small>${escH(l)}</small>`).join('')}</div>`;
+  if (coins || stars || linhas.length) h += `<div class="eco-res">${coins || stars ? `<b>Você ganhou ${fmt(coins)} moedas${stars ? ' e ' + stars + (stars > 1 ? ' estrelas' : ' estrela') : ''}.</b>` : ''}${linhas.map((l) => `<small>${escH(l)}</small>`).join('')}</div>`;
+  if (st.fase && st.fase.escolherPresente && presenteEspecialPendente()) h += '<button class="bigbtn" id="lesp" style="margin:8px 0">🎁 Escolher o presente especial</button>';
   if (st.desafioPts != null) h += `<a target="_blank" rel="noopener" href="https://wa.me/?text=${encodeURIComponent('Fiz ' + fmt(st.desafioPts) + ' no Desafio de hoje do Samba da Tânia. E você?')}"><button class="sec" style="width:100%">Contar para a turma</button></a>`;
   return h;
 }
 function localEndButtons(v) {
   const mode = Net.ctx.mode;
   if (v.phase !== 'gameEnd') return '<button class="bigbtn" id="lnext" style="margin-top:14px">Próxima rodada</button>';
-  if (mode === 'fase') { const nx = nextFaseId(Net.ctx.id); return `${nx ? '<button class="bigbtn" id="lprox" style="margin-top:14px">Próxima fase</button>' : ''}<div class="row" style="margin-top:8px"><button class="sec" id="lretry">Tentar de novo</button><button class="sec" id="lmapa">Mapa</button></div>`; }
+  if (mode === 'fase') {
+    const nx = nextFaseId(Net.ctx.id); const f = FA.byId(Net.ctx.id); const nf = nx && FA.byId(nx);
+    const barra = f ? `<p class="hint" style="text-align:center;margin:10px 0 0">${escH(FA.barra(EC, f.sala))}</p>` : '';
+    return `${barra}${nf ? `<button class="bigbtn" id="lprox" style="margin-top:10px">Próxima: ${escH(nf.id + ' ' + nf.nome)}</button>` : ''}<div class="row" style="margin-top:8px"><button class="sec" id="lretry">Jogar de novo</button><button class="sec" id="lmapa">Mapa</button></div>`;
+  }
+  if (mode === 'mm') return '<button class="bigbtn" id="lchave" style="margin-top:14px">Ver a chave</button>';
   return '<button class="bigbtn" id="lhome" style="margin-top:14px">Voltar ao início</button>';
 }
 function bindLocalEnd(m, v) {
@@ -1664,6 +1915,108 @@ function bindLocalEnd(m, v) {
   on('lretry', () => { fim(); startFase(id); });
   on('lmapa', () => { fim(); goHome(); mapaModal(); });
   on('lhome', () => { fim(); goHome(); });
+  on('lchave', () => { fim(); goHome(); chaveModal(); });
+  const esp = m.querySelector('#lesp'); if (esp) esp.onclick = presenteEspecialModal; // a fase continua aberta atrás
+}
+
+/* --- presente especial da Varanda: um item da aba "Com diamantes" (até 12 💎), de graça, uma vez --- */
+const presenteEspecialPendente = () => !!EC && !!FA && FA.salaCompleta(EC, 3) && !EC.has('especial_sala3');
+function presenteEspecialModal() {
+  if (!presenteEspecialPendente()) return;
+  const its = LOJA.filter((x) => x.gems && x.gems <= 12 && !EC.owned(x.id));
+  const m = document.createElement('div'); m.className = 'modal';
+  m.innerHTML = `<div><h2>🎁 Escolha um presente especial</h2><p class="hint">Você completou a Varanda. Escolha um enfeite da aba "Com diamantes", de graça.</p>${its.map((x) => `<div class="item"><span>${escH(x.name)} <small class="hint">(${x.gems} 💎)</small></span><button data-esp="${x.id}">Escolher</button></div>`).join('') || '<p>Você já tem todos!</p>'}<button class="sec" id="espx" style="width:100%;margin-top:10px">Depois</button></div>`;
+  m.querySelectorAll('[data-esp]').forEach((b) => (b.onclick = () => {
+    const x = LOJA.find((i) => i.id === b.dataset.esp);
+    if (EC.mark('especial_sala3', x.id) && EC.grant('premio_item:' + x.id, 0, 0, 'presente da Varanda')) { if (x.slot) EC.equip(x.slot, x.id); applyEquip(); toast('Presente escolhido: ' + x.name + '. Já está em uso.'); if (window.FX) FX.sound('levelup'); }
+    m.remove(); if (Net.view === null) goHome();
+  }));
+  m.querySelector('#espx').onclick = () => m.remove();
+  document.body.appendChild(m);
+}
+
+/* --- Mata-mata da Casa: chave de 8 duplas contra robôs (motor em torneios.js) --- */
+// O torneio fica guardado no aparelho entre as partidas ('mm-torneio'); a partida em andamento em 'mm-run'.
+const mmGet = () => { const t = ls.get('mm-torneio', null); return t && t.jogos ? t : null; };
+const mmSet = (t) => ls.set('mm-torneio', t);
+function mmHomeHtml() {
+  if (!TO) return '';
+  const t = mmGet(); const niveis = Object.keys(TO.NIVEIS).filter((k) => gate.mm(k));
+  if (!t && !niveis.length) return '';
+  let h = '<div class="card-box"><h2 style="font-size:20px">🥇 Mata-mata da Casa</h2><p class="hint">8 duplas, quartas, semi e final. Cada partida é uma rodada. Uns 40 minutos, e dá para parar e continuar.</p>';
+  if (t) h += `<button class="bigbtn" id="mmcont">${t.status === 'andamento' ? 'Continuar o Mata-mata ' + TO.NIVEIS[t.nivel].nome : 'Ver o resultado do Mata-mata'}</button>`;
+  else h += niveis.map((k) => `<button class="sec" data-mm="${k}" style="width:100%;margin-top:8px;font-size:18px">${TO.NIVEIS[k].nome} · inscrição ${TO.gratis(EC, k) ? 'grátis hoje' : fmt(TO.NIVEIS[k].insc) + ' 🪙'}</button>`).join('');
+  return h + '</div>';
+}
+function mmEntrada(k) {
+  const N = TO.NIVEIS[k]; const gratis = TO.gratis(EC, k); const cheio = !gratis && TO.inscricoesHoje(EC) >= TO.MAX_INSC_DIA;
+  const m = document.createElement('div'); m.className = 'modal';
+  m.innerHTML = `<div class="center"><h2>Mata-mata ${N.nome}</h2>
+   <p style="font-size:20px;line-height:1.5">${gratis ? '<b>Hoje a casa paga</b> a sua inscrição' : 'Custa ' + fmt(N.insc) + ' moedas'}<br>Campeã: ${fmt(N.premios[0])} · Vice: ${fmt(N.premios[1])}<br>Semifinal: ${fmt(N.premios[2])} · Quartas: ${fmt(N.premios[3])}</p>
+   <p class="hint">A inscrição não volta. Desistir no meio vale como derrota naquela partida.${N.vant ? ' Em cada partida eles começam com ' + N.vant + ' pontos.' : ''}${N.taca ? ' A campeã leva a Taça do Mata-mata.' : ''}</p>
+   ${cheio ? '<button disabled class="bigbtn">Amanhã de novo</button>' : '<button class="bigbtn" id="mmgo">Entrar</button>'}<button class="sec" id="mmx" style="width:100%;margin-top:8px">Voltar</button></div>`;
+  m.querySelector('#mmx').onclick = () => m.remove();
+  const go = m.querySelector('#mmgo');
+  if (go) go.onclick = () => {
+    if (!gratis && EC.wallet().coins < N.insc) return toast('Faltam moedas para esta inscrição.');
+    const t = TO.criar(k, myName); const r = TO.inscrever(EC, t); if (r.error) return toast(r.error);
+    mmSet(t); m.remove(); toast(r.gratis ? 'Hoje a casa paga! Boa sorte.' : 'Inscrição feita: −' + fmt(N.insc) + ' moedas'); chaveModal();
+  };
+  document.body.appendChild(m);
+}
+// Desenha a chave; quando a partida dela já acabou, joga as dos outros uma por vez (fora do fio da tela) e avança.
+function chaveModal() {
+  const t0 = mmGet(); if (!t0) return goHome();
+  document.querySelectorAll('.modal.chave').forEach((x) => x.remove());
+  const m = document.createElement('div'); m.className = 'modal chave';
+  const nomeD = (t, i) => escH(i === 0 ? 'Você e ' + t.duplas[0].nomes[1] : t.duplas[i].nomes.join(' e '));
+  const jogoHtml = (t, j) => {
+    const lado = (i, pts) => `<span class="${j.w === i ? 'ven' : j.w != null ? 'per' : ''} ${i === 0 ? 'eu' : ''}">${nomeD(t, i)}${pts != null ? ' <b>' + fmt(pts) + '</b>' : ''}</span>`;
+    const pa = j.placar ? (j.w === j.a ? j.placar[0] : j.placar[1]) : null, pb = j.placar ? (j.w === j.b ? j.placar[0] : j.placar[1]) : null;
+    return `<div class="jg">${lado(j.a, pa)}<i>×</i>${lado(j.b, pb)}</div>`;
+  };
+  let simulando = false;
+  const paint = () => {
+    const t = mmGet(); if (!t) { m.remove(); return; }
+    const N = TO.NIVEIS[t.nivel]; const minha = TO.minhaPartida(t); const salva = runSalvo('mm');
+    const pend = TO.pendentes(t);
+    let acao = '';
+    if (t.status === 'andamento' && minha && minha.w == null) {
+      const adv = TO.adversario(t, minha);
+      acao = salva ? '<button class="bigbtn" id="mmjoga">Continuar a partida</button>' : `<button class="bigbtn" id="mmjoga">Jogar: ${TO.RODADAS[t.rodada]} contra ${escH(adv.nomes.join(' e '))}</button>`;
+    } else if (pend || (t.rodada < 2 && TO.rodadaAtual(t).every((j) => j.w != null))) acao = '<p class="hint" style="text-align:center">⏳ Os outros jogos estão acontecendo…</p>';
+    const camp = TO.campeao(t);
+    let fim = '';
+    if (t.status === 'fim') {
+      const pg = TO.pagar(EC, t); // uma vez só (livro); repetir só redesenha
+      if (pg && !pg.repeat && N.taca && t.coloc === 1) EC.conquistar({ mmOuro: t.nivel === 'ouro' ? 1 : 0 });
+      const premio = TO.premio(t);
+      fim = `<div class="eco-res" style="text-align:center"><b>${t.coloc === 1 ? '🏆 Campeã do Mata-mata ' + N.nome + '!' : TO.COLOC[t.coloc] + (t.desistiu ? ' (desistiu)' : '')}</b><small>${premio ? 'Prêmio: +' + fmt(premio) + ' moedas' : 'Sem prêmio desta vez'}${t.coloc === 1 ? ' · Moldura Troféu liberada na Loja' + (N.taca ? ' · Taça do Mata-mata' : '') : ''}</small>${camp && !camp.voce && t.jogos[2] && t.jogos[2][0].w != null ? `<small>Campeãs: ${escH(camp.nomes.join(' e '))}</small>` : ''}</div>`;
+      if (!pend && !(t.rodada < 2 && TO.rodadaAtual(t).every((j) => j.w != null))) acao = '<button class="bigbtn" id="mmfim">Fechar a chave</button>';
+    }
+    m.innerHTML = `<div><div style="display:flex;justify-content:space-between;align-items:center"><h2>Mata-mata ${N.nome}</h2><button class="sec" id="mmx">Fechar</button></div>
+     ${t.jogos.map((R, r) => `<h3 style="margin:10px 0 4px">${TO.RODADAS[r]}</h3>${R.map((j) => jogoHtml(t, j)).join('')}`).join('')}
+     ${fim}${acao}${t.status === 'andamento' && minha && minha.w == null && !salva ? '<button class="sec" id="mmdes" style="width:100%;margin-top:8px">Desistir do torneio</button>' : ''}</div>`;
+    m.querySelector('#mmx').onclick = () => { m.remove(); if (Net.view === null) goHome(); };
+    const on = (id, fn) => { const el = m.querySelector('#' + id); if (el) el.onclick = fn; };
+    on('mmjoga', () => { m.remove(); if (salva) return resumeLocal('mm'); const c = TO.configPartida(t, myName); if (!c) return toast('Não há partida para jogar agora.'); localStart({ mode: 'mm', id: t.id, players: c.players, opts: c.opts, ctx: c.ctx }); });
+    on('mmdes', () => choiceModal('Desistir? Vale como derrota nesta partida e a inscrição não volta.', [{ label: 'Desistir', fn: () => { const tt = mmGet(); TO.desistir(tt); mmSet(tt); paint(); simular(); } }]));
+    on('mmfim', () => { ls.del('mm-torneio'); m.remove(); goHome(); });
+  };
+  // uma partida dos robôs por vez, com uma pausa para a tela respirar; depois monta a próxima fase da chave
+  const simular = () => {
+    if (simulando) return; simulando = true;
+    const passo = () => {
+      const t = mmGet(); if (!t || !m.parentNode) { simulando = false; return; }
+      const minha = TO.minhaPartida(t);
+      if (minha && minha.w == null) { simulando = false; paint(); return; } // espera a partida dela
+      if (TO.simularUma(t, S)) { mmSet(t); paint(); setTimeout(passo, 450); return; }
+      if (TO.avancar(t)) { mmSet(t); paint(); setTimeout(passo, 700); return; }
+      simulando = false; mmSet(t); paint();
+    };
+    setTimeout(passo, 300);
+  };
+  paint(); document.body.appendChild(m); simular();
 }
 
 /* --- loja: só enfeites, pagos com moedas ou diamantes do jogo --- */
@@ -1696,13 +2049,53 @@ const LOJA = [
   { id: 'c_coracoes', shelf: 'Para a mesa', name: 'Confete Corações', coins: 150, slot: 'confete' },
   { id: 'c_estrelas', shelf: 'Para a mesa', name: 'Confete Estrelas', coins: 150, slot: 'confete' },
   { id: 'c_dourado', shelf: 'Para a mesa', name: 'Confete dourado', gems: 5, slot: 'confete' },
+  // auditoria 17/10: o que faltava da tabela da Loja
+  { id: 'v_foto', shelf: 'Cartas (versos)', name: 'Minha foto nas costas das cartas', gems: 10, slot: 'verso' },
+  { id: 'm_carnaval', shelf: 'Mesa', name: 'Carnaval', gems: 20, slot: 'mesa', t: { felt: '#6a1b9a', felt2: '#3d0d5e', rim: '#ffd54f', bg: '#1f0633' } },
+  { id: 'g_nome', shelf: 'Mesa', name: 'Mesa com o seu nome gravado no feltro', gems: 8, slot: 'gravado' },
+  { id: 's_pandeiro', shelf: 'Mesa', name: 'Sons: Pandeiro', coins: 800, slot: 'som' },
+  { id: 's_sinos', shelf: 'Mesa', name: 'Sons: Sinos', coins: 800, slot: 'som' },
+  { id: 's_festa', shelf: 'Mesa', name: 'Sons: Festa (apito e "ôôô" na canastra)', coins: 800, slot: 'som' },
+  { id: 'f_trofeu', shelf: 'Minha foto', name: 'Moldura Troféu', premio: 'Só para quem venceu um Mata-mata', slot: 'moldura' },
+  { id: 'fg_risadas', shelf: 'Para a mesa', name: 'Figurinhas Risadas (6 na conversa)', coins: 300, slot: 'fg_risadas' },
+  { id: 'fg_festa', shelf: 'Para a mesa', name: 'Figurinhas Festa (6 na conversa)', coins: 500, slot: 'fg_festa' },
+  { id: 'fg_vovo', shelf: 'Para a mesa', name: 'Figurinhas Vovó (6 na conversa)', coins: 500, slot: 'fg_vovo' },
+  { id: 'b_robos', shelf: 'Para a mesa', name: 'Batizar os robôs (nomes da família)', coins: 200, slot: 'batizar' },
 ];
+const FIGURINHAS = { fg_risadas: ['😂', '🤣', '😆', '😹', '🙈', '😜'], fg_festa: ['🎉', '🥳', '🎊', '🍾', '🎈', '💃'], fg_vovo: ['👵', '☕', '🧶', '🍰', '🙏', '😘'] };
+const NOMES_ROBOS = ['Dona Nit', 'Zé', 'Marlene', 'Seu Tião', 'Lúcia'];
+const nomesRobos = () => { const n = ls.get('nomesRobos', null); return EC && EC.equipped().batizar && Array.isArray(n) && n.length === 5 ? n.map((x, i) => String(x || '').trim().slice(0, 14) || NOMES_ROBOS[i]) : NOMES_ROBOS; };
+function batizarModal() {
+  const m = document.createElement('div'); m.className = 'modal'; const atual = ls.get('nomesRobos', NOMES_ROBOS);
+  m.innerHTML = `<div><h2>Batizar os robôs</h2><p class="hint">Dê nome de gente da família aos 5 robôs da mesa livre.</p>${NOMES_ROBOS.map((n, i) => `<input data-rb="${i}" maxlength="14" placeholder="${n}" style="margin-top:6px">`).join('')}<button class="bigbtn" id="rbok" style="margin-top:10px">Guardar</button><button class="sec" id="rbx" style="width:100%;margin-top:8px">Fechar</button></div>`;
+  m.querySelectorAll('[data-rb]').forEach((el) => (el.value = (atual && atual[+el.dataset.rb]) || ''));
+  m.querySelector('#rbok').onclick = () => { ls.set('nomesRobos', [...m.querySelectorAll('[data-rb]')].map((el) => el.value.replace(/[<>&"]/g, '').trim())); EC.equip('batizar', 'b_robos'); m.remove(); toast('Pronto! Na próxima mesa eles já chegam com os nomes novos.'); };
+  m.querySelector('#rbx').onclick = () => m.remove();
+  document.body.appendChild(m);
+}
+// Figurinhas em uso entram na barra de reações da conversa.
+function paintQuick() {
+  const q = chatd.querySelector('.quick'); if (!q) return;
+  const eq = EC ? EC.equipped() : {}; const extra = Object.keys(FIGURINHAS).filter((k) => eq[k]).flatMap((k) => FIGURINHAS[k]);
+  q.innerHTML = ['👏', '😂', '😮', '🎉', '❤️', '😅'].concat(extra.filter((e) => !['😂', '🎉'].includes(e))).map((e) => `<button type="button">${e}</button>`).join('');
+  q.style.flexWrap = 'wrap'; q.querySelectorAll('button').forEach((b) => (b.style.flex = '1 0 13%'));
+  q.querySelectorAll('button').forEach((b) => (b.onclick = () => chatSend(b.textContent)));
+}
 const SAQUINHO = { id: 'saquinho', name: 'Saquinho de 400 moedas', gems: 1, give: 400, repeat: true };
 function applyEquip() {
   if (!EC) return; const eq = EC.equipped();
   document.body.className = document.body.className.replace(/\bverso-\S+/g, '').trim();
   if (eq.verso) document.body.classList.add('verso-' + eq.verso.slice(2));
   const mesa = LOJA.find((x) => x.id === eq.mesa); if (mesa && mesa.t) themeTemp(mesa.t);
+  // verso com a foto da pessoa (sem foto, fica dourado com o emoji dela)
+  const foto = typeof myAvatar === 'string' && myAvatar.startsWith('data:image') ? `url("${myAvatar}")` : 'none';
+  document.body.style.setProperty('--foto', foto);
+  // nome gravado no feltro
+  document.body.classList.toggle('mesa-nome', eq.gravado === 'g_nome');
+  document.body.style.setProperty('--nm', JSON.stringify(String(myName || 'Samba').slice(0, 14)));
+  // sons da canastra, da batida e da vitória
+  if (window.FX) FX.pack = eq.som ? eq.som.slice(2) : null;
+  paintQuick();
 }
 applyEquip();
 let lojaTab = 'moedas';
@@ -1713,7 +2106,7 @@ function lojaModal() {
     const w = EC.wallet(); const eq = EC.equipped();
     const shelves = [...new Set(LOJA.map((x) => x.shelf))];
     const row = (x) => { const own = EC.owned(x.id); const inUse = eq[x.slot] === x.id;
-      return `<div class="item"><span>${escH(x.name)}</span>${own ? `<button class="${inUse ? '' : 'sec'}" data-use="${x.id}">${inUse ? 'Em uso ✓' : 'Usar'}</button>` : x.premio ? `<small class="hint">${x.premio}</small>` : `<button data-buy="${x.id}">${x.coins ? fmt(x.coins) + ' 🪙' : x.gems + ' 💎'}</button>`}</div>`; };
+      return `<div class="item"><span>${escH(x.name)}</span>${own ? `<button class="${inUse ? '' : 'sec'}" data-use="${x.id}">${inUse ? 'Em uso ✓' : 'Usar'}</button>${x.id === 'b_robos' ? '<button class="sec" data-bat="1">Nomes</button>' : ''}` : x.premio ? `<small class="hint">${x.premio}</small>` : `<button data-buy="${x.id}">${x.coins ? fmt(x.coins) + ' 🪙' : x.gems + ' 💎'}</button>`}</div>`; };
     m.innerHTML = `<div><div style="display:flex;justify-content:space-between;align-items:center"><h2>Loja</h2><button class="sec" id="lx">Fechar</button></div>
      <p class="hint">${EC.FRASE}</p><div class="wal"><div class="wl" style="font-size:20px"><span>🪙 <b>${fmt(w.coins)}</b></span><span>💎 <b>${fmt(w.gems)}</b></span></div></div>
      <div class="tabs"><button data-tab="moedas" class="${lojaTab === 'moedas' ? 'on' : ''}">Com moedas</button><button data-tab="diamantes" class="${lojaTab === 'diamantes' ? 'on' : ''}">Com diamantes</button></div>
@@ -1722,8 +2115,9 @@ function lojaModal() {
      <p class="hint">Tudo aqui é enfeite e vale só na sua tela. Os 10 temas de mesa continuam grátis no 🎨.</p></div>`;
     m.querySelector('#lx').onclick = () => { m.remove(); if (Net.view === null) goHome(); };
     m.querySelectorAll('[data-tab]').forEach((b) => (b.onclick = () => { lojaTab = b.dataset.tab; paint(); }));
-    m.querySelectorAll('[data-buy]').forEach((b) => (b.onclick = () => { const x = LOJA.find((i) => i.id === b.dataset.buy); choiceModal('Comprar ' + x.name + ' por ' + (x.coins ? fmt(x.coins) + ' moedas' : x.gems + ' diamantes') + '?', [{ label: 'Comprar', fn: () => { const r = EC.buy(x); if (r.error) toast(r.error); else { EC.equip(x.slot, x.id); applyEquip(); toast('Pronto! Já está em uso.'); if (window.FX) FX.sound('levelup'); } paint(); } }]); }));
+    m.querySelectorAll('[data-buy]').forEach((b) => (b.onclick = () => { const x = LOJA.find((i) => i.id === b.dataset.buy); choiceModal('Comprar ' + x.name + ' por ' + (x.coins ? fmt(x.coins) + ' moedas' : x.gems + ' diamantes') + '?', [{ label: 'Comprar', fn: () => { const r = EC.buy(x); if (r.error) toast(r.error); else { EC.equip(x.slot, x.id); applyEquip(); toast('Pronto! Já está em uso.'); if (window.FX) FX.sound('levelup'); if (x.id === 'b_robos') batizarModal(); } paint(); } }]); }));
     m.querySelectorAll('[data-use]').forEach((b) => (b.onclick = () => { const x = LOJA.find((i) => i.id === b.dataset.use); EC.equip(x.slot, EC.equipped()[x.slot] === x.id ? null : x.id); if (!EC.equipped().mesa) applyTheme(ls.get('theme', THEMES[0])); applyEquip(); paint(); }));
+    const bat = m.querySelector('[data-bat]'); if (bat) bat.onclick = batizarModal;
     const sq = m.querySelector('[data-saq]'); if (sq) sq.onclick = () => choiceModal('Usar 1 diamante no Saquinho de 400 moedas?', [{ label: 'Sim', fn: () => { const r = EC.buy(SAQUINHO); toast(r.error || '+400 moedas!'); paint(); } }]);
   };
   paint(); document.body.appendChild(m);
@@ -1732,11 +2126,30 @@ function tacasModal() {
   const ts = [];
   FA.SALAS.forEach((s) => { if (EC.has('sala:' + s.n)) ts.push('🏆 ' + s.taca + ' (' + s.nome + ')'); });
   if (EC.has('festa68')) ts.push('👑 Dona da Casa');
+  EC.find('taca:mm:').forEach((e) => ts.push('🥇 Taça do Mata-mata · ' + (e.day ? e.day.slice(6) + '/' + e.day.slice(4, 6) + '/' + e.day.slice(0, 4) : '')));
+  EC.find('taca:familia:').forEach((e) => { const [pos, nome] = String(e.ref || '').split('|'); ts.push((pos === '1' ? '🏆 Taça da Família dourada' : '🥈 Taça da Família de prata · ' + pos + 'º lugar') + (nome ? ' · ' + nome : '')); });
   EC.find('taca:desafio:').forEach((e) => { const d = e.code.split(':')[2]; ts.push('🥉 Desafio do Dia ' + d.slice(6) + '/' + d.slice(4, 6) + ' · ' + fmt(+e.ref) + ' pontos'); });
   const m = document.createElement('div'); m.className = 'modal';
   m.innerHTML = `<div><h2>Minhas Taças</h2>${ts.length ? '<div id="tl"></div>' : '<p class="hint">Ainda nenhuma. Complete um cômodo da casa ou jogue o Desafio do Dia.</p>'}<button style="width:100%;margin-top:10px">Fechar</button></div>`;
   const tl = m.querySelector('#tl'); if (tl) ts.forEach((t) => { const d = document.createElement('div'); d.className = 'mis'; d.textContent = t; tl.appendChild(d); });
   m.querySelector('button').onclick = () => m.remove(); document.body.appendChild(m);
+}
+// Levar meu jogo para outro celular: o código leva moedas, estrelas e taças. Só entra em celular novo.
+function levarModal() {
+  const m = document.createElement('div'); m.className = 'modal';
+  const code = EC.exportar(pid);
+  m.innerHTML = `<div><h2>📲 Levar meu jogo</h2><p>Copie este texto e cole no celular novo. Suas moedas, estrelas e taças vão junto.</p>
+   <textarea id="lvc" readonly rows="4" style="width:100%;font-size:12px;word-break:break-all"></textarea>
+   <button id="lvcp" style="width:100%;margin-top:6px">Copiar o código</button>
+   <h3 style="margin:16px 0 6px">Chegou num celular novo?</h3><p class="hint">Cole aqui o código do celular antigo.</p>
+   <textarea id="lvi" rows="3" style="width:100%;font-size:12px" placeholder="SAMBA1…"></textarea>
+   <button class="sec" id="lvok" style="width:100%;margin-top:6px">Trazer meu jogo</button>
+   <button class="sec" id="lvx" style="width:100%;margin-top:10px">Fechar</button></div>`;
+  m.querySelector('#lvc').value = code;
+  m.querySelector('#lvcp').onclick = async () => { try { await navigator.clipboard.writeText(code); toast('Código copiado. Agora cole no celular novo.'); } catch (e) { const t = m.querySelector('#lvc'); t.select(); toast('Segure o texto e escolha Copiar.'); } };
+  m.querySelector('#lvok').onclick = () => { const r = EC.importar(m.querySelector('#lvi').value); if (r.error) return toast(r.error); m.remove(); toast('Pronto! Seu jogo chegou: ' + fmt(r.coins) + ' moedas e ' + r.gems + ' diamantes.'); goHome(); };
+  m.querySelector('#lvx').onclick = () => m.remove();
+  document.body.appendChild(m);
 }
 // Banca da família: o dono credita ou debita moedas (do jogo) com motivo; tudo vai para o livro.
 function bancaModal() {
@@ -1776,7 +2189,7 @@ function giroModal() {
     const P = EC.CFG.GIRO_PESOS;
     m.innerHTML = `<div class="center"><h2>🎡 Giro da Sorte</h2><p class="hint">Partida rápida até ${fmt(EC.CFG.GIRO_ALVO)} pontos. Antes de começar, a roleta sorteia por quanto o prêmio multiplica a entrada. Quem vencer leva tudo.</p>
      <b>Entrada</b><div class="avs t" style="justify-content:center">${EC.CFG.GIRO_ENTRADAS.map((x) => `<button type="button" class="${giroE === x ? 'on' : ''}" data-ge="${x}">${x}</button>`).join('')}</div>
-     <p class="hint">Mesa de duplas: você e um robô contra dois robôs afiados, que começam na frente com ${EC.CFG.GIRO_VANTAGEM} pontos.</p>
+     <p class="hint">Mesa de duplas: você e um robô contra dois robôs, todos no nível Normal.</p>
      <p style="font-size:15px">Prêmio total possível: ${P.map((p) => fmt(giroE * p[0])).join(' · ')} moedas, dividido pela dupla</p>
      <p style="font-size:18px;line-height:1.5">Custa ${fmt(giroE)} moedas<br>Se sua dupla vencer: o prêmio total, dividido pela dupla<br>Se perder: nada volta.</p>
      <button class="bigbtn" id="ggo">Girar e jogar</button><button class="sec" id="gx" style="width:100%;margin-top:8px">Voltar</button></div>`;

@@ -109,6 +109,8 @@
     s.reds = [[], []];
     for (let i = 0; i < s.n; i++) layReds(s, i);
     s.meldSeq = 0; s.pileTakes = 0; s.lock = null; s.turnNo = 0; s.drawn = 0; s.owed = 0;
+    // memória da mesa (o que qualquer jogador atento sabe): figuras que cada um levou do lixo e as que descartou
+    s.known = Array.from({ length: s.n }, () => []); s.discR = Array.from({ length: s.n }, () => []);
     s.dealer = (s.dealer + 1) % s.n;
     s.turn = (s.dealer + 1) % s.n; // direita de quem deu
     s.step = 'draw';
@@ -172,8 +174,8 @@
     s.roundResult = { outSeat, stockOut: !!stockOut, teams: res };
     s.phase = 'roundEnd';
     const max = Math.max(...s.scores);
-    // fase/torneio/desafio: o monte acabar encerra só a rodada; empate puxa outra rodada
-    if (s.mode === 'fase' || s.mode === 'torneio' || s.mode === 'desafio') {
+    // fase/torneio/desafio/familia: o monte acabar encerra só a rodada; empate puxa outra rodada
+    if (s.mode === 'fase' || s.mode === 'torneio' || s.mode === 'desafio' || s.mode === 'familia') {
       if (s.maxRounds) {
         if (s.round >= s.maxRounds && s.scores[0] !== s.scores[1]) { s.phase = 'gameEnd'; s.winner = s.scores.indexOf(max); }
       } else if (s.target <= 1) {
@@ -238,7 +240,8 @@
       }
       return out;
     };
-    const drop = (cards) => { for (const c of cards) hand.splice(hand.findIndex((x) => x.id === c.id), 1); };
+    const forget = (c) => { const k = s.known && s.known[seat]; if (k) { const i = k.indexOf(c.r); if (i >= 0) k.splice(i, 1); } };
+    const drop = (cards) => { for (const c of cards) { hand.splice(hand.findIndex((x) => x.id === c.id), 1); forget(c); } };
     const zone = Number.isInteger(a.zone) && a.zone >= 0 && a.zone < s.n && teamOf(s, a.zone) === t ? a.zone : seat;
     const lay = (ms) => {
       for (const m of ms) { m.id = ++s.meldSeq; m.zone = zone; s.melds[t].push(m); }
@@ -249,7 +252,7 @@
     switch (a.a) {
       case 'draw': {
         if (s.step !== 'draw') return E('Você já comprou. Agora baixe jogos e descarte.');
-        if (!s.stock.length) { s.last = s.mode ? 'O monte acabou. Fim da rodada.' : 'O monte acabou. Fim de jogo.'; endRound(s, null, true); return { state: s }; }
+        if (!s.stock.length) { s.last = s.mode && s.mode !== 'livre' ? 'O monte acabou. Fim da rodada.' : 'O monte acabou. Fim de jogo.'; endRound(s, null, true); return { state: s }; }
         // uma carta por toque: primeiro as de reposição dos 3 vermelhos que saíram, depois as 2 da vez
         const repo = (s.owed || 0) > 0;
         hand.push(s.stock.pop());
@@ -290,7 +293,8 @@
         const k = s.discard.length + 1;
         const pile = s.discard; s.discard = [];
         for (const g of groups) drop(g);
-        hand.push(...pile); const nrp = layReds(s, seat);
+        hand.push(...pile); if (s.known) pile.forEach((c) => { if (!isWild(c)) s.known[seat].push(c.r); });
+        const nrp = layReds(s, seat);
         if (merged) { merged.id = existing.id; merged.zone = existing.zone; s.melds[t][s.melds[t].indexOf(existing)] = merged; if (merged.canastra && !existing.canastra && s.rstats) s.rstats[seat][merged.black ? 'canB' : merged.clean ? 'canL' : 'canS']++; }
         lay(chk.melds);
         s.step = 'play'; s.lock = null; s.pileTakes++; s.tookPile = true;
@@ -333,6 +337,7 @@
         if (!c) return E('Carta inválida.');
         if (hand.length === 1 && s.mortoTaken[t] && !canBater(s, t)) return E('Para bater o time precisa de uma canastra limpa e uma suja.');
         drop([c]); s.discard.push(c);
+        if (s.discR) { s.discR[seat].push(c.r); if (s.discR[seat].length > 8) s.discR[seat].shift(); }
         if (s.turnos) s.turnos[seat] = (s.turnos[seat] || 0) + 1;
         s.last = name + ' descartou ' + cardName(c) + '.';
         const next = (s.turn + 1) % s.n;
@@ -426,6 +431,8 @@
   }
   function botPlan(s, seat, level) {
     level = level || 'normal';
+    if (level === 'dificil') return hardPlan(s, seat, PARAMS.dificil);
+    if (level === 'mestre') return hardPlan(s, seat, PARAMS.mestre);
     const hand = s.hands[seat]; const t = teamOf(s, seat); const melds = s.melds[t];
     const need = needFor(s.scores[t]); const desc = s.descended[t];
     const used = new Set(melds.map((m) => m.rank));
@@ -470,9 +477,115 @@
     }
     return { a: 'discard', id: order[0] };
   }
+  /* ---------- robô Difícil: joga como gente experiente, sem espiar a mão de ninguém ----------
+     Usa só o que está à vista ou na memória de quem presta atenção: jogos na mesa, lixo, cartas que cada um
+     levou do lixo (s.known) e o que cada um descartou (s.discR). Conta as cartas que faltam aparecer. */
+  const COPIAS = 16; // 4 baralhos × 4 naipes de cada figura
+  function unseenOf(s, seat, r) {
+    let vis = 0;
+    s.hands[seat].forEach((c) => { if (c.r === r) vis++; });
+    s.melds.forEach((ms) => ms.forEach((m) => m.cards.forEach((c) => { if (c.r === r) vis++; })));
+    s.discard.forEach((c) => { if (c.r === r) vis++; });
+    if (r === 3) s.reds.forEach((rs) => (vis += rs.length));
+    return Math.max(0, COPIAS - vis);
+  }
+  // Chance de o jogador "who" conseguir pegar o lixo se a carta de cima for da figura r (1 igual + coringa já serve).
+  function perigo(s, me, who, r) {
+    const h = s.hands[who].length; if (!h) return 0;
+    const pool = Math.max(20, s.stock.length + s.hands.reduce((a, x, i) => a + (i === me ? 0 : x.length), 0) + s.mortos.reduce((a, m) => a + m.length, 0));
+    const u = unseenOf(s, me, r); const e = (u * h) / pool;
+    const known = (s.known && s.known[who] ? s.known[who].filter((x) => x === r).length : 0);
+    const descartou = s.discR && s.discR[who] && s.discR[who].slice(-4).includes(r);
+    let p1 = 1 - Math.exp(-e), p2 = 1 - Math.exp(-e) * (1 + e); // ≥1 e ≥2 cópias
+    if (known >= 2) { p1 = 1; p2 = 1; } else if (known === 1) { p1 = 1; p2 = Math.max(p2, 1 - Math.exp(-e)); }
+    if (descartou && known < 2) { p1 *= 0.5; p2 *= 0.3; }
+    const pw = 1 - Math.pow(1 - 24 / 216, h); // ter pelo menos um coringa
+    return Math.min(1, p2 + (p1 - p2) * pw);
+  }
+  const projecao = (s, t) => s.melds[t].reduce((a, m) => a + meldPts(m) + canastraBonus(m), 0) + s.reds[t].length * 100 - (s.mortoTaken[t] ? 0 : 100);
+  // Parâmetros dos robôs fortes (ajustados por simulação: node sim-ajuste.js). Mestre = os mesmos movimentos com números afinados.
+  const PARAMS = {
+    dificil: { minPile: 1, pileWild: 2, wildDump: 14, parWild: 12, limpa4: 4, limpa6: 6, pairKeep: 30, meldKeep: 25, ptsW: 0.25, presBase: 8, presPer: 3, black3: -40, black3Pile: 2, wildCost: 70, jokerExtra: 20, lockPile: 6, lockCusto: 45, presMatch: 0 },
+  };
+  // Mestre: números afinados por simulação contra o Difícil (sim-ajuste.js). Joga limpo como o Difícil: só usa o que está à vista e na memória da mesa.
+  PARAMS.mestre = Object.assign({}, PARAMS.dificil, {"minPile":1,"pileWild":2,"wildDump":14,"parWild":12,"limpa4":4,"limpa6":5,"pairKeep":30,"meldKeep":25,"ptsW":0.25,"presBase":8,"presPer":6,"black3":-40,"black3Pile":2,"wildCost":70,"jokerExtra":20,"lockPile":6,"lockCusto":0});
+  function hardPlan(s, seat, P) {
+    P = P || PARAMS.dificil;
+    const hand = s.hands[seat]; const t = teamOf(s, seat); const o = 1 - t; const melds = s.melds[t];
+    const need = needFor(s.scores[t]); const desc = s.descended[t];
+    const used = new Set(melds.map((m) => m.rank));
+    const n1 = (seat + 1) % s.n; // quem joga depois de mim (sempre adversário)
+    const oppAmeaca = s.mortoTaken[o] && s.melds[o].some((m) => m.canastra && m.clean) && s.hands.some((h, i) => teamOf(s, i) === o && h.length <= 4);
+    if (s.step === 'draw') {
+      const top = s.discard[s.discard.length - 1];
+      if (top && !s.drawn && !s.owed && !lockedFor(s, seat) && s.pileTakes < 30 && !isWild(top) && !isBlack3(top)) {
+        if (desc) {
+          const same = hand.filter((c) => c.r === top.r);
+          const jm = melds.find((x) => x.rank === top.r);
+          if (same.length >= 2 && s.discard.length >= P.minPile) return { a: 'takePile', groups: [same.slice(0, 2).map((c) => c.id)], joinId: jm ? jm.id : undefined };
+          const w = hand.find((c) => c.r === 2) || hand.find(isWild);
+          if (same.length === 1 && w && s.discard.length >= P.pileWild) return { a: 'takePile', groups: [[same[0].id, w.id]], joinId: jm ? jm.id : undefined };
+        } else {
+          const gs = planGroups(hand.concat([top]), used, need, false);
+          const gi = gs.findIndex((g) => g.some((c) => c.id === top.id));
+          if (gi >= 0) {
+            const ordered = [gs[gi]].concat(gs.filter((_, i) => i !== gi)).map((g) => g.filter((c) => c.id !== top.id).map((c) => c.id));
+            if (ordered[0].length >= 2) return { a: 'takePile', groups: ordered };
+          }
+        }
+      }
+      return { a: 'draw' };
+    }
+    const nat = hand.filter((x) => !isWild(x) && !isBlack3(x));
+    if (desc) {
+      // 1) cartas naturais nos jogos do time
+      for (const c of nat) { const m = melds.find((x) => x.rank === c.r && !x.black); if (m) return { a: 'addTo', meldId: m.id, ids: [c.id] }; }
+      // 2) trincas naturais novas (limpas); par + coringa só quando a mão está grande ou o adversário ameaça bater
+      const by = countBy(nat); const novos = [];
+      for (const r in by) if (by[r].length >= 3 && !used.has(+r)) novos.push(by[r].map((c) => c.id));
+      if (novos.length) return { a: 'meld', groups: novos };
+      const wilds = hand.filter(isWild);
+      const temSuja = melds.some((m) => m.canastra && !m.clean), temLimpa = melds.some((m) => m.canastra && m.clean);
+      // 3) coringa: fecha a canastra suja que falta para bater, ou despeja quando o outro time ameaça bater
+      if (wilds.length) {
+        const w = wilds.find((c) => c.r === 2) || wilds[0];
+        if (!temSuja) { const alvo = melds.filter((m) => !m.canastra && !m.black && m.cards.length >= (temLimpa ? P.limpa4 : P.limpa6) && m.cards.length + wilds.length >= 7).sort((a, b) => b.cards.length - a.cards.length)[0]; if (alvo) return { a: 'addTo', meldId: alvo.id, ids: [w.id] }; }
+        const vaiBater = s.mortoTaken[t] && temLimpa && temSuja;
+        if (oppAmeaca || vaiBater || hand.length > P.wildDump) { const alvo = melds.find((m) => !m.black && (!m.clean || !m.canastra) && !(m.canastra && m.clean)) || melds.find((m) => !m.black && !m.clean); if (alvo) return { a: 'addTo', meldId: alvo.id, ids: [w.id] }; }
+      }
+      if (oppAmeaca || hand.length > P.parWild) {
+        for (const r in by) if (by[r].length === 2 && !used.has(+r) && wilds.length) return { a: 'meld', groups: [by[r].map((c) => c.id).concat([wilds[0].id])] };
+      }
+    } else {
+      const gs = planGroups(hand, used, need, false);
+      if (gs.length) return { a: 'meld', groups: gs.map((g) => g.map((c) => c.id)) };
+    }
+    // descarte: o que menos ajuda o próximo adversário e menos me faz falta
+    const by = countBy(nat); const pileN = s.discard.length;
+    const temJogo = new Set(melds.map((m) => m.rank));
+    const oppRanks = new Set(s.melds[o].map((m) => m.rank));
+    const encaixam = P.presMatch ? s.discard.filter((x) => oppRanks.has(x.r)).length : 0;
+    const presente = P.presBase + P.presPer * pileN + (P.presMatch || 0) * encaixam; // tamanho do presente que eu daria
+    const opts = hand.map((c) => {
+      let custo;
+      if (isBlack3(c)) custo = P.black3 - pileN * P.black3Pile; // tranca o próximo e tira −100 da mão
+      else if (isWild(c)) custo = P.wildCost + (c.r === 0 ? P.jokerExtra : 0);
+      else {
+        const k = by[c.r] ? by[c.r].length : 1;
+        const guardar = (k >= 2 ? P.pairKeep : 0) + (temJogo.has(c.r) ? P.meldKeep : 0) + pts(c) * P.ptsW;
+        custo = guardar + perigo(s, seat, n1, c.r) * presente;
+      }
+      return { c, custo };
+    }).sort((a, b) => a.custo - b.custo);
+    // lixo grande e todo descarte é perigoso: tranca com um 2 (coringa tranca até voltar a mim)
+    const best = opts.find((x) => !isWild(x.c)) || opts[0];
+    if (best && !isWild(best.c) && !isBlack3(best.c) && pileN >= P.lockPile && best.custo > P.lockCusto) { const dois = hand.find((c) => c.r === 2); if (dois) return { a: 'discard', id: dois.id }; }
+    return { a: 'discard', id: (best || opts[0]).c.id };
+  }
+
   // Jogada do robô já com plano B se a regra recusar a primeira ideia.
-  function botMove(s, seat, level) {
-    level = (s.players[seat] && s.players[seat].lvl) || level;
+  function botMove(s, seat, level, forcar) {
+    if (!forcar) level = (s.players[seat] && s.players[seat].lvl) || level;
     let r = act(s, seat, botPlan(s, seat, level));
     if (!r.error) return r;
     if (s.step === 'draw') return act(s, seat, { a: 'draw' });
@@ -519,7 +632,7 @@
 
   const api = {
     SUITS, SYM, RN, TARGET, isWild, isBlack3, isRed3, pts, cardName, makeDeck, classify, meldPts, canastraBonus, needFor,
-    teamStats, newGame, nextRound, act, viewFor, botPlan, botMove, timeoutMove, suggestGroups, autoGroups, teamOf, teamSeats, canBater, mulberry, clone,
+    PARAMS, teamStats, newGame, nextRound, act, viewFor, botPlan, botMove, timeoutMove, suggestGroups, autoGroups, teamOf, teamSeats, canBater, mulberry, clone,
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.Samba = api;
