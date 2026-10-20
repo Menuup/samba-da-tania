@@ -492,18 +492,18 @@ body.verso-dourado .card.back{background:linear-gradient(135deg,#9c7d1e,#f2c14e,
 </div>
 
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
-<script src="engine.js?v=20261020d"></script>
-<script src="fx.js?v=20261020d"></script>
-<script src="eco.js?v=20261020d"></script>
-<script src="fases.js?v=20261020d"></script>
-<script src="mapa.js?v=20261020d"></script>
-<script src="torneios.js?v=20261020d"></script>
-<script src="tutorial.js?v=20261020d"></script>
-<script src="missoes.js?v=20261020d"></script>
-<script src="domingos.js?v=20261020d"></script>
-<script src="voz.js?v=20261020d"></script>
-<script src="cloud-config.js?v=20261020d"></script>
-<script src="cloud.js?v=20261020d"></script>
+<script src="engine.js?v=20261020e"></script>
+<script src="fx.js?v=20261020e"></script>
+<script src="eco.js?v=20261020e"></script>
+<script src="fases.js?v=20261020e"></script>
+<script src="mapa.js?v=20261020e"></script>
+<script src="torneios.js?v=20261020e"></script>
+<script src="tutorial.js?v=20261020e"></script>
+<script src="missoes.js?v=20261020e"></script>
+<script src="domingos.js?v=20261020e"></script>
+<script src="voz.js?v=20261020e"></script>
+<script src="cloud-config.js?v=20261020e"></script>
+<script src="cloud.js?v=20261020e"></script>
 <script>
 'use strict';
 const $ = (s) => document.querySelector(s);
@@ -1802,7 +1802,7 @@ function localStart(spec, resume) {
   Net.host = true; Net.local = true; Net.peer = null; Net.code = null; Net.conns = {}; Net.chat = []; Net.lateId = null; Net.deadline = null;
   Net.spec = spec; Net.ctx = Object.assign({}, spec.ctx || {}, { mode: spec.mode, id: spec.id || null });
   Net.acc = resume ? resume.acc || { rounds: [] } : { rounds: [] };
-  Net.lobby = spec.players.map((p, i) => ({ pid: i ? 'bot' + i : pid, name: i ? p.name : myName || p.name, bot: !!p.bot, lvl: p.lvl, connected: true, avatar: i ? BOT_AV[(i - 1) % BOT_AV.length] : myAvatar }));
+  Net.lobby = spec.players.map((p, i) => ({ pid: i ? 'bot' + i : pid, name: i ? p.name : myName || p.name, bot: !!p.bot, lvl: p.lvl, connected: true, avatar: i ? (PERSONAS[p.name] ? PERSONAS[p.name].ic : BOT_AV[(i - 1) % BOT_AV.length]) : myAvatar }));
   Net.opts = Object.assign({}, Net.opts, { timer: 0 }, spec.nivel ? { lvl: spec.nivel } : {}); // contra robôs não há relógio
   Net.g = resume ? resume.g : spec.g || S.newGame(spec.players.map((p, i) => (i ? p : Object.assign({}, p, { name: myName || p.name }))), spec.opts);
   if (spec.mode === 'fase' && FA) { const f = FA.byId(spec.id); if (f) themeTemp(THEMES[FA.SALAS[f.sala - 1].tema]); }
@@ -2135,8 +2135,14 @@ const LOJA = [
   { id: 'b_robos', shelf: 'Para a mesa', name: 'Batizar os robôs (nomes da família)', coins: 200, slot: 'batizar' },
 ];
 const FIGURINHAS = { fg_risadas: ['😂', '🤣', '😆', '😹', '🙈', '😜'], fg_festa: ['🎉', '🥳', '🎊', '🍾', '🎈', '💃'], fg_vovo: ['👵', '☕', '🧶', '🍰', '🙏', '😘'] };
-const NOMES_ROBOS = ['Tânia', 'Marinho', 'Dedé', 'Osni', 'Pedro'];
-const nomesRobos = () => { const n = ls.get('nomesRobos', null); return EC && EC.equipped().batizar && Array.isArray(n) && n.length === 5 ? n.map((x, i) => String(x || '').trim().slice(0, 14) || NOMES_ROBOS[i]) : NOMES_ROBOS; };
+const NOMES_ROBOS = ['Tânia', 'Marinho', 'Pedro', 'Marcelo', 'Osni', 'Dedé']; // a turma dos domingos: são sempre estes 6; quem joga ocupa o lugar do seu nome
+const nomesRobos = () => {
+  const n = ls.get('nomesRobos', null); const bat = EC && EC.equipped().batizar && Array.isArray(n) && n.length === NOMES_ROBOS.length;
+  const base = bat ? n.map((x, i) => String(x || '').trim().slice(0, 14) || NOMES_ROBOS[i]) : NOMES_ROBOS.slice();
+  const eu = String(myName || '').trim().toLowerCase(); const i = base.findIndex((x) => x.toLowerCase() === eu);
+  if (i >= 0) base.splice(i, 1); // se você é um da turma, os outros 5 sentam à mesa
+  return base;
+};
 function batizarModal() {
   const m = document.createElement('div'); m.className = 'modal'; const atual = ls.get('nomesRobos', NOMES_ROBOS);
   m.innerHTML = `<div><h2>Batizar os robôs</h2><p class="hint">Dê nome de gente da família aos 5 robôs da mesa livre.</p>${NOMES_ROBOS.map((n, i) => `<input data-rb="${i}" maxlength="14" placeholder="${n}" style="margin-top:6px">`).join('')}<button class="bigbtn" id="rbok" style="margin-top:10px">Guardar</button><button class="sec" id="rbx" style="width:100%;margin-top:8px">Fechar</button></div>`;
