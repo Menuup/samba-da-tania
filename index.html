@@ -393,12 +393,12 @@ body.verso-dourado .card.back{background:linear-gradient(135deg,#9c7d1e,#f2c14e,
 /* mão: o tamanho das cartas é escolhido pelo fitMao() (o maior que cabe deixando a mesa com altura boa); linhas se sobrepõem de baixo para cima, a figura fica no canto de cima */
 #app.wide{--cw:62px}
 #app.wide .hand{display:flex;flex-wrap:wrap;align-content:flex-start;gap:0;padding:14px 2px calc(var(--cw) * .66) 2px;min-height:0;overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
-#app.wide .hand .card{width:var(--cw);height:calc(var(--cw) * 1.42);margin-right:calc(var(--cw) * -.44);margin-bottom:calc(var(--cw) * -.66);justify-content:flex-start;align-items:flex-start;padding:calc(var(--cw) * .05) 0 0 calc(var(--cw) * .07);border-radius:8px;box-shadow:-2px 0 5px #0005}
+#app.wide .hand .card{width:var(--cw);height:calc(var(--cw) * 1.42);margin-right:calc(var(--cw) * -.4);margin-bottom:calc(var(--cw) * -.66);justify-content:flex-start;align-items:flex-start;padding:calc(var(--cw) * .05) 0 0 calc(var(--cw) * .07);border-radius:8px;box-shadow:-2px 0 5px #0005}
 #app.wide .hand .card b{font-size:calc(var(--cw) * .44);line-height:1}
 #app.wide .hand .card i{font-size:calc(var(--cw) * .42);line-height:1;margin-top:1px}
 #app.wide .hand .card.jk b{font-size:calc(var(--cw) * .42)}
 #app.wide .hand .card.jk i{font-size:calc(var(--cw) * .13);writing-mode:vertical-rl;margin-top:3px;letter-spacing:0}
-#app.wide .hand .card.sel{transform:translateY(-13px);z-index:6}
+#app.wide .hand .card.sel{transform:translateY(-12px);z-index:auto;box-shadow:0 -4px 10px #f2c14ecc,-2px 0 5px #0005}
 @media(max-width:600px){
 #app.wide .status{font-size:13px;line-height:1.25;max-height:2.6em;overflow:hidden}
 #app.wide .top .placar .verc{flex:1 1 100%;text-align:center;font-size:11px;opacity:.7;margin-top:-4px}
@@ -433,16 +433,16 @@ body.verso-dourado .card.back{background:linear-gradient(135deg,#9c7d1e,#f2c14e,
 </div>
 
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
-<script src="engine.js?v=20261019e"></script>
-<script src="fx.js?v=20261019e"></script>
-<script src="eco.js?v=20261019e"></script>
-<script src="fases.js?v=20261019e"></script>
-<script src="mapa.js?v=20261019e"></script>
-<script src="torneios.js?v=20261019e"></script>
-<script src="tutorial.js?v=20261019e"></script>
-<script src="voz.js?v=20261019e"></script>
-<script src="cloud-config.js?v=20261019e"></script>
-<script src="cloud.js?v=20261019e"></script>
+<script src="engine.js?v=20261019f"></script>
+<script src="fx.js?v=20261019f"></script>
+<script src="eco.js?v=20261019f"></script>
+<script src="fases.js?v=20261019f"></script>
+<script src="mapa.js?v=20261019f"></script>
+<script src="torneios.js?v=20261019f"></script>
+<script src="tutorial.js?v=20261019f"></script>
+<script src="voz.js?v=20261019f"></script>
+<script src="cloud-config.js?v=20261019f"></script>
+<script src="cloud.js?v=20261019f"></script>
 <script>
 'use strict';
 const $ = (s) => document.querySelector(s);
@@ -1364,9 +1364,9 @@ function fitMao() {
   const pad = parseFloat(cs(app).paddingTop) + parseFloat(cs(app).paddingBottom);
   const minMesa = Math.max(200, Math.min(300, innerHeight * 0.36)) + parseFloat(cs(tw).marginTop) + parseFloat(cs(tw).marginBottom);
   const dispo = Math.max(110, app.clientHeight - pad - fixo - semMao - minMesa);
-  let pick = 40;
-  for (const cw of [60, 56, 52, 48, 44, 40]) {
-    const step = Math.round(cw * 0.56), ch = cw * 1.42, por = Math.max(1, Math.floor((W - cw) / step) + 1), lin = Math.ceil(n / por);
+  let pick = 36;
+  for (const cw of [52, 48, 44, 40, 36]) {
+    const step = Math.round(cw * 0.6), ch = cw * 1.42, por = Math.max(1, Math.floor((W - cw) / step) + 1), lin = Math.ceil(n / por);
     if (ch + (lin - 1) * ch * 0.54 + 14 <= dispo) { pick = cw; break; }
   }
   app.style.setProperty('--cw', pick + 'px'); hand.style.maxHeight = dispo + 'px';
