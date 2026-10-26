@@ -479,6 +479,16 @@ body.verso-dourado .card.back{background:linear-gradient(135deg,#9c7d1e,#f2c14e,
 
 .dcs{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:8px 0}.dc{border-radius:10px;aspect-ratio:2/3;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:34px;color:#fff;border:2px solid #ffffff55}.dc.costas{background:repeating-linear-gradient(45deg,#7a1e4a,#7a1e4a 6px,#5a1236 6px,#5a1236 12px)}.dc.p{background:#222;color:#fff}.dc.v{background:#fff;color:#c2185b}.dc small{font-size:11px;font-weight:700}
 
+/* letras dos jogos da mesa: maiores e com piso de leitura, sem cobrir o resto (fitZones encolhe as cartas se precisar) */
+#app.wide .sz .meld.pk .cnt{font-size:max(11px,calc(13 * var(--u,1px) * var(--ms,1)));font-weight:800;line-height:1.15}
+#app.wide .sz .meld.pk .cnt{right:auto;left:50%;transform:translateX(-50%);bottom:calc(-13 * var(--u,1px) * var(--ms,1));white-space:nowrap}
+#app.wide .sz .meld.pk .tag{margin-top:calc(12 * var(--u,1px) * var(--ms,1))}
+#app.wide .sz .meld.pk:not(:has(.tag)){padding-bottom:calc(15 * var(--u,1px) * var(--ms,1))}
+#app.wide .sz .meld .tag,#app.wide .sz .rd3 .tag{font-size:max(10px,calc(11 * var(--u,1px) * var(--ms,1)));font-weight:800}
+#app.wide .sz .zl{font-size:max(10px,calc(11 * var(--u,1px) * var(--ms,1)))}
+#app.wide .sz .meld.pk .pkc .card b{font-size:max(15px,calc(21 * var(--u,1px) * var(--ms,1)))}
+#app.wide .sz .meld.pk .pkc .card i{font-size:max(12px,calc(16 * var(--u,1px) * var(--ms,1)))}
+
 </style>
 </head>
 <body>
@@ -494,18 +504,18 @@ body.verso-dourado .card.back{background:linear-gradient(135deg,#9c7d1e,#f2c14e,
 </div>
 
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
-<script src="engine.js?v=20261020f"></script>
-<script src="fx.js?v=20261020f"></script>
-<script src="eco.js?v=20261020f"></script>
-<script src="fases.js?v=20261020f"></script>
-<script src="mapa.js?v=20261020f"></script>
-<script src="torneios.js?v=20261020f"></script>
-<script src="tutorial.js?v=20261020f"></script>
-<script src="missoes.js?v=20261020f"></script>
-<script src="domingos.js?v=20261020f"></script>
-<script src="voz.js?v=20261020f"></script>
-<script src="cloud-config.js?v=20261020f"></script>
-<script src="cloud.js?v=20261020f"></script>
+<script src="engine.js?v=20261025b"></script>
+<script src="fx.js?v=20261025b"></script>
+<script src="eco.js?v=20261025b"></script>
+<script src="fases.js?v=20261025b"></script>
+<script src="mapa.js?v=20261025b"></script>
+<script src="torneios.js?v=20261025b"></script>
+<script src="tutorial.js?v=20261025b"></script>
+<script src="missoes.js?v=20261025b"></script>
+<script src="domingos.js?v=20261025b"></script>
+<script src="voz.js?v=20261025b"></script>
+<script src="cloud-config.js?v=20261025b"></script>
+<script src="cloud.js?v=20261025b"></script>
 <script>
 'use strict';
 const $ = (s) => document.querySelector(s);
@@ -517,6 +527,11 @@ const ls = {
   del(k) { try { localStorage.removeItem(NS + k); } catch (e) {} },
 };
 const PREFIX = 'samba-tania-';
+// Conexão entre celulares: vários servidores STUN e um TURN público de reserva (quando as duas redes não se enxergam direto).
+const PEER_OPTS = { pingInterval: 5000, config: { iceCandidatePoolSize: 4, iceServers: [
+  { urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' }, { urls: 'stun:global.stun.twilio.com:3478' },
+  { urls: ['turn:openrelay.metered.ca:80', 'turn:openrelay.metered.ca:443', 'turn:openrelay.metered.ca:443?transport=tcp'], username: 'openrelayproject', credential: 'openrelayproject' },
+] } };
 let pid = new URLSearchParams(location.search).get('pid') || ls.get('pid', null); if (!pid) { pid = Math.random().toString(36).slice(2, 10); ls.set('pid', pid); }
 let myName = ls.get('name', '');
 
@@ -681,7 +696,7 @@ const myState = () => (hostingRoom() ? 'sala' : (Net.host && Net.g) || (Net.view
 
 function presenceStart() {
   try { if (pPeer) pPeer.destroy(); } catch (e) {}
-  try { pPeer = new Peer('samba-u-' + myCode); } catch (e) { return; }
+  try { pPeer = new Peer('samba-u-' + myCode, PEER_OPTS); } catch (e) { return; }
   pPeer.on('open', () => { pollFriends(); });
   pPeer.on('connection', (c) => c.on('data', (m) => onPresenceMsg(c, m)));
   pPeer.on('disconnected', () => { try { pPeer.reconnect(); } catch (e) {} });
@@ -829,16 +844,17 @@ function hostStart(code, resume) {
   if (!resume) { Net.lobby = [{ pid, name: myName, bot: false, connected: true, avatar: myAvatar }]; Net.g = null; Net.chat = []; }
   if (resume && Net.lobby[0]) Net.lobby[0].avatar = myAvatar;
   render({ phase: 'conectando' });
-  const peer = new Peer(PREFIX + Net.code);
+  const peer = new Peer(PREFIX + Net.code, PEER_OPTS);
   Net.peer = peer;
   peer.on('open', () => { Net.retry = 0; persist(); broadcast(); });
+  peer.on('disconnected', () => { if (Net.peer === peer && !peer.destroyed) setTimeout(() => { try { if (Net.peer === peer && peer.disconnected && !peer.destroyed) peer.reconnect(); } catch (e) {} }, 1500); });
   peer.on('connection', (conn) => {
     conn.on('data', (m) => hostMsg(conn, m));
     conn.on('close', () => { const p = Net.lobby.find((x) => Net.conns[x.pid] === conn); if (p) { p.connected = false; delete Net.conns[p.pid]; broadcast(); } });
   });
   peer.on('error', (e) => {
     if (e.type === 'unavailable-id') {
-      if (resume && Net.retry++ < 8) { setTimeout(() => hostStart(Net.code, true), 3000); return; }
+      if (resume && Net.retry++ < 25) { setTimeout(() => hostStart(Net.code, true), 3000); return; }
       if (!resume) { hostStart(null, false); return; }
     }
     toast('Problema de conexão: ' + e.type);
@@ -846,6 +862,8 @@ function hostStart(code, resume) {
 }
 
 function hostMsg(conn, m) {
+  { const q = Net.lobby.find((x) => Net.conns[x.pid] === conn); if (q) q.visto = Date.now(); }
+  if (m && m.t === 'ping') { try { conn.send({ t: 'pong' }); } catch (e) {} return; }
   if (m.t === 'hello') {
     let p = Net.lobby.find((x) => x.pid === m.pid);
     if (!p) {
@@ -855,7 +873,7 @@ function hostMsg(conn, m) {
       p = { pid: m.pid, name: m.name || 'Convidado', bot: false, connected: true, avatar: safeAv(m.avatar) };
       if (bi >= 0) Net.lobby.splice(bi, 1, p); else Net.lobby.push(p); // quem entra assume o lugar de um robô
     }
-    p.connected = true; p.name = m.name || p.name; p.avatar = safeAv(m.avatar); p.mold = enfeiteOk(m.mold, "f_"); p.titulo = enfeiteOk(m.titulo, "t_"); p.peerId = typeof m.peerId === 'string' && m.peerId.length < 80 ? m.peerId : null; Net.conns[p.pid] = conn;
+    p.connected = true; p.visto = Date.now(); p.name = m.name || p.name; p.avatar = safeAv(m.avatar); p.mold = enfeiteOk(m.mold, "f_"); p.titulo = enfeiteOk(m.titulo, "t_"); p.peerId = typeof m.peerId === 'string' && m.peerId.length < 80 ? m.peerId : null; Net.conns[p.pid] = conn;
     Net.lastAv = null; conn.send({ t: 'chatlog', list: Net.chat });
     persist(); broadcast();
   } else if (m.t === 'chat') {
@@ -1058,7 +1076,34 @@ function scheduleBot() {
 
 // Convidado: a tela do jogo fica como está enquanto tenta voltar (a cada 2,5 s, até 12 vezes).
 // O 'hello' vai com o mesmo pid, e o anfitrião devolve a vista de onde parou.
-const REJOIN_MAX = 12, REJOIN_MS = 2500;
+const REJOIN_MAX = 40, REJOIN_MS = 2500;
+// Batimento: o convidado manda um ping a cada 4 s; se o anfitrião não responde em 15 s, a conexão morreu (celular dormiu, trocou de rede) e ele volta sozinho.
+setInterval(() => {
+  if (Net.host || Net.local || !Net.conn || !Net.code) return;
+  if (Net.conn.open) { try { Net.conn.send({ t: 'ping' }); } catch (e) {} }
+  if (Net.lastPong && Date.now() - Net.lastPong > 15000 && Net.guestLost) Net.guestLost();
+}, 4000);
+// Anfitrião: vigia a ligação com o servidor de sinal (sem ela ninguém consegue voltar à mesa) e marca quem ficou mudo.
+setInterval(() => {
+  if (!Net.host || Net.local || !Net.peer) return;
+  try {
+    if (Net.peer.destroyed && Net.code) { if (!Net.reabrindo) { Net.reabrindo = true; hostStart(Net.code, true); setTimeout(() => (Net.reabrindo = false), 6000); } }
+    else if (Net.peer.disconnected) Net.peer.reconnect();
+  } catch (e) {}
+  let mudou = false; Net.lobby.forEach((p, i) => { if (i && !p.bot && p.connected && p.visto && Date.now() - p.visto > 22000) { p.connected = false; delete Net.conns[p.pid]; mudou = true; } });
+  if (mudou) broadcast();
+}, 5000);
+// Voltou para o app: confere na hora se a mesa ainda está de pé.
+function conferirMesa() {
+  if (Net.local) return;
+  if (Net.host) { try { if (Net.peer && Net.peer.disconnected && !Net.peer.destroyed) Net.peer.reconnect(); } catch (e) {} return; }
+  if (!Net.code || !Net.view || Net.view.phase === 'home') return;
+  const velho = !Net.lastPong || Date.now() - Net.lastPong > 6000;
+  if (!Net.conn || !Net.conn.open || velho) { if (Net.guestLost) Net.guestLost(); else { Net.rejoin = 0; join(Net.code, true); } }
+}
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'visible') conferirMesa(); });
+window.addEventListener('online', () => conferirMesa());
+window.addEventListener('pageshow', () => conferirMesa());
 const rejoinEl = document.createElement('div'); rejoinEl.id = 'rejoin'; document.body.appendChild(rejoinEl);
 function showRejoin(n) {
   if (!n) { rejoinEl.style.display = 'none'; return; }
@@ -1075,7 +1120,7 @@ function rejoinFailModal(code) {
   const m = document.createElement('div'); m.className = 'modal';
   m.innerHTML = `<div class="center"><div style="font-size:46px">📵</div><h2>Não consegui voltar para a mesa</h2><p class="hint">Confira a internet e se a mesa <b>${code}</b> ainda está aberta no celular de quem criou.</p><button id="rjy" style="width:100%;margin-bottom:8px">Tentar de novo</button><button class="sec" id="rjn" style="width:100%">Voltar ao início</button></div>`;
   m.querySelector('#rjy').onclick = () => { m.remove(); Net.rejoin = 0; join(code, true); };
-  m.querySelector('#rjn').onclick = () => { m.remove(); goHome(); };
+  m.querySelector('#rjn').onclick = () => { m.remove(); ls.del('sala-ativa'); goHome(); };
   document.body.appendChild(m);
 }
 function join(code, retry) {
@@ -1084,21 +1129,24 @@ function join(code, retry) {
   Net.host = false; Net.code = code;
   if (!retry) { leaveTable(); render({ phase: 'conectando' }); }
   else if (Net.peer) { Net.peer.sambaGone = true; try { Net.peer.destroy(); } catch (e) {} }
-  const peer = new Peer(); Net.peer = peer;
+  const peer = new Peer(undefined, PEER_OPTS); Net.peer = peer;
   // Caiu: marca este peer como morto (para o 'close' do destroy não contar de novo) e agenda a volta.
   const lost = () => {
     if (peer.sambaGone) return; peer.sambaGone = true;
     if (Net.host || Net.peer !== peer || Net.code !== code) return;
     try { peer.destroy(); } catch (e) {}
     Net.rejoin = (Net.rejoin || 0) + 1;
-    if (Net.rejoin > REJOIN_MAX) { showRejoin(0); rejoinFailModal(code); return; }
+    if (Net.rejoin > REJOIN_MAX) { Net.guestLost = null; showRejoin(0); rejoinFailModal(code); return; }
     showRejoin(Net.rejoin);
     clearTimeout(Net.rejoinT); Net.rejoinT = setTimeout(() => join(code, true), REJOIN_MS);
   };
+  Net.guestLost = lost; Net.lastPong = Date.now();
+  // sem timeout a tela ficava eternamente em "Conectando…": se a ligação não abre em 15 s, tenta de novo
+  const tmo = setTimeout(() => { if (!Net.conn || Net.conn.peer !== PREFIX + code || !Net.conn.open) lost(); }, 15000); peer.on('close', () => clearTimeout(tmo));
   peer.on('open', () => {
     const conn = peer.connect(PREFIX + code, { reliable: true }); Net.conn = conn;
-    conn.on('open', () => { Net.rejoin = 0; showRejoin(0); ls.set('sala', code); conn.send({ t: 'hello', pid, name: myName, avatar: myAvatar, peerId: peer.id, mold: meuEnfeite('moldura'), titulo: meuEnfeite('titulo') }); });
-    conn.on('data', (m) => { if (m.t === 'view') onView(m.v); else if (m.t === 'avs' && Array.isArray(m.list)) { avatars = m.list.slice(0, 6).map(safeAv); if (Net.view) render(Net.view); } else if (m.t === 'chat' && m.m) onChat(m.m); else if (m.t === 'chatlog' && Array.isArray(m.list)) { chatLog = []; m.list.forEach((x) => onChat({ ...x })); unread = 0; updateBadges(); } else if (m.t === 'err') { toast(m.msg); if (!Net.view) goHome(); } });
+    conn.on('open', () => { clearTimeout(tmo); Net.rejoin = 0; Net.lastPong = Date.now(); Net.guestLost = lost; showRejoin(0); ls.set('sala', code); ls.set('sala-ativa', { code, ts: Date.now() }); conn.send({ t: 'hello', pid, name: myName, avatar: myAvatar, peerId: peer.id, mold: meuEnfeite('moldura'), titulo: meuEnfeite('titulo') }); });
+    conn.on('data', (m) => { Net.lastPong = Date.now(); if (m.t === 'pong') return; if (m.t === 'view') onView(m.v); else if (m.t === 'avs' && Array.isArray(m.list)) { avatars = m.list.slice(0, 6).map(safeAv); if (Net.view) render(Net.view); } else if (m.t === 'chat' && m.m) onChat(m.m); else if (m.t === 'chatlog' && Array.isArray(m.list)) { chatLog = []; m.list.forEach((x) => onChat({ ...x })); unread = 0; updateBadges(); } else if (m.t === 'err') { toast(m.msg); if (!Net.view) goHome(); } });
     conn.on('close', lost);
     conn.on('error', lost);
   });
@@ -2443,11 +2491,13 @@ function menuHtml() {
   const estrelas = FA && EC ? FA.FASES.reduce((a, f) => a + FA.starsOf(EC, f.id), 0) : 0;
   const nomes = { fase: () => 'a fase ' + ((runSalvo('fase') || { ctx: {} }).ctx.id || ''), mm: () => 'o Mata-mata', desafio: () => 'o Desafio do Dia', premio: () => 'a Mesa com Prêmio', giro: () => 'o Giro da Sorte', livre: () => 'o jogo contra os robôs' };
   const salvo = ['livre', 'fase', 'mm', 'desafio', 'premio', 'giro'].find((m) => runSalvo(m));
+  const salaA = ls.get('sala-ativa', null); const salaOk = salaA && salaA.code && Date.now() - (salaA.ts || 0) < 8 * 3600e3; const hostS = ls.get('host', null); const hostOk = hostS && hostS.g && hostS.g.phase !== 'gameEnd' && hostS.code;
   const hoje = hojeBadges();
   const tile = (id, cor, ic, titulo, sub, extra) => `<button class="mn-tile ${cor}" data-tela="${id}"><span class="ic">${ic}</span><span><b>${titulo}</b><small>${sub}</small></span>${extra || ''}</button>`;
   return `<div id="menu">
   <div class="mn-top"><div class="mn-titulo"><span>🃏</span> Samba da Tânia</div><button class="sec mutebtn" title="Som">🔊</button></div>
   <button class="mn-eu" id="mn-eu"><span id="avnow">${avHtml(myAvatar, 52)}</span><span class="mn-nome"><b>${myName ? escH(myName) : 'Toque para escolher seu nome'}</b>${window.FX ? FX.profileHtml(true) : ''}</span><span class="mn-carteira"><span class="chip">🪙 ${fmt(w.coins)}</span><span class="chip">💎 ${fmt(w.gems)}</span></span></button>
+  ${salaOk ? `<button class="bigbtn mn-cont" id="mn-sala">🌐 Voltar à mesa ${escH(salaA.code)}</button>` : ''}${hostOk ? `<button class="bigbtn mn-cont" id="mn-host">🌐 Retomar a mesa que você criou (${escH(hostS.code)})</button>` : ''}
   ${salvo ? `<button class="bigbtn mn-cont" id="mn-cont" data-modo="${salvo}">▶ Continuar ${nomes[salvo]()}</button>` : ''}
   ${window.Domingos ? '<button class="mn-hoje" data-tela="domingos">🏅 Domingos: o ranking da turma (jogo pessoalmente)</button>' : ''}
   ${MI ? `<button class="mn-hoje" data-tela="missoes">🎯 Missões: ${MI.LISTA.length ? missoesFeitas() + ' de ' + MI.LISTA.length : ''} jogos que ficam mais difíceis</button>` : ''}
@@ -2477,6 +2527,8 @@ function bindMenu(app) {
   app.querySelectorAll('[data-tela]').forEach((b) => (b.onclick = () => ({ campanha: () => (mapaModal(), 0), robos: telaRobos, familia: () => telaFamilia(), torneios: telaTorneios, loja: telaLoja, mais: telaMais, hoje: telaHoje, missoes: telaMissoes, domingos: telaDomingos })[b.dataset.tela]()));
   const eu = $('#mn-eu'); if (eu) eu.onclick = () => (myName ? telaMais() : precisaNome(() => goHome()));
   const c = $('#mn-cont'); if (c) c.onclick = () => precisaNome(() => resumeLocal(c.dataset.modo));
+  const sa = $('#mn-sala'); if (sa) sa.onclick = () => precisaNome(() => { Net.rejoin = 0; join(ls.get('sala-ativa').code); });
+  const sh = $('#mn-host'); if (sh) sh.onclick = () => precisaNome(() => retomarHost(ls.get('host', null)));
   if (window.FX) bindChrome();
   if (ecoMsg && EC) bindHomeEco();
 }
@@ -2508,6 +2560,11 @@ function iniciarRobos(c) {
 }
 
 /* --- Com a família: mesa online entre celulares --- */
+function retomarHost(saved) {
+  if (!saved) return; fechaTela();
+  Net.lobby = saved.lobby; Net.g = saved.g; Net.opts = saved.opts || Net.opts; Net.camp = saved.camp || null; Net.lobby[0].name = myName; hostStart(saved.code, true);
+  const w = setInterval(() => { if (Net.peer && Net.peer.open) { clearInterval(w); scheduleBot(); armTimer(); } }, 300);
+}
 function telaFamilia(codigo) {
   const saved = ls.get('host', null);
   const sala = codigo || String(ls.get('sala', '') || '').toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 4);
@@ -2518,7 +2575,7 @@ function telaFamilia(codigo) {
    <button class="sec frbtn" style="width:100%;margin-top:14px">👥 Meus amigos</button>`, (t) => {
     t.querySelector('#fcriar').onclick = () => precisaNome(() => { fechaTela(); hostStart(); });
     t.querySelector('#fentrar').onclick = () => precisaNome(() => { const c = t.querySelector('#cod').value; fechaTela(); join(c); });
-    const r = t.querySelector('#fretomar'); if (r) r.onclick = () => precisaNome(() => { fechaTela(); Net.lobby = saved.lobby; Net.g = saved.g; Net.opts = saved.opts || Net.opts; Net.camp = saved.camp || null; Net.lobby[0].name = myName; hostStart(saved.code, true); const w = setInterval(() => { if (Net.peer && Net.peer.open) { clearInterval(w); scheduleBot(); } }, 300); });
+    const r = t.querySelector('#fretomar'); if (r) r.onclick = () => precisaNome(() => { fechaTela(); retomarHost(saved); });
     bindChrome();
   });
 }
@@ -2595,7 +2652,7 @@ function sairMesa(v) {
   const host = Net.host; const jogando = !!(v && v.phase && v.phase !== 'lobby' && v.phase !== 'conectando');
   const outros = host && Net.lobby.some((p, i) => i && !p.bot && p.connected);
   const msg = host ? (outros ? 'Fechar a mesa e voltar ao menu? Os outros jogadores saem da mesa.' : 'Voltar ao menu?') + (jogando ? ' O jogo fica guardado: dá para retomar depois.' : '') : 'Sair da mesa e voltar ao menu?';
-  choiceModal(msg, [{ label: '🏠 Voltar ao menu', fn: () => { if (host) persist(); leaveTable(); Net.host = false; Net.g = null; Net.camp = null; Net.lobby = []; Net.ctx = { mode: 'livre' }; goHome(); } }]);
+  choiceModal(msg, [{ label: '🏠 Voltar ao menu', fn: () => { if (host) persist(); ls.del('sala-ativa'); leaveTable(); Net.host = false; Net.g = null; Net.camp = null; Net.lobby = []; Net.ctx = { mode: 'livre' }; goHome(); } }]);
 }
 // moedas na tela do menu acompanham o livro
 if (EC) EC.onChange = () => {

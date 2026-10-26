@@ -132,7 +132,9 @@
   let tbTimer = null;
   FX.turnBanner = (v, delay) => {
     if (v.phase !== 'playing') return;
+    let tent = 0;
     const show = () => {
+      if (!q('.felt') && tent++ < 10) { tbTimer = setTimeout(show, 250); return; } // a mesa ainda não foi desenhada: espera, em vez de cair no meio da tela
       const old = q('#tb'); if (old) old.remove();
       const me = v.turn === v.seat; const p = v.players[v.turn];
       const el = document.createElement('div'); el.id = 'tb'; el.className = me ? 'me' : '';
