@@ -21,3 +21,10 @@ window.SAMBA_FIREBASE = {
   messagingSenderId: '575454411752',
   appId: '1:575454411752:web:4417056a4f4aec9fbfc25d',
 };
+
+/* Servidor TURN (opcional, mas é ele que faz o jogo online funcionar quando os celulares estão em redes
+   diferentes, como 4G e Wi-Fi). O TURN gratuito que vinha embutido (openrelayproject) passou a exigir cadastro.
+   Para ligar um TURN seu: crie conta gratuita em metered.ca (20 GB/mês), copie os dados do seu app e cole abaixo, ex.:
+   window.SAMBA_TURN = [{ urls: ['turn:SEU-APP.metered.live:80', 'turn:SEU-APP.metered.live:443?transport=tcp', 'turns:SEU-APP.metered.live:443?transport=tcp'], username: '...', credential: '...' }];
+   Enquanto for null, só valem os servidores embutidos. */
+window.SAMBA_TURN = null;

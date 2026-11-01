@@ -57,6 +57,7 @@
     if (cards.length < 3) return null;
     let best = null;
     for (let r = 1; r <= 13; r++) {
+      if (r === 2) continue; // o 2 é coringa: não existe jogo/canastra de coringa, a figura precisa de 2 cartas normais
       const nat = cards.filter((c) => c.r === r);
       if (nat.length < 2) continue;
       const oth = cards.filter((c) => c.r !== r);
@@ -207,7 +208,7 @@
     const out = []; const seen = new Set();
     for (const g of groups) {
       const m = classify(g);
-      if (!m) return { error: 'Esse jogo não vale: precisa de 3 ou mais cartas iguais (pelo menos 2 naturais, o resto pode ser coringa).' };
+      if (!m) return { error: 'Esse jogo não vale: precisa de 3 ou mais cartas iguais, com pelo menos 2 cartas normais (coringa e 2 só completam, não formam jogo sozinhos).' };
       out.push(m);
     }
     if (!s.descended[t] && out.length) {
@@ -515,7 +516,7 @@
   const projecao = (s, t) => s.melds[t].reduce((a, m) => a + meldPts(m) + canastraBonus(m), 0) + s.reds[t].length * 100 - (s.mortoTaken[t] ? 0 : 100);
   // Parâmetros dos robôs fortes (ajustados por simulação: node sim-ajuste.js). Mestre = os mesmos movimentos com números afinados.
   const PARAMS = {
-    dificil: { minPile: 1, pileWild: 2, wildDump: 14, parWild: 12, limpa4: 4, limpa6: 6, pairKeep: 30, meldKeep: 25, ptsW: 0.25, presBase: 8, presPer: 3, black3: -40, black3Pile: 2, wildCost: 70, jokerExtra: 20, lockPile: 6, lockCusto: 45, presMatch: 0, vivaW: 0, parceiroW: 0, hiper: 0 },
+    dificil: { minPile: 1, pileWild: 2, wildDump: 14, parWild: 12, limpa4: 4, limpa6: 6, pairKeep: 30, meldKeep: 25, ptsW: 0.25, presBase: 8, presPer: 3, black3: -40, black3Pile: 2, wildCost: 70, jokerExtra: 20, lockPile: 6, lockCusto: 45, presMatch: 0, vivaW: 0, parceiroW: 0, hiper: 0, esconde: 0, escondeMao: 12, perigoMul: 1, aprende: 0 },
   };
   // Mestre: números afinados por simulação contra o Difícil (sim-ajuste.js). Joga limpo como o Difícil: só usa o que está à vista e na memória da mesa.
   PARAMS.mestre = Object.assign({}, PARAMS.dificil, {"minPile":1,"pileWild":2,"wildDump":14,"parWild":12,"limpa4":4,"limpa6":5,"pairKeep":30,"meldKeep":25,"ptsW":0.25,"presBase":8,"presPer":6,"black3":-40,"black3Pile":2,"wildCost":70,"jokerExtra":20,"lockPile":6,"lockCusto":0});
@@ -525,6 +526,9 @@
     const need = needFor(s.scores[t]); const desc = s.descended[t];
     const used = new Set(melds.map((m) => m.rank));
     const n1 = (seat + 1) % s.n; // quem joga depois de mim (sempre adversário)
+    // aprende com a mesa: quanto mais o outro time já levou do lixo nesta rodada, mais desconfiado (esconde cartas, entrega menos, tranca mais cedo)
+    const levou = P.aprende && s.rstats ? s.rstats.reduce((a, st, i) => a + (teamOf(s, i) === o ? st.pile || 0 : 0), 0) : 0;
+    const desconf = 1 + (P.aprende || 0) * Math.min(levou, 4);
     const oppAmeaca = s.mortoTaken[o] && s.melds[o].some((m) => m.canastra && m.clean) && s.hands.some((h, i) => teamOf(s, i) === o && h.length <= 4);
     if (s.step === 'draw') {
       const top = s.discard[s.discard.length - 1];
@@ -553,7 +557,9 @@
       // 2) trincas naturais novas (limpas); par + coringa só quando a mão está grande ou o adversário ameaça bater
       const by = countBy(nat); const novos = [];
       for (const r in by) if (by[r].length >= 3 && !used.has(+r)) novos.push(by[r].map((c) => c.id));
-      if (novos.length) return { a: 'meld', groups: novos };
+      // malícia: trinca nova fica escondida na mão (isca para pegar o lixo quando alguém descartar a figura); só desce com a mão cheia, o monte acabando ou o outro time ameaçando
+      const esconder = P.esconde && s.stock.length > P.esconde && hand.length <= P.escondeMao && !oppAmeaca;
+      if (novos.length && !esconder) return { a: 'meld', groups: novos };
       const wilds = hand.filter(isWild);
       const temSuja = melds.some((m) => m.canastra && !m.clean), temLimpa = melds.some((m) => m.canastra && m.clean);
       // 3) coringa: fecha a canastra suja que falta para bater, ou despeja quando o outro time ameaça bater
@@ -584,7 +590,7 @@
         const k = by[c.r] ? by[c.r].length : 1;
         const guardar = (k >= 2 ? P.pairKeep : 0) + (temJogo.has(c.r) ? P.meldKeep : 0) + pts(c) * P.ptsW;
         const viva = P.vivaW ? (P.vivaW * Math.min(unseenOf(s, seat, c.r), 12) / 12) * (k >= 2 ? 1 : 0.5) : 0; // figura com muitas cópias ainda por aparecer vale guardar
-        const pe = perigo(s, seat, n1, c.r, P.hiper);
+        const pe = Math.min(1, perigo(s, seat, n1, c.r, P.hiper) * (P.perigoMul || 1) * desconf);
         custo = guardar + viva + pe * presente;
         // mesa de 4 ou 6: figura que o parceiro levou do lixo e ainda deve ter ajuda a ele (só pela memória da mesa, nunca pela mão dele)
         if (P.parceiroW && s.n >= 4 && s.known && (s.known[(seat + 2) % s.n] || []).includes(c.r)) custo -= P.parceiroW * (1 - pe);
@@ -593,7 +599,7 @@
     }).sort((a, b) => a.custo - b.custo);
     // lixo grande e todo descarte é perigoso: tranca com um 2 (coringa tranca até voltar a mim)
     const best = opts.find((x) => !isWild(x.c)) || opts[0];
-    if (best && !isWild(best.c) && !isBlack3(best.c) && pileN >= P.lockPile && best.custo > P.lockCusto) { const dois = hand.find((c) => c.r === 2); if (dois) return { a: 'discard', id: dois.id }; }
+    if (best && !isWild(best.c) && !isBlack3(best.c) && pileN >= Math.max(3, P.lockPile - (P.aprende ? levou : 0)) && best.custo > P.lockCusto) { const dois = hand.find((c) => c.r === 2); if (dois) return { a: 'discard', id: dois.id }; }
     if (!opts.length) return { a: 'draw' }; // mão vazia: nada a descartar (a regra recusa e o plano B assume)
     return { a: 'discard', id: (best || opts[0]).c.id };
   }

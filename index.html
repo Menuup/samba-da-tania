@@ -41,8 +41,8 @@ h1,h2{font-family:Georgia,"Times New Roman",serif;margin:0}
 .card.sel{transform:translateY(-14px);outline:3px solid var(--gold)}
 .card.w{box-shadow:0 0 0 3px #ff8a00 inset,0 2px 4px #0005}
 .card.back{background:repeating-linear-gradient(45deg,var(--back1) 0 6px,var(--back2) 6px 12px);border:2px solid #fff}
-.card.mini{width:30px;height:44px;border-radius:5px}
-.card.mini b{font-size:15px}.card.mini i{font-size:14px}
+.card.mini{width:33px;height:48px;border-radius:5px}
+.card.mini b{font-size:16px}.card.mini i{font-size:15px}
 .card.mini.jk i{display:none}
 .card.empty{background:#ffffff14;border:2px dashed #fff5;box-shadow:none}
 /* mesa */
@@ -100,8 +100,8 @@ h1,h2{font-family:Georgia,"Times New Roman",serif;margin:0}
 .mortos{position:absolute;right:0;top:-4px;display:flex;gap:8px;font-size:10px;text-align:center;z-index:2}
 .mt.gone{opacity:.45}.mt .card{margin:0 auto 2px}
 .meld{padding:3px 6px 3px 4px;margin:0;gap:5px;flex:none}
-.meld .card.mini{width:24px;height:36px}.meld .card.mini b{font-size:13px}.meld .card.mini i{font-size:12px}
-.meld .cards .card+.card{margin-left:-14px}
+.meld .card.mini{width:26px;height:40px}.meld .card.mini b{font-size:14px}.meld .card.mini i{font-size:13px}
+.meld .cards .card+.card{margin-left:-15px}
 .meld .tag{font-size:9px;padding:1px 4px}
 .meld .rk{font-size:14px;min-width:16px}
 .sc{overflow-x:auto;margin:6px 0;background:#00000040;border-radius:12px;padding:4px 6px}
@@ -166,8 +166,8 @@ table{width:100%;border-collapse:collapse}td,th{padding:5px 4px;text-align:right
 #app.wide .pile .card{width:34px;height:50px}
 #app.wide .pile .card b,#app.wide .pile .card i{font-size:16px}
 #app.wide .centro{gap:12px}
-#app.wide .card.mini{width:20px;height:30px;border-radius:4px}
-#app.wide .card.mini b,#app.wide .card.mini i{font-size:11px}
+#app.wide .card.mini{width:22px;height:33px;border-radius:4px}
+#app.wide .card.mini b,#app.wide .card.mini i{font-size:12px}
 #app.wide .meld{padding:2px 4px 2px 3px;gap:3px}
 #app.wide .meld .cards .card+.card{margin-left:-12px}
 #app.wide .meld .rk{font-size:12px;min-width:12px}
@@ -228,7 +228,7 @@ body.chat-open .chtab{right:min(78vw,320px)}
 /* cartas da mesa encolhem sozinhas até caberem todos os jogos, sem rolar */
 #app.wide{--u:1px}
 @media(min-width:700px){#app.wide{--u:1.4px}}
-#app.wide .sz{--ms:1}
+#app.wide .sz{--ms:1.1}
 #app.wide .sz .zg{overflow:hidden;max-height:100%}
 #app.wide .sz .card.mini{width:calc(20 * var(--u) * var(--ms));height:calc(30 * var(--u) * var(--ms));border-radius:calc(4 * var(--u) * var(--ms))}
 #app.wide .sz .card.mini b,#app.wide .sz .card.mini i{font-size:calc(11 * var(--u) * var(--ms))}
@@ -504,18 +504,18 @@ body.verso-dourado .card.back{background:linear-gradient(135deg,#9c7d1e,#f2c14e,
 </div>
 
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
-<script src="engine.js?v=20261025b"></script>
-<script src="fx.js?v=20261025b"></script>
-<script src="eco.js?v=20261025b"></script>
-<script src="fases.js?v=20261025b"></script>
-<script src="mapa.js?v=20261025b"></script>
-<script src="torneios.js?v=20261025b"></script>
-<script src="tutorial.js?v=20261025b"></script>
-<script src="missoes.js?v=20261025b"></script>
-<script src="domingos.js?v=20261025b"></script>
-<script src="voz.js?v=20261025b"></script>
-<script src="cloud-config.js?v=20261025b"></script>
-<script src="cloud.js?v=20261025b"></script>
+<script src="engine.js?v=20261027a"></script>
+<script src="fx.js?v=20261101a"></script>
+<script src="eco.js?v=20261101a"></script>
+<script src="fases.js?v=20261101a"></script>
+<script src="mapa.js?v=20261101a"></script>
+<script src="torneios.js?v=20261101a"></script>
+<script src="tutorial.js?v=20261101a"></script>
+<script src="missoes.js?v=20261101a"></script>
+<script src="domingos.js?v=20261101a"></script>
+<script src="voz.js?v=20261101a"></script>
+<script src="cloud-config.js?v=20261027a"></script>
+<script src="cloud.js?v=20261101a"></script>
 <script>
 'use strict';
 const $ = (s) => document.querySelector(s);
@@ -531,7 +531,7 @@ const PREFIX = 'samba-tania-';
 const PEER_OPTS = { pingInterval: 5000, config: { iceCandidatePoolSize: 4, iceServers: [
   { urls: 'stun:stun.l.google.com:19302' }, { urls: 'stun:stun1.l.google.com:19302' }, { urls: 'stun:global.stun.twilio.com:3478' },
   { urls: ['turn:openrelay.metered.ca:80', 'turn:openrelay.metered.ca:443', 'turn:openrelay.metered.ca:443?transport=tcp'], username: 'openrelayproject', credential: 'openrelayproject' },
-] } };
+].concat(Array.isArray(window.SAMBA_TURN) ? window.SAMBA_TURN : []) } };
 let pid = new URLSearchParams(location.search).get('pid') || ls.get('pid', null); if (!pid) { pid = Math.random().toString(36).slice(2, 10); ls.set('pid', pid); }
 let myName = ls.get('name', '');
 
@@ -666,7 +666,7 @@ function hostChat(seat, text) {
   const p = Net.lobby[seat]; if (!p) return;
   const m = { n: p.name, s: seat, text, ts: Date.now() };
   Net.chat.push(m); if (Net.chat.length > 60) Net.chat.shift();
-  Net.lobby.forEach((q, i) => { if (i === 0) onChat({ ...m }); else if (Net.conns[q.pid]) Net.conns[q.pid].send({ t: 'chat', m }); });
+  Net.lobby.forEach((q, i) => { if (i === 0) onChat({ ...m }); else sendTo(i, { t: 'chat', m }); });
 }
 // Liga os botões de conversa e de cor depois de cada desenho de tela.
 function bindChrome() {
@@ -831,7 +831,7 @@ function refreshFriendsUI() {
 })();
 
 /* ---------- rede: anfitrião (jogador 0) e convidados ---------- */
-const Net = { local: false, ctx: { mode: 'livre' }, spec: null, acc: null, opts: { timer: 0, bot: 'normal', msg: 6, lvl: 'dificil', entrada: 50 }, deadline: null, timerId: null, turnTimer: null, viewAt: 0, chat: [], lastAv: null, host: false, code: null, peer: null, conn: null, conns: {}, lobby: [], g: null, botTimer: null, view: null, retry: 0 };
+const Net = { local: false, ctx: { mode: 'livre' }, spec: null, acc: null, opts: { timer: 0, bot: 'normal', msg: 6, lvl: 'mestre', entrada: 50, vant: 2000 }, deadline: null, timerId: null, turnTimer: null, viewAt: 0, chat: [], lastAv: null, host: false, code: null, peer: null, conn: null, conns: {}, lobby: [], g: null, botTimer: null, view: null, retry: 0 };
 
 function randCode() { const a = 'ABCDEFGHJKLMNPQRSTUVWXYZ'; let c = ''; for (let i = 0; i < 4; i++) c += a[(Math.random() * a.length) | 0]; return c; }
 
@@ -862,8 +862,9 @@ function hostStart(code, resume) {
 }
 
 function hostMsg(conn, m) {
-  { const q = Net.lobby.find((x) => Net.conns[x.pid] === conn); if (q) q.visto = Date.now(); }
-  if (m && m.t === 'ping') { try { conn.send({ t: 'pong' }); } catch (e) {} return; }
+  const q0 = Net.lobby.find((x) => Net.conns[x.pid] === conn);
+  if (q0) { q0.visto = Date.now(); if (!q0.connected) { q0.connected = true; broadcast(); } } // estava marcado como fora (celular dormiu) e voltou a falar
+  if (m && m.t === 'ping') { try { conn.send(q0 ? { t: 'pong' } : { t: 'again' }); } catch (e) {} return; } // ligação que o anfitrião não conhece: pede o hello de novo
   if (m.t === 'hello') {
     let p = Net.lobby.find((x) => x.pid === m.pid);
     if (!p) {
@@ -943,7 +944,7 @@ function viewOf(seat) {
   v.timeLeft = Net.deadline && Net.g.phase === 'playing' && !Net.g.players[Net.g.turn].bot && Net.opts.timer ? Math.max(0, Math.round((Net.deadline - Date.now()) / 1000)) : null;
   return v;
 }
-function sendTo(seat, msg) { const p = Net.lobby[seat]; if (p && Net.conns[p.pid]) Net.conns[p.pid].send(msg); }
+function sendTo(seat, msg) { const p = Net.lobby[seat]; if (p && Net.conns[p.pid]) { try { Net.conns[p.pid].send(msg); } catch (e) {} } }
 let lastChange = Date.now();
 setInterval(() => {
   if (!Net.host || !Net.g || Net.g.phase !== 'playing') return;
@@ -955,11 +956,11 @@ function broadcast() {
   const key = Net.lobby.map((p) => p.pid + (p.avatar ? p.avatar.length : 0)).join('|');
   if (key !== Net.lastAv) {
     Net.lastAv = key; const list = Net.lobby.map((p) => p.avatar || '🙂');
-    avatars = list; Net.lobby.forEach((p, i) => { if (i && Net.conns[p.pid]) Net.conns[p.pid].send({ t: 'avs', list }); });
+    avatars = list; Net.lobby.forEach((p, i) => { if (i) sendTo(i, { t: 'avs', list }); });
   }
   Net.lobby.forEach((p, i) => {
     if (i === 0) onView(viewOf(0));
-    else if (Net.conns[p.pid]) Net.conns[p.pid].send({ t: 'view', v: viewOf(i) });
+    else sendTo(i, { t: 'view', v: viewOf(i) });
   });
 }
 // Relógio da vez dos jogadores humanos: quando acaba, o jogo compra e descarta sozinho.
@@ -1090,7 +1091,7 @@ setInterval(() => {
     if (Net.peer.destroyed && Net.code) { if (!Net.reabrindo) { Net.reabrindo = true; hostStart(Net.code, true); setTimeout(() => (Net.reabrindo = false), 6000); } }
     else if (Net.peer.disconnected) Net.peer.reconnect();
   } catch (e) {}
-  let mudou = false; Net.lobby.forEach((p, i) => { if (i && !p.bot && p.connected && p.visto && Date.now() - p.visto > 22000) { p.connected = false; delete Net.conns[p.pid]; mudou = true; } });
+  let mudou = false; Net.lobby.forEach((p, i) => { if (i && !p.bot && p.connected && p.visto && Date.now() - p.visto > 22000) { p.connected = false; mudou = true; } });
   if (mudou) broadcast();
 }, 5000);
 // Voltou para o app: confere na hora se a mesa ainda está de pé.
@@ -1146,15 +1147,15 @@ function join(code, retry) {
   peer.on('open', () => {
     const conn = peer.connect(PREFIX + code, { reliable: true }); Net.conn = conn;
     conn.on('open', () => { clearTimeout(tmo); Net.rejoin = 0; Net.lastPong = Date.now(); Net.guestLost = lost; showRejoin(0); ls.set('sala', code); ls.set('sala-ativa', { code, ts: Date.now() }); conn.send({ t: 'hello', pid, name: myName, avatar: myAvatar, peerId: peer.id, mold: meuEnfeite('moldura'), titulo: meuEnfeite('titulo') }); });
-    conn.on('data', (m) => { Net.lastPong = Date.now(); if (m.t === 'pong') return; if (m.t === 'view') onView(m.v); else if (m.t === 'avs' && Array.isArray(m.list)) { avatars = m.list.slice(0, 6).map(safeAv); if (Net.view) render(Net.view); } else if (m.t === 'chat' && m.m) onChat(m.m); else if (m.t === 'chatlog' && Array.isArray(m.list)) { chatLog = []; m.list.forEach((x) => onChat({ ...x })); unread = 0; updateBadges(); } else if (m.t === 'err') { toast(m.msg); if (!Net.view) goHome(); } });
+    conn.on('data', (m) => { Net.lastPong = Date.now(); if (m.t === 'pong') return; if (m.t === 'again') { try { conn.send({ t: 'hello', pid, name: myName, avatar: myAvatar, peerId: peer.id, mold: meuEnfeite('moldura'), titulo: meuEnfeite('titulo') }); } catch (e) {} return; } if (m.t === 'view') onView(m.v); else if (m.t === 'avs' && Array.isArray(m.list)) { avatars = m.list.slice(0, 6).map(safeAv); if (Net.view) render(Net.view); } else if (m.t === 'chat' && m.m) onChat(m.m); else if (m.t === 'chatlog' && Array.isArray(m.list)) { chatLog = []; m.list.forEach((x) => onChat({ ...x })); unread = 0; updateBadges(); } else if (m.t === 'err') { toast(m.msg); if (!Net.view) goHome(); } });
     conn.on('close', lost);
     conn.on('error', lost);
   });
   peer.on('disconnected', () => { if (!peer.sambaGone) try { peer.reconnect(); } catch (e) { lost(); } });
   peer.on('error', (e) => {
     if (e.type === 'peer-unavailable') {
-      if (retry) { lost(); return; } // a mesa pode estar voltando também
-      toast('Não achei essa mesa. Confira o código e se a Tânia já criou a mesa.'); goHome();
+      if (Net.view || (Net.rejoin || 0) < 8) { lost(); return; } // a mesa pode estar voltando, ou a anfitriã ainda criando: procura de novo (até 8 vezes se nunca entrou)
+      toast('Não achei essa mesa. Confira o código e se a anfitriã já criou a mesa.'); showRejoin(0); goHome();
     } else if (['network', 'server-error', 'socket-error', 'socket-closed', 'disconnected'].includes(e.type) && (retry || Net.view)) lost();
     else toast('Problema de conexão: ' + e.type);
   });
@@ -1397,7 +1398,7 @@ function renderLobby(app, v) {
   const wa = 'https://wa.me/?text=' + encodeURIComponent('Vem jogar Samba com a gente! Abra ' + link + ' e use o código ' + v.code);
   const four = v.players.length >= 4;
   app.innerHTML = `<div class="center card-box"><div style="display:flex;gap:8px;justify-content:space-between;flex-wrap:wrap"><button class="sec" id="lmenu">🏠 Menu</button><span style="display:flex;gap:8px;flex-wrap:wrap">${friendsBtn}${chromeBtns}</span></div><div class="hint">Código da mesa</div><div class="code">${v.code}</div>
-   ${host ? `<a href="${wa}" target="_blank" rel="noopener"><button style="width:100%;margin-top:8px">Chamar a turma no WhatsApp</button></a>` : ''}</div>
+   ${host ? `<button class="bigbtn" id="convida" style="margin-top:8px">📲 Convidar (WhatsApp ou outro)</button><button class="sec" id="copialink" style="width:100%;margin-top:8px">🔗 Copiar o link</button><p class="hint">Quem abrir o link entra direto na mesa, sem digitar código.</p>` : ''}</div>
    <div class="card-box"><h2 style="font-size:20px">Na mesa (${v.players.length}/6)</h2>
    ${v.players.map((p, i) => `<div class="pl"><span style="display:flex;gap:10px;align-items:center">${avMold(avatars[i], 34, p.mold)}<span>${p.name}${p.titulo ? ` <small class="hint">· ${escH(tituloTxt(p.titulo))}</small>` : ""}${i === v.seat ? ' (você)' : ''}${i === 0 ? ' · anfitrião' : ''}${four ? ` · time ${i % 2 ? 'B' : 'A'}` : ''}</span></span><span>${p.connected ? '🟢' : '⚪ saiu'}</span></div>`).join('')}
    ${four ? '<p class="hint">Os times alternam: 1º, 3º e 5º jogam juntos contra 2º, 4º e 6º. O jogo é com 2, 4 ou 6 pessoas.</p>' : '<p class="hint">Com 2 jogadores é um contra um. Para 4 ou 6, adicione pessoas ou robôs.</p>'}</div>
@@ -1409,6 +1410,8 @@ function renderLobby(app, v) {
    <p class="center"><button class="sec" id="regras">Como se joga</button></p>`;
   $('#regras').onclick = () => { showRules = true; rulesModal(); };
   if ($('#lmenu')) $('#lmenu').onclick = () => sairMesa(v);
+  if ($('#convida')) $('#convida').onclick = () => { const txt = 'Vem jogar Samba da Tânia comigo! Toque no link para entrar na mesa: ' + link; if (navigator.share) navigator.share({ text: txt }).catch(() => {}); else window.open(wa, '_blank'); };
+  if ($('#copialink')) $('#copialink').onclick = () => { try { navigator.clipboard.writeText(link).then(() => toast('Link copiado! Cole no WhatsApp.')); } catch (e) { toast(link); } };
   bindOpts(app);
   if (host) { $('#bot').onclick = () => send({ a: 'addBot' }); $('#rbot').onclick = () => send({ a: 'removeBot' }); $('#start').onclick = () => send({ a: 'start' }); if ($('#swap')) $('#swap').onclick = () => send({ a: 'swap' }); }
 }
@@ -1495,7 +1498,7 @@ function fitZones() {
     // mede o tamanho natural e vai encolhendo as cartas até caber na área
     z.style.maxHeight = 'none'; z.style.maxWidth = maxW + 'px'; z.style.width = maxW + 'px'; // largura fixa: os jogos quebram em linhas e as cartas ficam do maior tamanho que cabe
     g.style.maxHeight = 'none'; g.style.overflow = 'visible';
-    let k = 1; z.style.setProperty('--ms', k);
+    let k = 1.1; z.style.setProperty('--ms', k);
     const over = () => z.getBoundingClientRect().height > maxH + 1 || g.scrollWidth > maxW + 1;
     while (over() && k > 0.3) { k = Math.round((k - 0.04) * 100) / 100; z.style.setProperty('--ms', k); }
     if (over()) { z.style.maxHeight = maxH + 'px'; g.style.maxHeight = maxH + 'px'; g.style.overflowY = 'auto'; }
@@ -1705,7 +1708,7 @@ function rulesModal() {
   <li><b>Coringas:</b> os jokers e todos os 2.</li>
   <li><b>Sua vez:</b> vire 2 cartas do monte, uma de cada vez (toque no monte duas vezes), <i>ou</i> pegue o lixo. Depois baixe jogos e descarte 1 carta.</li>
   <li><b>3 vermelhos:</b> saem da mão sozinhos e ficam na mesa, à vista de todos, cada um trazendo 1 carta do monte no lugar. Valem +100 cada. Se alguém bater e o seu time não tiver nenhuma canastra, cada um vale −100.</li>
-  <li><b>Jogos:</b> só lavadeiras: 3 ou mais cartas iguais, com pelo menos 2 naturais; o resto pode ser coringa. Jogo com coringa é sujo e não limpa mais.</li>
+  <li><b>Jogos:</b> só lavadeiras: 3 ou mais cartas iguais, com pelo menos 2 cartas normais (não coringa); o resto pode ser coringa. Não existe jogo nem canastra só de coringa (nem de 2). Jogo com coringa é sujo e não limpa mais.</li>
   <li><b>Descer:</b> a primeira vez do time na rodada precisa de pontos mínimos: 75 (0 a 1999), 90 (2000 a 3999), 120 (4000 a 5999), uma canastra qualquer (6000 a 7999) e 200 (8000 em diante). Monte vários jogos com "+ Outro jogo" e baixe todos juntos.</li>
   <li><b>Lixo:</b> você leva todas as cartas dele para a mão e depois descarta 1. Para pegar, junte a carta de cima com 2 cartas iguais da sua mão (coringa vale) e baixe esse jogo. Se o seu time já desceu, só esse jogo desce. Na primeira descida do time dá para usar o lixo também (a carta de cima num jogo, e os pontos mínimos valem). 3 preto descartado tranca o próximo jogador. Coringa descartado tranca todos até a vez de quem jogou.</li>
   <li><b>Canastra:</b> 7 cartas iguais. Limpa 500, suja 300, de 3 preto 1000.</li>
@@ -2483,7 +2486,8 @@ function precisaNome(fn) {
 }
 const NIVEIS = [['facil', 'Fácil', 'Robôs distraídos. Bom para aprender.'], ['normal', 'Normal', 'Joga direito, mas erra um pouco.'], ['dificil', 'Difícil', 'Guarda na memória o que passa pela mesa e se defende.'], ['mestre', 'Mestre', 'O mais forte. Joga limpo, sem ver as suas cartas.']];
 const NOME_NIVEL = { facil: 'Fácil', normal: 'Normal', dificil: 'Difícil', mestre: 'Mestre' };
-const cfgRobos = () => Object.assign({ n: 2, lvl: 'dificil', target: 10000, vant: 0 }, ls.get('robos-cfg', {}));
+// 01/11: a turma achou os robôs fáceis. O padrão agora é Mestre com 2.000 pontos de vantagem para os robôs (dá para mudar); quem já tinha escolha guardada sobe uma vez só.
+const cfgRobos = () => { const s = ls.get('robos-cfg', {}); const c = Object.assign({ n: 2, lvl: 'mestre', target: 10000, vant: 2000 }, s); if (!s.ver) { c.ver = 2; if (c.lvl === 'dificil' || c.lvl === 'normal' || c.lvl === 'facil') c.lvl = 'mestre'; if ((c.vant | 0) < 2000) c.vant = 2000; } return c; };
 
 function menuHtml() {
   const w = EC ? EC.wallet() : { coins: 0, gems: 0 };
@@ -2521,7 +2525,11 @@ function hojeBadges() {
 function renderHome(app) {
   app.innerHTML = menuHtml(); bindMenu(app);
   const sala = new URLSearchParams(location.search).get('sala');
-  if (sala && !renderHome.avisou) { renderHome.avisou = true; telaFamilia(String(sala).toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 4)); }
+  if (sala && !renderHome.avisou) {
+    renderHome.avisou = true; const cod = String(sala).toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 4);
+    try { history.replaceState(null, '', location.pathname); } catch (e) {} // o link só vale uma vez: depois o menu volta ao normal
+    if (cod.length === 4) precisaNome(() => join(cod)); else telaFamilia(cod); // quem recebe o link cai direto na mesa, sem digitar nada
+  }
 }
 function bindMenu(app) {
   app.querySelectorAll('[data-tela]').forEach((b) => (b.onclick = () => ({ campanha: () => (mapaModal(), 0), robos: telaRobos, familia: () => telaFamilia(), torneios: telaTorneios, loja: telaLoja, mais: telaMais, hoje: telaHoje, missoes: telaMissoes, domingos: telaDomingos })[b.dataset.tela]()));
