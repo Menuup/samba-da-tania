@@ -505,17 +505,17 @@ body.verso-dourado .card.back{background:linear-gradient(135deg,#9c7d1e,#f2c14e,
 
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <script src="engine.js?v=20261027a"></script>
-<script src="fx.js?v=20261101b"></script>
-<script src="eco.js?v=20261101b"></script>
-<script src="fases.js?v=20261101b"></script>
-<script src="mapa.js?v=20261101b"></script>
-<script src="torneios.js?v=20261101b"></script>
-<script src="tutorial.js?v=20261101b"></script>
-<script src="missoes.js?v=20261101b"></script>
-<script src="domingos.js?v=20261101b"></script>
-<script src="voz.js?v=20261101b"></script>
+<script src="fx.js?v=20261101c"></script>
+<script src="eco.js?v=20261101c"></script>
+<script src="fases.js?v=20261101c"></script>
+<script src="mapa.js?v=20261101c"></script>
+<script src="torneios.js?v=20261101c"></script>
+<script src="tutorial.js?v=20261101c"></script>
+<script src="missoes.js?v=20261101c"></script>
+<script src="domingos.js?v=20261101c"></script>
+<script src="voz.js?v=20261101c"></script>
 <script src="cloud-config.js?v=20261027a"></script>
-<script src="cloud.js?v=20261101b"></script>
+<script src="cloud.js?v=20261101c"></script>
 <script>
 'use strict';
 const $ = (s) => document.querySelector(s);
@@ -918,7 +918,7 @@ function hostAct(seat, a) {
     if (['rapido', 'normal', 'lento', 'muito'].includes(a.bot)) Net.opts.bot = a.bot;
     if ([3, 5, 8, 12, 20].includes(a.msg)) Net.opts.msg = a.msg;
     if (['facil', 'normal', 'dificil', 'mestre'].includes(a.lvl) && Net.ctx.mode === 'livre') Net.opts.lvl = a.lvl;
-    if (EC && EC.ENTRADAS.includes(a.entrada) && !Net.g) Net.opts.entrada = a.entrada;
+    if (EC && (a.entrada === 0 || EC.ENTRADAS.includes(a.entrada)) && !Net.g) Net.opts.entrada = a.entrada;
     if ([1, 3000, 5000, 10000].includes(a.target) && !Net.g) Net.opts.target = a.target;
     if ([0, 1000, 2000, 3000, 5000].includes(a.vant) && !Net.g) Net.opts.vant = a.vant;
     if (a.camp !== undefined && !Net.g) Net.opts.camp = a.camp && ['todos', 'duplas'].includes(a.camp.formato) ? { formato: a.camp.formato, nome: String(a.camp.nome || '').replace(/[<>&"]/g, '').trim().slice(0, 30) } : null;
@@ -1926,9 +1926,9 @@ function ecoOnView(v) {
 }
 function entradaHtml(v, host) {
   if (!EC) return '';
-  const e = (v.opts && v.opts.entrada) || EC.CFG.ENTRADA_MIN; const n = v.humanos || 1;
-  if (!host) return `<div class="card-box"><b>Entrada da mesa:</b> ${n >= 2 ? fmt(e) + ' moedas do jogo (sai da sua carteira quando o jogo começa; o time vencedor divide)' : 'grátis (com robôs)'}</div>`;
-  return `<div class="card-box"><b>Entrada da mesa</b> <span class="hint">(moedas do jogo)</span><div class="avs t">${EC.ENTRADAS.map((x) => `<button type="button" class="${e === x ? 'on' : ''}" data-entrada="${x}">${x}</button>`).join('')}</div><p class="hint" style="margin:6px 0 0">Cada pessoa paga a entrada da própria carteira quando o jogo começa. O time vencedor divide tudo. Só com robôs é grátis.</p></div>`;
+  const e = (v.opts && v.opts.entrada) || 0; const n = v.humanos || 1;
+  if (!host) return `<div class="card-box"><b>Entrada da mesa:</b> ${n >= 2 && e ? fmt(e) + ' moedas do jogo (sai da sua carteira quando o jogo começa; o time vencedor divide)' : 'grátis'}</div>`;
+  return `<div class="card-box"><b>Entrada da mesa</b> <span class="hint">(moedas do jogo)</span><div class="avs t">${[0].concat(EC.ENTRADAS).map((x) => `<button type="button" class="${e === x ? 'on' : ''}" data-entrada="${x}">${x ? x : 'Grátis'}</button>`).join('')}</div><p class="hint" style="margin:6px 0 0">${e ? 'Cada pessoa paga a entrada da própria carteira quando o jogo começa. O time vencedor divide tudo.' : 'Jogo sem moedas: é só jogar.'}</p></div>`;
 }
 
 /* --- fases: mapa e cartão --- */
