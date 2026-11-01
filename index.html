@@ -505,17 +505,17 @@ body.verso-dourado .card.back{background:linear-gradient(135deg,#9c7d1e,#f2c14e,
 
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <script src="engine.js?v=20261027a"></script>
-<script src="fx.js?v=20261101a"></script>
-<script src="eco.js?v=20261101a"></script>
-<script src="fases.js?v=20261101a"></script>
-<script src="mapa.js?v=20261101a"></script>
-<script src="torneios.js?v=20261101a"></script>
-<script src="tutorial.js?v=20261101a"></script>
-<script src="missoes.js?v=20261101a"></script>
-<script src="domingos.js?v=20261101a"></script>
-<script src="voz.js?v=20261101a"></script>
+<script src="fx.js?v=20261101b"></script>
+<script src="eco.js?v=20261101b"></script>
+<script src="fases.js?v=20261101b"></script>
+<script src="mapa.js?v=20261101b"></script>
+<script src="torneios.js?v=20261101b"></script>
+<script src="tutorial.js?v=20261101b"></script>
+<script src="missoes.js?v=20261101b"></script>
+<script src="domingos.js?v=20261101b"></script>
+<script src="voz.js?v=20261101b"></script>
 <script src="cloud-config.js?v=20261027a"></script>
-<script src="cloud.js?v=20261101a"></script>
+<script src="cloud.js?v=20261101b"></script>
 <script>
 'use strict';
 const $ = (s) => document.querySelector(s);
@@ -831,7 +831,7 @@ function refreshFriendsUI() {
 })();
 
 /* ---------- rede: anfitrião (jogador 0) e convidados ---------- */
-const Net = { local: false, ctx: { mode: 'livre' }, spec: null, acc: null, opts: { timer: 0, bot: 'normal', msg: 6, lvl: 'mestre', entrada: 50, vant: 2000 }, deadline: null, timerId: null, turnTimer: null, viewAt: 0, chat: [], lastAv: null, host: false, code: null, peer: null, conn: null, conns: {}, lobby: [], g: null, botTimer: null, view: null, retry: 0 };
+const Net = { local: false, ctx: { mode: 'livre' }, spec: null, acc: null, opts: { timer: 0, bot: 'normal', msg: 6, lvl: 'mestre', entrada: 0, vant: 0 }, deadline: null, timerId: null, turnTimer: null, viewAt: 0, chat: [], lastAv: null, host: false, code: null, peer: null, conn: null, conns: {}, lobby: [], g: null, botTimer: null, view: null, retry: 0 };
 
 function randCode() { const a = 'ABCDEFGHJKLMNPQRSTUVWXYZ'; let c = ''; for (let i = 0; i < 4; i++) c += a[(Math.random() * a.length) | 0]; return c; }
 
@@ -984,6 +984,7 @@ function armTimer() {
 const TAMANHOS = [[1, 'Uma rodada', 'uns 10 min'], [3000, 'Até 3.000', 'uns 20 min'], [5000, 'Até 5.000', 'uns 35 min'], [10000, 'Jogo inteiro, 10.000', 'uns 50 min']];
 const VANTS = [[0, 'Nenhuma'], [1000, '1.000'], [2000, '2.000'], [3000, '3.000'], [5000, '5.000']];
 function vantHtml(v, host) {
+  return ''; // 01/11: sem vantagem de pontos para os robôs: a dificuldade vem do jeito de jogar deles
   const o = v.opts || {}; const tg = o.target || 10000; const vt = o.vant | 0;
   if (tg === 1) return ''; // em uma rodada só a vantagem não pesa na regra
   const aviso = (v.players || []).every((p, i) => i % 2 === 0 || p.bot) ? '' : '<p class="hint" style="margin:4px 0">Só vale quando o time de baixo é de robôs.</p>';
@@ -1023,7 +1024,7 @@ function novoJogo() {
   if (C && C.formato === 'todos' && TO) { const byPid = new Map(Net.lobby.map((p) => [p.pid, p])); const ord = TO.rotacao(C.base, C.jogo).map((id) => byPid.get(id)).filter(Boolean); if (ord.length === Net.lobby.length) Net.lobby = ord; }
   const opts = C ? { target: C.formato === 'todos' ? 1 : 5000, mode: 'familia' } : { target: Net.opts.target || 10000 };
   if (opts.target === 1 || opts.target === 3000 || opts.target === 5000) opts.mode = 'familia';
-  const vt = Net.opts.vant | 0;
+  const vt = 0; // sem vantagem de pontos para os robôs
   if (vt && !C && opts.target > 1 && Net.lobby.length >= 2 && Net.lobby.every((p, i) => i % 2 === 0 || p.bot)) opts.scores = [0, vt]; // robôs começam na frente: a dificuldade que se vê no placar // jogo curto: monte acabando fecha a rodada, não o jogo
   Net.g = S.newGame(Net.lobby.map((p) => ({ name: p.name, bot: p.bot })), opts);
   Net.lastAv = null;
@@ -2487,7 +2488,7 @@ function precisaNome(fn) {
 const NIVEIS = [['facil', 'Fácil', 'Robôs distraídos. Bom para aprender.'], ['normal', 'Normal', 'Joga direito, mas erra um pouco.'], ['dificil', 'Difícil', 'Guarda na memória o que passa pela mesa e se defende.'], ['mestre', 'Mestre', 'O mais forte. Joga limpo, sem ver as suas cartas.']];
 const NOME_NIVEL = { facil: 'Fácil', normal: 'Normal', dificil: 'Difícil', mestre: 'Mestre' };
 // 01/11: a turma achou os robôs fáceis. O padrão agora é Mestre com 2.000 pontos de vantagem para os robôs (dá para mudar); quem já tinha escolha guardada sobe uma vez só.
-const cfgRobos = () => { const s = ls.get('robos-cfg', {}); const c = Object.assign({ n: 2, lvl: 'mestre', target: 10000, vant: 2000 }, s); if (!s.ver) { c.ver = 2; if (c.lvl === 'dificil' || c.lvl === 'normal' || c.lvl === 'facil') c.lvl = 'mestre'; if ((c.vant | 0) < 2000) c.vant = 2000; } return c; };
+const cfgRobos = () => { const s = ls.get('robos-cfg', {}); const c = Object.assign({ n: 2, lvl: 'mestre', target: 10000, vant: 0 }, s); c.vant = 0; if (!s.ver) { c.ver = 2; if (c.lvl === 'dificil' || c.lvl === 'normal' || c.lvl === 'facil') c.lvl = 'mestre'; if ((c.vant | 0) < 2000) c.vant = 2000; } return c; };
 
 function menuHtml() {
   const w = EC ? EC.wallet() : { coins: 0, gems: 0 };
@@ -2551,7 +2552,6 @@ function telaRobos() {
     $t('.tl-corpo').innerHTML = `${seg('Quantos jogam?', 'n', [[2, '1 contra 1', 'só você e 1 robô'], [4, '2 contra 2', 'um robô joga COM você'], [6, '3 contra 3', 'dois robôs jogam COM você']])}
       ${seg('Nível dos robôs', 'lvl', NIVEIS.map(([k, n]) => [k, n]))}<p class="hint" style="margin:-4px 0 12px">${nivel[2]}</p>
       ${seg('Tamanho do jogo', 'target', [[1, 'Uma rodada', 'uns 10 min'], [3000, 'Até 3.000', 'uns 20 min'], [5000, 'Até 5.000', 'uns 35 min'], [10000, 'Jogo inteiro', 'uns 50 min']])}
-      ${longo ? seg('Vantagem dos robôs', 'vant', [[0, 'Nenhuma'], [1000, '1.000'], [2000, '2.000'], [3000, '3.000'], [5000, '5.000']]) + '<p class="hint" style="margin:-4px 0 12px">Eles começam o jogo na frente. É a forma justa de deixar mais difícil.</p>' : ''}
       <div class="mn-resumo">${resumo}</div><button class="bigbtn" id="rjogar">▶ Jogar</button>`;
     $t('.tl-corpo').querySelectorAll('[data-k]').forEach((b) => (b.onclick = () => { const x = cfgRobos(); x[b.dataset.k] = +b.dataset.v || b.dataset.v; if (b.dataset.k === 'lvl') x.lvl = b.dataset.v; if (b.dataset.k === 'target' && x.target === 1) x.vant = 0; ls.set('robos-cfg', x); paint(); }));
     $t('#rjogar').onclick = () => precisaNome(() => iniciarRobos(cfgRobos()));
@@ -2563,7 +2563,7 @@ function iniciarRobos(c) {
   const nomes = nomesRobos(); const ps = [{ name: myName, bot: false }];
   for (let i = 1; i < c.n; i++) ps.push({ name: nomes[(i - 1) % nomes.length], bot: true });
   const opts = { target: c.target }; if (c.target === 1 || c.target === 3000 || c.target === 5000) opts.mode = 'familia';
-  if (c.vant && c.target > 1) opts.scores = [0, c.vant];
+  
   localStart({ mode: 'livre', players: ps, opts, nivel: c.lvl, ctx: { lvl: c.lvl } });
 }
 

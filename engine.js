@@ -516,10 +516,10 @@
   const projecao = (s, t) => s.melds[t].reduce((a, m) => a + meldPts(m) + canastraBonus(m), 0) + s.reds[t].length * 100 - (s.mortoTaken[t] ? 0 : 100);
   // Parâmetros dos robôs fortes (ajustados por simulação: node sim-ajuste.js). Mestre = os mesmos movimentos com números afinados.
   const PARAMS = {
-    dificil: { minPile: 1, pileWild: 2, wildDump: 14, parWild: 12, limpa4: 4, limpa6: 6, pairKeep: 30, meldKeep: 25, ptsW: 0.25, presBase: 8, presPer: 3, black3: -40, black3Pile: 2, wildCost: 70, jokerExtra: 20, lockPile: 6, lockCusto: 45, presMatch: 0, vivaW: 0, parceiroW: 0, hiper: 0, esconde: 0, escondeMao: 12, perigoMul: 1, aprende: 0 },
+    dificil: { minPile: 1, pileWild: 2, wildDump: 14, parWild: 12, limpa4: 4, limpa6: 6, pairKeep: 30, meldKeep: 25, ptsW: 0.25, presBase: 8, presPer: 3, black3: -40, black3Pile: 2, wildCost: 70, jokerExtra: 20, lockPile: 6, lockCusto: 45, presMatch: 0, vivaW: 0, parceiroW: 0, hiper: 0, esconde: 0, escondeMao: 12, perigoMul: 1, aprende: 0, guardaPar: 0, guardaMao: 11 },
   };
   // Mestre: números afinados por simulação contra o Difícil (sim-ajuste.js). Joga limpo como o Difícil: só usa o que está à vista e na memória da mesa.
-  PARAMS.mestre = Object.assign({}, PARAMS.dificil, {"minPile":1,"pileWild":2,"wildDump":14,"parWild":12,"limpa4":4,"limpa6":5,"pairKeep":30,"meldKeep":25,"ptsW":0.25,"presBase":8,"presPer":6,"black3":-40,"black3Pile":2,"wildCost":70,"jokerExtra":20,"lockPile":6,"lockCusto":0});
+  PARAMS.mestre = Object.assign({}, PARAMS.dificil, {"minPile":1,"pileWild":2,"wildDump":14,"parWild":12,"limpa4":4,"limpa6":5,"pairKeep":30,"meldKeep":25,"ptsW":0.37,"presBase":8,"presPer":7.5,"black3":-40,"black3Pile":2,"wildCost":70,"jokerExtra":20,"lockPile":6,"lockCusto":0,"presMatch":0,"vivaW":8,"parceiroW":0,"hiper":0,"esconde":0,"escondeMao":12,"perigoMul":1.4,"aprende":0,"guardaPar":1,"guardaMao":11});
   function hardPlan(s, seat, P) {
     P = P || PARAMS.dificil;
     const hand = s.hands[seat]; const t = teamOf(s, seat); const o = 1 - t; const melds = s.melds[t];
@@ -553,7 +553,9 @@
     const nat = hand.filter((x) => !isWild(x) && !isBlack3(x));
     if (desc) {
       // 1) cartas naturais nos jogos do time
-      for (const c of nat) { const m = melds.find((x) => x.rank === c.r && !x.black); if (m) return { a: 'addTo', meldId: m.id, ids: [c.id] }; }
+      // malícia: guarda na mão o par de uma figura que o time já tem na mesa (isca para levar o lixo quando alguém descartar essa figura), até a mão encher ou o jogo fechar a canastra
+      const parNaMao = (c) => nat.filter((x) => x.r === c.r).length === 2;
+      for (const c of nat) { const m = melds.find((x) => x.rank === c.r && !x.black); if (m && !(P.guardaPar && parNaMao(c) && m.cards.length < 6 && hand.length <= P.guardaMao && s.stock.length > 20 && !oppAmeaca)) return { a: 'addTo', meldId: m.id, ids: [c.id] }; }
       // 2) trincas naturais novas (limpas); par + coringa só quando a mão está grande ou o adversário ameaça bater
       const by = countBy(nat); const novos = [];
       for (const r in by) if (by[r].length >= 3 && !used.has(+r)) novos.push(by[r].map((c) => c.id));
