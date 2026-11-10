@@ -513,17 +513,18 @@ body.verso-dourado .card.back{background:linear-gradient(135deg,#9c7d1e,#f2c14e,
 
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <script src="engine.js?v=20261027a"></script>
-<script src="fx.js?v=20261111c"></script>
-<script src="eco.js?v=20261111c"></script>
-<script src="fases.js?v=20261111c"></script>
-<script src="mapa.js?v=20261111c"></script>
-<script src="torneios.js?v=20261111c"></script>
-<script src="tutorial.js?v=20261111c"></script>
-<script src="missoes.js?v=20261111c"></script>
-<script src="domingos.js?v=20261111c"></script>
-<script src="voz.js?v=20261111c"></script>
+<script src="fx.js?v=20261111e"></script>
+<script src="eco.js?v=20261111e"></script>
+<script src="fases.js?v=20261111e"></script>
+<script src="mapa.js?v=20261111e"></script>
+<script src="torneios.js?v=20261111e"></script>
+<script src="tutorial.js?v=20261111e"></script>
+<script src="missoes.js?v=20261111e"></script>
+<script src="domingos.js?v=20261111e"></script>
+<script src="analise.js?v=20261111e"></script>
+<script src="voz.js?v=20261111e"></script>
 <script src="cloud-config.js?v=20261027a"></script>
-<script src="cloud.js?v=20261111c"></script>
+<script src="cloud.js?v=20261111e"></script>
 <script>
 'use strict';
 const $ = (s) => document.querySelector(s);
@@ -1226,6 +1227,7 @@ function onView(v) {
   else if (window.FX && v.phase === 'playing' && v.late && pv && !pv.late) FX.sound('lock');
   Net.view = v; Net.viewAt = Date.now();
   try { ecoOnView(v); } catch (e) { console.warn('eco', e); }
+  try { analiseRegistra(v); } catch (e) { console.warn('analise', e); }
   const inGame = v.phase === 'playing' || v.phase === 'roundEnd' || v.phase === 'gameEnd';
   if (inGame) trackBanners(v);
   if (inGame) { const ids = new Set(v.hand.map((c) => c.id)); sel = new Set([...sel].filter((i) => ids.has(i))); }
@@ -2563,6 +2565,7 @@ function menuHtml() {
   <button class="mn-eu" id="mn-eu"><span id="avnow">${avHtml(myAvatar, 52)}</span><span class="mn-nome"><b>${myName ? escH(myName) : 'Toque para escolher seu nome'}</b>${window.FX ? FX.profileHtml(true) : ''}</span><span class="mn-carteira"><span class="chip">🪙 ${fmt(w.coins)}</span><span class="chip">💎 ${fmt(w.gems)}</span></span></button>
   ${salaOk ? `<button class="bigbtn mn-cont" id="mn-sala">🌐 Voltar à mesa ${escH(salaA.code)}</button>` : ''}${hostOk ? `<button class="bigbtn mn-cont" id="mn-host">🌐 Retomar a mesa que você criou (${escH(hostS.code)})</button>` : ''}
   ${salvo ? `<button class="bigbtn mn-cont" id="mn-cont" data-modo="${salvo}">▶ Continuar ${nomes[salvo]()}</button>` : ''}
+  ${window.Analise ? '<button class="mn-hoje" data-tela="matematico">🧮 O Matemático: por que você ganha dos robôs</button>' : ''}
   ${window.Domingos ? '<button class="mn-hoje" data-tela="domingos">🏅 Domingos: o ranking da turma (jogo pessoalmente)</button>' : ''}
   ${MI ? `<button class="mn-hoje" data-tela="missoes">🎯 Missões: ${MI.LISTA.length ? missoesFeitas() + ' de ' + MI.LISTA.length : ''} jogos que ficam mais difíceis</button>` : ''}
   ${gate.presente() || hoje.n ? `<button class="mn-hoje ${hoje.n ? 'tem' : ''}" data-tela="hoje">📅 Hoje: presente, missões e bônus${hoje.n ? `<i>${hoje.n}</i>` : ''}</button>` : ''}
@@ -2592,7 +2595,7 @@ function renderHome(app) {
   }
 }
 function bindMenu(app) {
-  app.querySelectorAll('[data-tela]').forEach((b) => (b.onclick = () => ({ campanha: () => (mapaModal(), 0), robos: telaRobos, familia: () => telaFamilia(), torneios: telaTorneios, loja: telaLoja, mais: telaMais, hoje: telaHoje, missoes: telaMissoes, domingos: telaDomingos })[b.dataset.tela]()));
+  app.querySelectorAll('[data-tela]').forEach((b) => (b.onclick = () => ({ campanha: () => (mapaModal(), 0), robos: telaRobos, familia: () => telaFamilia(), torneios: telaTorneios, loja: telaLoja, mais: telaMais, hoje: telaHoje, missoes: telaMissoes, domingos: telaDomingos, matematico: telaMatematico })[b.dataset.tela]()));
   const eu = $('#mn-eu'); if (eu) eu.onclick = () => (myName ? telaMais() : precisaNome(() => goHome()));
   const c = $('#mn-cont'); if (c) c.onclick = () => precisaNome(() => resumeLocal(c.dataset.modo));
   const sa = $('#mn-sala'); if (sa) sa.onclick = () => precisaNome(() => { Net.rejoin = 0; join(ls.get('sala-ativa').code); });
@@ -2947,6 +2950,37 @@ function renderLiga(app, v) {
   on('lgcome', () => send({ a: 'ligaComecar' })); on('lgwoa', () => send({ a: 'ligaWO', lado: 'a' })); on('lgwob', () => send({ a: 'ligaWO', lado: 'b' })); on('lgsair', () => send({ a: 'ligaSair' }));
   if (g.fim && window.FX && !renderLiga.festa) { renderLiga.festa = true; FX.sound('win'); confetti(4000); }
   if (!g.fim) renderLiga.festa = false;
+}
+
+/* --- O Matemático: por que você ganha dos robôs --- */
+const AN = window.Analise || null;
+function analiseRegistra(v) {
+  if (!AN || !v || (v.phase !== 'roundEnd' && v.phase !== 'gameEnd') || v.liga || !v.roundResult) return;
+  const lista = ls.get('analise', []);
+  const lvl = (Net.host && Net.lobby[1] && Net.lobby[1].lvl) || (v.opts && v.opts.lvl) || (Net.ctx && Net.ctx.lvl) || null;
+  const r = AN.registro(v, { lvl, log: Net.host && Net.g && Net.g.log ? Net.g.log : v.log });
+  const nova = AN.guardar(lista, r); if (nova !== lista) ls.set('analise', nova);
+}
+function telaMatematico() {
+  if (!AN) return;
+  const lista = ls.get('analise', []); const a = AN.analisar(lista);
+  if (!a.n) return abreTela('🧮 O Matemático', '<p class="hint" style="margin-top:0">Ainda não há rodadas contra robôs guardadas. Jogue uma partida contra os robôs (1 contra 1, em times ou cada um por si) e volte aqui: o Matemático mostra, com contas, de onde vem a sua vantagem e onde o robô ainda perde.</p>');
+  const fm = (x) => Math.round(x).toLocaleString('pt-BR'); const sg = (x) => (x > 0 ? '+' : '') + fm(x);
+  const lin = (nome, eu, ro, dif, ok) => `<tr><td style="text-align:left">${nome}</td><td align="center"><b>${eu}</b></td><td align="center">${ro}</td><td align="center" style="color:${ok ? '#9cf0b0' : '#ffb3c1'}">${dif}</td></tr>`;
+  const comps = a.comps.map((c) => lin(c.nome, fm(c.eu), fm(c.ro), sg(c.dif), c.dif >= 0)).join('');
+  const ests = a.ests.filter((e) => e.k !== 'draws').map((e) => lin(e.nome, e.eu.toFixed(1), e.ro.toFixed(1), (e.dif > 0 ? '+' : '') + e.dif.toFixed(1), e.dif >= 0)).join('');
+  const b = AN.BASE.mestre;
+  abreTela('🧮 O Matemático', `<div class="mn-resumo" style="font-size:19px">${escH(a.resumo)}</div>
+   <div class="card-box"><b>Em ${a.n} rodada${a.n === 1 ? '' : 's'} contra robôs</b><br>Você ganhou <b>${a.vitorias}</b> (${a.pct}%).${a.jogos ? ` Jogos completos: ${a.jogosG} vitória${a.jogosG === 1 ? '' : 's'} em ${a.jogos}.` : ''}<br>Por rodada: você faz <b>${fm(a.totalEu)}</b> pontos e eles <b>${fm(a.totalRo)}</b> (${sg(a.vant)}).</div>
+   <div class="card-box"><h2 style="font-size:18px;margin-top:0">De onde vem a diferença (média por rodada)</h2><table style="width:100%;font-size:14px;border-collapse:collapse"><tr class="hint"><th></th><th>Você</th><th>Robôs</th><th>Dif.</th></tr>${comps}</table></div>
+   <div class="card-box"><h2 style="font-size:18px;margin-top:0">Como cada um joga (por rodada)</h2><table style="width:100%;font-size:14px;border-collapse:collapse"><tr class="hint"><th></th><th>Você</th><th>Robôs</th><th>Dif.</th></tr>${ests}</table></div>
+   <div class="card-box"><h2 style="font-size:18px;margin-top:0">O que as contas dizem</h2>${a.frases.length ? a.frases.map((f) => `<p style="margin:6px 0">${escH(f)}</p>`).join('') : '<p class="hint">Jogue mais algumas rodadas para as contas ficarem firmes.</p>'}</div>
+   <p class="hint">Régua: um robô Mestre contra outro Mestre faz em média ${fm(b['1x1'].rodada)} pontos por rodada num 1×1 e bate em ${Math.round(b['1x1'].bateu * 100)}% das rodadas, em ${b['1x1'].vezes} vezes.</p>
+   <p class="hint" style="margin:0 0 8px">As rodadas ficam guardadas neste celular sozinhas (as últimas 80). Para eu analisar, mande o relatório:</p><button class="bigbtn" id="mrel">📋 Copiar relatório para o Caetano</button><button class="sec" id="mzap" style="width:100%;margin-top:8px">📲 Mandar o relatório (WhatsApp ou outro)</button><button class="sec" id="mzera" style="width:100%;margin-top:8px">🗑️ Zerar a análise</button>`, (t) => {
+    t.querySelector('#mrel').onclick = () => { const txt = AN.relatorio(ls.get('analise', [])); try { navigator.clipboard.writeText(txt).then(() => toast('Relatório copiado! Cole na conversa.')); } catch (e) { toast('Não consegui copiar neste aparelho.'); } };
+    t.querySelector('#mzap').onclick = () => { const txt = AN.relatorio(ls.get('analise', [])); if (navigator.share) navigator.share({ title: 'Relatório do Matemático', text: txt }).catch(() => {}); else { try { navigator.clipboard.writeText(txt).then(() => toast('Relatório copiado! Cole no WhatsApp.')); } catch (e) { toast('Não consegui copiar neste aparelho.'); } } };
+    t.querySelector('#mzera').onclick = () => choiceModal('Zerar a análise das partidas?', [{ label: 'Zerar', fn: () => { ls.set('analise', []); telaMatematico(); } }]);
+  });
 }
 
 presenceStart();

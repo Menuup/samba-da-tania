@@ -1,7 +1,7 @@
 /* Samba da Tânia: guarda os arquivos do jogo para abrir rápido e funcionar como app.
    O jogo online continua precisando de internet. Rede primeiro, cópia guardada se estiver sem sinal. */
-const CACHE = 'samba-tania-v39';
-const FILES = ['./', 'index.html', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png', 'engine.js', 'fx.js', 'eco.js', 'fases.js', 'torneios.js', 'mapa.js', 'tutorial.js', 'missoes.js', 'domingos.js', 'voz.js', 'cloud-config.js', 'cloud.js'];
+const CACHE = 'samba-tania-v41';
+const FILES = ['./', 'index.html', 'manifest.webmanifest', 'icon-192.png', 'icon-512.png', 'apple-touch-icon.png', 'engine.js', 'fx.js', 'eco.js', 'fases.js', 'torneios.js', 'mapa.js', 'tutorial.js', 'missoes.js', 'domingos.js', 'analise.js', 'voz.js', 'cloud-config.js', 'cloud.js'];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(FILES)).then(() => self.skipWaiting()));
