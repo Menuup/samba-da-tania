@@ -86,7 +86,10 @@
   }
 
   /* ---------- partida ---------- */
-  const teamOf = (s, seat) => seat % 2;
+  // 3 pessoas, cada uma por si (s.solo): cada cadeira é o seu próprio time e há só 2 mortos; quem não pega morto não bate
+  const teamOf = (s, seat) => (s.solo ? seat : seat % 2);
+  const topUnico = (arr) => { const m = Math.max(...arr); const k = arr.filter((x) => x === m).length; return k === 1 ? arr.indexOf(m) : -1; };
+  const outrosTimes = (s, t) => { const r = []; for (let i = 0; i < s.nTeams; i++) if (i !== t) r.push(i); return r; };
   const teamSeats = (s, t) => { const r = []; for (let i = 0; i < s.n; i++) if (teamOf(s, i) === t) r.push(i); return r; };
   const canBater = (s, t) => s.mortoTaken[t] && s.melds[t].some((m) => m.canastra && m.clean) && s.melds[t].some((m) => m.canastra && !m.clean);
 
@@ -99,15 +102,15 @@
     for (let t = 0; t < 2; t++) s.mortos.push(deck.splice(0, 11));
     s.discard = [];
     s.stock = deck;
-    s.mortoTaken = [false, false];
-    s.descended = [false, false];
-    s.melds = [[], []];
+    s.mortoTaken = Array(s.nTeams).fill(false);
+    s.descended = Array(s.nTeams).fill(false);
+    s.melds = Array.from({ length: s.nTeams }, () => []);
     // estatísticas por jogador: da rodada (rstats) e do jogo inteiro (gstats)
     const zero = () => ({ draws: 0, pile: 0, melds: 0, canL: 0, canS: 0, canB: 0, bater: 0, reds: 0, descFirst: 0 });
     s.rstats = Array.from({ length: s.n }, zero);
     if (!s.gstats) s.gstats = Array.from({ length: s.n }, zero);
     s.firstDesc = null;
-    s.reds = [[], []];
+    s.reds = Array.from({ length: s.nTeams }, () => []);
     for (let i = 0; i < s.n; i++) layReds(s, i);
     s.meldSeq = 0; s.pileTakes = 0; s.lock = null; s.turnNo = 0; s.drawn = 0; s.owed = 0;
     // memória da mesa (o que qualquer jogador atento sabe): figuras que cada um levou do lixo e as que descartou
@@ -123,10 +126,10 @@
   }
   function newGame(players, opts) {
     opts = opts || {};
-    const n = players.length;
+    const n = players.length; const solo = !!opts.solo && n === 3;
     const s = {
       players: players.map((p) => (p.lvl ? { name: p.name, bot: !!p.bot, lvl: p.lvl } : { name: p.name, bot: !!p.bot })),
-      n, nTeams: 2, scores: opts.scores ? [+opts.scores[0] || 0, +opts.scores[1] || 0] : [0, 0], target: opts.target || TARGET, round: 0, dealer: n - 1, winner: null,
+      n, nTeams: solo ? 3 : 2, solo, scores: solo ? [0, 0, 0] : opts.scores ? [+opts.scores[0] || 0, +opts.scores[1] || 0] : [0, 0], target: opts.target || TARGET, round: 0, dealer: n - 1, winner: null,
     };
     s.vantagem = s.scores.slice();
     if (opts.maxRounds) s.maxRounds = opts.maxRounds;
@@ -151,6 +154,7 @@
   }
   function takeMorto(s, seat) {
     const t = teamOf(s, seat);
+    if (s.solo) { const m = s.mortos.shift(); if (!m) return; s.hands[seat] = s.hands[seat].concat(m); s.mortoTaken[t] = true; layReds(s, seat); return; } // sozinho: o 1º e o 2º a esvaziar a mão levam um morto cada
     s.hands[seat] = s.hands[seat].concat(s.mortos[t]); s.mortos[t] = []; s.mortoTaken[t] = true;
     layReds(s, seat);
   }
@@ -158,7 +162,7 @@
   function endRound(s, outSeat, stockOut) {
     const res = [];
     if (outSeat != null && s.rstats) s.rstats[outSeat].bater = 1;
-    for (let t = 0; t < 2; t++) {
+    for (let t = 0; t < s.nTeams; t++) {
       let mp = 0, bonus = 0, handPts = 0;
       for (const m of s.melds[t]) { mp += meldPts(m); bonus += canastraBonus(m); }
       for (const seat of teamSeats(s, t)) for (const c of s.hands[seat]) handPts += handPenalty(c);
@@ -178,15 +182,15 @@
     // fase/torneio/desafio/familia: o monte acabar encerra só a rodada; empate puxa outra rodada
     if (s.mode === 'fase' || s.mode === 'torneio' || s.mode === 'desafio' || s.mode === 'familia') {
       if (s.maxRounds) {
-        if (s.round >= s.maxRounds && s.scores[0] !== s.scores[1]) { s.phase = 'gameEnd'; s.winner = s.scores.indexOf(max); }
+        if (s.round >= s.maxRounds && topUnico(s.scores) >= 0) { s.phase = 'gameEnd'; s.winner = topUnico(s.scores); }
       } else if (s.target <= 1) {
-        if (res[0].total !== res[1].total) { s.phase = 'gameEnd'; s.winner = res[0].total > res[1].total ? 0 : 1; }
-      } else if (max >= s.target && s.scores[0] !== s.scores[1]) { s.phase = 'gameEnd'; s.winner = s.scores.indexOf(max); }
+        const w = topUnico(res.map((x) => x.total)); if (w >= 0) { s.phase = 'gameEnd'; s.winner = w; }
+      } else if (max >= s.target && topUnico(s.scores) >= 0) { s.phase = 'gameEnd'; s.winner = topUnico(s.scores); }
       return;
     }
-    if (stockOut || (max >= s.target && s.scores[0] !== s.scores[1])) {
+    if (stockOut || (max >= s.target && topUnico(s.scores) >= 0)) {
       s.phase = 'gameEnd';
-      s.winner = s.scores[0] === s.scores[1] ? -1 : s.scores.indexOf(max);
+      s.winner = topUnico(s.scores);
     }
   }
 
@@ -195,11 +199,13 @@
     const t = teamOf(s, seat); const hand = s.hands[seat];
     const msg = 'Para bater o time precisa ter pego o morto, ter uma canastra limpa e uma suja.';
     if (hand.length === 0) {
+      if (!s.mortoTaken[t] && s.solo && !s.mortos.length) return 'Os dois mortos já foram pegos: sem morto você não pode bater.';
       if (!s.mortoTaken[t]) { takeMorto(s, seat); s.last += ' e pegou o morto'; return null; }
       if (canBater(s, t)) { endRound(s, seat); s.last += ' e BATEU!'; return null; }
       return msg;
     }
     if (hand.length === 1 && s.mortoTaken[t] && !canBater(s, t)) return 'Assim você ficaria com uma carta só e sem poder bater. ' + msg;
+    if (hand.length === 1 && !s.mortoTaken[t] && s.solo && !s.mortos.length) return 'Os dois mortos já foram pegos: sem morto você não pode ficar com uma carta só.';
     return null;
   }
 
@@ -337,6 +343,7 @@
         const c = hand.find((x) => x.id === a.id);
         if (!c) return E('Carta inválida.');
         if (hand.length === 1 && s.mortoTaken[t] && !canBater(s, t)) return E('Para bater o time precisa de uma canastra limpa e uma suja.');
+        if (hand.length === 1 && !s.mortoTaken[t] && s.solo && !s.mortos.length) return E('Os dois mortos já foram pegos: sem morto você não pode bater.');
         drop([c]); s.discard.push(c);
         if (s.discR) { s.discR[seat].push(c.r); if (s.discR[seat].length > 8) s.discR[seat].shift(); }
         if (s.turnos) s.turnos[seat] = (s.turnos[seat] || 0) + 1;
@@ -372,7 +379,7 @@
   function viewFor(s, seat) {
     const t = teamOf(s, seat);
     return {
-      phase: s.phase, n: s.n, nTeams: 2, round: s.round, target: s.target,
+      phase: s.phase, n: s.n, nTeams: s.nTeams, solo: !!s.solo, mortosRestam: s.mortos.length, round: s.round, target: s.target,
       scores: s.scores, seat, myTeam: t,
       players: s.players.map((p, i) => ({ name: p.name, bot: p.bot, team: teamOf(s, i), count: s.hands[i].length })),
       hand: s.hands[seat],
@@ -383,13 +390,13 @@
       pileLocked: lockedFor(s, seat) && s.discard.length > 0,
       lockType: s.lock ? s.lock.type : null,
       mortoTaken: s.mortoTaken, descended: s.descended,
-      need: [needFor(s.scores[0]), needFor(s.scores[1])],
+      need: s.scores.map(needFor),
       melds: s.melds,
       stats: s.rstats || [], gstats: s.gstats || [], firstDesc: s.firstDesc == null ? null : s.firstDesc,
       turn: s.turn, step: s.step, last: s.last, lastSeat: s.lastSeat == null ? null : s.lastSeat, log: (s.log || []).slice(-30), logN: s.logN || 0,
       roundResult: s.roundResult, winner: s.winner,
       runId: s.runId || null, startedAt: s.startedAt || null, vantagem: s.vantagem || [0, 0], mode: s.mode || null, maxRounds: s.maxRounds || 0, turnos: s.turnos || [],
-      roundWinner: s.roundResult ? (s.roundResult.teams[0].total === s.roundResult.teams[1].total ? -1 : s.roundResult.teams[0].total > s.roundResult.teams[1].total ? 0 : 1) : null,
+      roundWinner: s.roundResult ? topUnico(s.roundResult.teams.map((x) => x.total)) : null,
     };
   }
 
@@ -474,7 +481,7 @@
     if (level === 'facil') { const pick = order.slice(0, 3); return { a: 'discard', id: pick[Math.floor(Math.random() * pick.length)] }; }
     if (level === 'dificil') {
       // não entrega carta que o outro time já tem jogo na mesa
-      const oppRanks = new Set(s.melds[1 - t].map((m) => m.rank));
+      const oppRanks = new Set(outrosTimes(s, t).flatMap((q) => s.melds[q].map((m) => m.rank)));
       const safe = order.filter((id) => { const c = hand.find((x) => x.id === id); return c && !isWild(c) && !oppRanks.has(c.r); });
       if (safe.length) return { a: 'discard', id: safe[0] };
     }
@@ -516,20 +523,28 @@
   const projecao = (s, t) => s.melds[t].reduce((a, m) => a + meldPts(m) + canastraBonus(m), 0) + s.reds[t].length * 100 - (s.mortoTaken[t] ? 0 : 100);
   // Parâmetros dos robôs fortes (ajustados por simulação: node sim-ajuste.js). Mestre = os mesmos movimentos com números afinados.
   const PARAMS = {
-    dificil: { minPile: 1, pileWild: 2, wildDump: 14, parWild: 12, limpa4: 4, limpa6: 6, pairKeep: 30, meldKeep: 25, ptsW: 0.25, presBase: 8, presPer: 3, black3: -40, black3Pile: 2, wildCost: 70, jokerExtra: 20, lockPile: 6, lockCusto: 45, presMatch: 0, vivaW: 0, parceiroW: 0, hiper: 0, esconde: 0, escondeMao: 12, perigoMul: 1, aprende: 0, guardaPar: 0, guardaMao: 11 },
+    dificil: { minPile: 1, pileWild: 2, wildDump: 14, parWild: 12, limpa4: 4, limpa6: 6, pairKeep: 30, meldKeep: 25, ptsW: 0.25, presBase: 8, presPer: 3, black3: -40, black3Pile: 2, wildCost: 70, jokerExtra: 20, lockPile: 6, lockCusto: 45, presMatch: 0, vivaW: 0, parceiroW: 0, hiper: 0, esconde: 0, escondeMao: 12, perigoMul: 1, aprende: 0, guardaPar: 0, guardaMao: 11, fecha: 0, placar: 0, placarMargem: 400 },
   };
   // Mestre: números afinados por simulação contra o Difícil (sim-ajuste.js). Joga limpo como o Difícil: só usa o que está à vista e na memória da mesa.
-  PARAMS.mestre = Object.assign({}, PARAMS.dificil, {"minPile":1,"pileWild":2,"wildDump":14,"parWild":12,"limpa4":4,"limpa6":5,"pairKeep":30,"meldKeep":25,"ptsW":0.37,"presBase":8,"presPer":7.5,"black3":-40,"black3Pile":2,"wildCost":70,"jokerExtra":20,"lockPile":6,"lockCusto":0,"presMatch":0,"vivaW":8,"parceiroW":0,"hiper":0,"esconde":0,"escondeMao":12,"perigoMul":1.4,"aprende":0,"guardaPar":1,"guardaMao":11});
+  PARAMS.mestre = Object.assign({}, PARAMS.dificil, {"minPile":1,"pileWild":2,"wildDump":14,"parWild":12,"limpa4":4,"limpa6":4,"pairKeep":30,"meldKeep":25,"ptsW":0.25,"presBase":8,"presPer":9,"black3":-40,"black3Pile":2,"wildCost":70,"jokerExtra":20,"lockPile":10,"lockCusto":40,"presMatch":0,"vivaW":16,"parceiroW":0,"hiper":0,"esconde":0,"escondeMao":12,"perigoMul":1.4,"aprende":0.1,"guardaPar":1,"guardaMao":9,"fecha":1,"placar":1,"placarMargem":800});
   function hardPlan(s, seat, P) {
     P = P || PARAMS.dificil;
-    const hand = s.hands[seat]; const t = teamOf(s, seat); const o = 1 - t; const melds = s.melds[t];
+    const hand = s.hands[seat]; const t = teamOf(s, seat); const os = outrosTimes(s, t); const o = os[0]; const melds = s.melds[t];
     const need = needFor(s.scores[t]); const desc = s.descended[t];
     const used = new Set(melds.map((m) => m.rank));
     const n1 = (seat + 1) % s.n; // quem joga depois de mim (sempre adversário)
     // aprende com a mesa: quanto mais o outro time já levou do lixo nesta rodada, mais desconfiado (esconde cartas, entrega menos, tranca mais cedo)
-    const levou = P.aprende && s.rstats ? s.rstats.reduce((a, st, i) => a + (teamOf(s, i) === o ? st.pile || 0 : 0), 0) : 0;
+    const levou = P.aprende && s.rstats ? s.rstats.reduce((a, st, i) => a + (teamOf(s, i) !== t ? st.pile || 0 : 0), 0) : 0;
     const desconf = 1 + (P.aprende || 0) * Math.min(levou, 4);
-    const oppAmeaca = s.mortoTaken[o] && s.melds[o].some((m) => m.canastra && m.clean) && s.hands.some((h, i) => teamOf(s, i) === o && h.length <= 4);
+    // o jogo é de 10.000: quem passa do alvo primeiro leva. O robô olha o placar do JOGO (não só da rodada):
+    //  · se o que ele já tem na mesa leva o time ao alvo e à frente do outro, vale bater logo (cash);
+    //  · se o outro time está perto do alvo, vira defesa: despeja coringas, tranca o lixo cedo e não deixa a rodada correr.
+    const alvo = s.target > 1 ? s.target : 0;
+    const proj = (tt) => s.scores[tt] + s.melds[tt].reduce((a, m) => a + meldPts(m) + canastraBonus(m), 0) + s.reds[tt].length * 100 - (s.mortoTaken[tt] ? 0 : 100);
+    const meuProj = alvo ? proj(t) : 0, opProj = alvo ? Math.max(...os.map(proj)) : 0;
+    const cash = !!(P.placar && alvo && meuProj >= alvo && meuProj > opProj);
+    const aperto = !!(P.placar && alvo && !cash && opProj >= alvo - P.placarMargem);
+    const oppAmeaca = aperto || os.some((q) => s.mortoTaken[q] && s.melds[q].some((m) => m.canastra && m.clean) && s.hands.some((hh, i) => teamOf(s, i) === q && hh.length <= 4));
     if (s.step === 'draw') {
       const top = s.discard[s.discard.length - 1];
       if (top && !s.drawn && !s.owed && !lockedFor(s, seat) && s.pileTakes < 30 && !isWild(top) && !isBlack3(top)) {
@@ -571,7 +586,9 @@
         const vaiBater = s.mortoTaken[t] && temLimpa && temSuja;
         if (oppAmeaca || vaiBater || hand.length > P.wildDump) { const alvo = melds.find((m) => !m.black && (!m.clean || !m.canastra) && !(m.canastra && m.clean)) || melds.find((m) => !m.black && !m.clean); if (alvo) return { a: 'addTo', meldId: alvo.id, ids: [w.id] }; }
       }
-      if (oppAmeaca || hand.length > P.parWild) {
+      // fechar a rodada: com o morto pego e as duas canastras, joga tudo o que der (par + coringa) para bater logo
+      const fechando = cash || (P.fecha && s.mortoTaken[t] && melds.some((m) => m.canastra && m.clean) && melds.some((m) => m.canastra && !m.clean));
+      if (oppAmeaca || fechando || hand.length > P.parWild) {
         for (const r in by) if (by[r].length === 2 && !used.has(+r) && wilds.length) return { a: 'meld', groups: [by[r].map((c) => c.id).concat([wilds[0].id])] };
       }
     } else {
@@ -581,7 +598,7 @@
     // descarte: o que menos ajuda o próximo adversário e menos me faz falta
     const by = countBy(nat); const pileN = s.discard.length;
     const temJogo = new Set(melds.map((m) => m.rank));
-    const oppRanks = new Set(s.melds[o].map((m) => m.rank));
+    const oppRanks = new Set(os.flatMap((q) => s.melds[q].map((m) => m.rank)));
     const encaixam = P.presMatch ? s.discard.filter((x) => oppRanks.has(x.r)).length : 0;
     const presente = P.presBase + P.presPer * pileN + (P.presMatch || 0) * encaixam; // tamanho do presente que eu daria
     const opts = hand.map((c) => {
@@ -601,7 +618,7 @@
     }).sort((a, b) => a.custo - b.custo);
     // lixo grande e todo descarte é perigoso: tranca com um 2 (coringa tranca até voltar a mim)
     const best = opts.find((x) => !isWild(x.c)) || opts[0];
-    if (best && !isWild(best.c) && !isBlack3(best.c) && pileN >= Math.max(3, P.lockPile - (P.aprende ? levou : 0)) && best.custo > P.lockCusto) { const dois = hand.find((c) => c.r === 2); if (dois) return { a: 'discard', id: dois.id }; }
+    if (best && !isWild(best.c) && !isBlack3(best.c) && pileN >= (aperto ? 3 : Math.max(3, P.lockPile - (P.aprende ? levou : 0))) && best.custo > P.lockCusto) { const dois = hand.find((c) => c.r === 2); if (dois) return { a: 'discard', id: dois.id }; }
     if (!opts.length) return { a: 'draw' }; // mão vazia: nada a descartar (a regra recusa e o plano B assume)
     return { a: 'discard', id: (best || opts[0]).c.id };
   }
@@ -654,7 +671,7 @@
   const teamStats = (list, players, t) => { const o = {}; (list || []).forEach((st, i) => { if (players[i] && players[i].team === t || (!players[i].team && i % 2 === t)) for (const k in st) o[k] = (o[k] || 0) + st[k]; }); return o; };
 
   const api = {
-    SUITS, SYM, RN, TARGET, isWild, isBlack3, isRed3, pts, cardName, makeDeck, classify, meldPts, canastraBonus, needFor,
+    topUnico, SUITS, SYM, RN, TARGET, isWild, isBlack3, isRed3, pts, cardName, makeDeck, classify, meldPts, canastraBonus, needFor,
     PARAMS, teamStats, newGame, nextRound, act, viewFor, botPlan, botMove, timeoutMove, suggestGroups, autoGroups, teamOf, teamSeats, canBater, mulberry, clone,
   };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;

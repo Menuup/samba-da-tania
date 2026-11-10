@@ -161,7 +161,61 @@
   }
   const FORMATOS = { todos: { id: 'todos', nome: 'Cada um com cada um', jogos: 3, target: 1, pessoas: [4], tempo: 'uns 40 min' }, duplas: { id: 'duplas', nome: 'Em duplas até 5.000', jogos: 1, target: 5000, pessoas: [4, 6], tempo: 'uns 35 min' } };
 
-  const api = { NIVEIS, DUPLAS, RODADAS, COLOC, FORMATOS, MAX_INSC_DIA, criar, minhaPartida, adversario, configPartida, registrar, desistir, simularUma, pendentes, avancar, premio, campeao, inscrever, gratis, inscricoesHoje, pagar, ev, tabelaFamilia, rotacao, rodadaAtual, campFechar, campConfere, assinatura };
+
+  /* ---------- Liga da Família: pontos corridos (todos contra todos, 1×1) e depois as finais ----------
+     Quem quiser entra (pessoas e robôs). Cada duelo vale uma rodada; a final vale 3 rodadas somadas.
+     Vitória 3 pontos, empate 1. Classificação: pontos, saldo, pontos feitos, confronto direto. Os 4 melhores vão às
+     semifinais (1º×4º e 2º×3º); com 3 participantes é final direta (1º×2º); com 2 é só a final. */
+  function ligaCalendario(ids) {
+    const a = ids.slice(); if (a.length % 2) a.push(null); const n = a.length, out = [];
+    for (let r = 0; r < n - 1; r++) {
+      for (let i = 0; i < n / 2; i++) { const x = a[i], y = a[n - 1 - i]; if (x != null && y != null) out.push([x, y]); }
+      a.splice(1, 0, a.pop()); // gira todos menos o primeiro
+    }
+    return out;
+  }
+  function ligaCriar(pessoas, nome) {
+    const p = pessoas.map((x) => ({ id: x.id, name: x.name, bot: !!x.bot }));
+    const L = { id: Date.now().toString(36), nome: nome || 'Liga da Família', p, jogos: [], fase: 'liga', fim: null };
+    if (p.length < 2) return L;
+    if (p.length === 2) { L.fase = 'final'; L.jogos.push({ k: 'final', a: p[0].id, b: p[1].id, res: null }); return L; }
+    ligaCalendario(p.map((x) => x.id)).forEach(([a, b]) => L.jogos.push({ k: 'liga', a, b, res: null }));
+    return L;
+  }
+  const vencedorDe = (res, a, b, pos) => (res.pa > res.pb ? a : res.pb > res.pa ? b : (pos[a] || 99) <= (pos[b] || 99) ? a : b); // empate no mata-mata: passa quem foi melhor na liga
+  function ligaTabela(L) {
+    const T = {}; L.p.forEach((x) => (T[x.id] = { id: x.id, name: x.name, bot: x.bot, j: 0, v: 0, e: 0, d: 0, pts: 0, pro: 0, contra: 0, saldo: 0 }));
+    L.jogos.filter((g) => g.k === 'liga' && g.res).forEach((g) => {
+      const A = T[g.a], B = T[g.b], r = g.res; A.j++; B.j++; A.pro += r.pa; A.contra += r.pb; B.pro += r.pb; B.contra += r.pa;
+      if (r.pa > r.pb) { A.v++; A.pts += 3; B.d++; } else if (r.pb > r.pa) { B.v++; B.pts += 3; A.d++; } else { A.e++; B.e++; A.pts++; B.pts++; }
+    });
+    const lista = Object.values(T); lista.forEach((x) => (x.saldo = x.pro - x.contra));
+    const h2h = (x, y) => { const g = L.jogos.find((q) => q.k === 'liga' && q.res && ((q.a === x.id && q.b === y.id) || (q.a === y.id && q.b === x.id))); if (!g) return 0; const px = g.a === x.id ? g.res.pa : g.res.pb, py = g.a === x.id ? g.res.pb : g.res.pa; return py - px; };
+    lista.sort((x, y) => y.pts - x.pts || y.saldo - x.saldo || y.pro - x.pro || h2h(x, y) || x.name.localeCompare(y.name));
+    return lista.map((x, i) => Object.assign(x, { pos: i + 1 }));
+  }
+  const ligaProximo = (L) => L.jogos.findIndex((g) => !g.res);
+  // Registra o resultado do jogo i e abre a fase seguinte quando a atual acaba. res = { pa, pb } (pontos de cada lado).
+  function ligaRegistrar(L, i, res) {
+    const g = L.jogos[i]; if (!g || g.res) return L; g.res = { pa: res.pa | 0, pb: res.pb | 0, wo: !!res.wo };
+    if (L.jogos.some((x) => !x.res)) return L;
+    const tab = ligaTabela(L); const pos = {}; tab.forEach((x) => (pos[x.id] = x.pos));
+    if (L.fase === 'liga') {
+      if (tab.length >= 4) { L.fase = 'semi'; L.jogos.push({ k: 'semi', a: tab[0].id, b: tab[3].id, res: null }, { k: 'semi', a: tab[1].id, b: tab[2].id, res: null }); }
+      else { L.fase = 'final'; L.jogos.push({ k: 'final', a: tab[0].id, b: tab[1].id, res: null }); }
+    } else if (L.fase === 'semi') {
+      const s = L.jogos.filter((x) => x.k === 'semi'); L.fase = 'final';
+      L.jogos.push({ k: 'final', a: vencedorDe(s[0].res, s[0].a, s[0].b, pos), b: vencedorDe(s[1].res, s[1].a, s[1].b, pos), res: null });
+    } else if (L.fase === 'final') {
+      const f = L.jogos.find((x) => x.k === 'final'); const c = vencedorDe(f.res, f.a, f.b, pos); const v = c === f.a ? f.b : f.a;
+      const semis = L.jogos.filter((x) => x.k === 'semi').map((s) => { const w = vencedorDe(s.res, s.a, s.b, pos); return w === s.a ? s.b : s.a; }).sort((x, y) => (pos[x] || 99) - (pos[y] || 99));
+      L.fase = 'fim'; L.fim = { campeao: c, vice: v, terceiro: semis[0] || null, tabela: tab };
+    }
+    return L;
+  }
+  const ligaNome = (L, id) => { const x = L.p.find((q) => q.id === id); return x ? x.name : '?'; };
+
+  const api = { ligaCalendario, ligaCriar, ligaTabela, ligaProximo, ligaRegistrar, ligaNome, NIVEIS, DUPLAS, RODADAS, COLOC, FORMATOS, MAX_INSC_DIA, criar, minhaPartida, adversario, configPartida, registrar, desistir, simularUma, pendentes, avancar, premio, campeao, inscrever, gratis, inscricoesHoje, pagar, ev, tabelaFamilia, rotacao, rodadaAtual, campFechar, campConfere, assinatura };
   if (typeof module !== 'undefined' && module.exports) module.exports = api;
   else root.Torneios = api;
 })(typeof window !== 'undefined' ? window : globalThis);

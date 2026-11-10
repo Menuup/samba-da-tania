@@ -89,9 +89,10 @@
       if (st && st.getVideoTracks().length && av && av.tagName !== 'VIDEO') {
         const vd = document.createElement('video'); vd.className = 'av vid'; vd.muted = true; vd.autoplay = true; vd.setAttribute('playsinline', ''); vd.setAttribute('muted', '');
         vd.style.cssText = (av.getAttribute('style') || '') + ';object-fit:cover;transform:' + (s === meuSeat ? 'scaleX(-1)' : 'none');
-        vd.srcObject = st; av.replaceWith(vd); const p = vd.play(); if (p && p.catch) p.catch(() => {});
+        vd.srcObject = st; av.replaceWith(vd); el.classList.add('cam'); const p = vd.play(); if (p && p.catch) p.catch(() => {});
       }
     });
+    if (typeof root.placeSeats === 'function') try { root.placeSeats(); } catch (e) {} // a cadeira com vídeo fica mais alta: reposiciona os vizinhos
     paintSpeak();
   };
   function paintSpeak() {
