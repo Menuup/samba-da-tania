@@ -497,6 +497,8 @@ body.verso-dourado .card.back{background:linear-gradient(135deg,#9c7d1e,#f2c14e,
 
 .dono{display:inline-flex;align-items:center;justify-content:center;font-size:10px;font-weight:800;background:#ffffff33;color:#fff;border-radius:6px;padding:0 4px;margin-right:2px;align-self:flex-start}
 
+.grp{display:flex;flex-wrap:wrap;align-items:flex-start;gap:calc(3 * var(--u,1px) * var(--ms,1));border:2px solid var(--cor);border-radius:12px;padding:calc(2 * var(--u,1px) * var(--ms,1)) calc(3 * var(--u,1px) * var(--ms,1));background:color-mix(in srgb,var(--cor) 14%,transparent);position:relative;margin-top:9px}
+.grp .dono{position:absolute;top:-9px;left:7px;font-size:10px;line-height:1.3;background:var(--cor);color:#1d0a14;font-weight:800;border-radius:7px;padding:0 6px;margin:0}
 </style>
 </head>
 <body>
@@ -513,18 +515,18 @@ body.verso-dourado .card.back{background:linear-gradient(135deg,#9c7d1e,#f2c14e,
 
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <script src="engine.js?v=20261027a"></script>
-<script src="fx.js?v=20261111e"></script>
-<script src="eco.js?v=20261111e"></script>
-<script src="fases.js?v=20261111e"></script>
-<script src="mapa.js?v=20261111e"></script>
-<script src="torneios.js?v=20261111e"></script>
-<script src="tutorial.js?v=20261111e"></script>
-<script src="missoes.js?v=20261111e"></script>
-<script src="domingos.js?v=20261111e"></script>
-<script src="analise.js?v=20261111e"></script>
-<script src="voz.js?v=20261111e"></script>
+<script src="fx.js?v=20261115c"></script>
+<script src="eco.js?v=20261115c"></script>
+<script src="fases.js?v=20261115c"></script>
+<script src="mapa.js?v=20261115c"></script>
+<script src="torneios.js?v=20261115c"></script>
+<script src="tutorial.js?v=20261115c"></script>
+<script src="missoes.js?v=20261115c"></script>
+<script src="domingos.js?v=20261115c"></script>
+<script src="analise.js?v=20261115c"></script>
+<script src="voz.js?v=20261115c"></script>
 <script src="cloud-config.js?v=20261027a"></script>
-<script src="cloud.js?v=20261111e"></script>
+<script src="cloud.js?v=20261115c"></script>
 <script>
 'use strict';
 const $ = (s) => document.querySelector(s);
@@ -1559,6 +1561,11 @@ function pausaHtml(v) {
 function seatZones(v, tap) {
   const mine = v.melds[v.myTeam].slice().sort(byRank), opp = jogosDosOutros(v).slice().sort(byRank);
   const rm = (v.reds && v.reds[v.myTeam]) || [], ro = v.solo ? (v.reds || []).flatMap((rs, i) => (i === v.myTeam ? [] : rs)) : (v.reds && v.reds[1 - v.myTeam]) || [];
+  const CORES = ['#4cc9f0', '#ffb347', '#c77dff', '#ff6b9d'];
+  const oppHtml = () => {
+    if (!v.solo) return opp.map((m) => meldHtml(m, false)).join('');
+    return v.melds.map((ms, ti) => ({ ti, ms })).filter((x) => x.ti !== v.myTeam && x.ms.length).map(({ ti, ms }) => `<div class="grp" style="--cor:${CORES[ti % CORES.length]}"><span class="dono">${escH(v.players[ti].name)}</span>${ms.slice().sort(byRank).map((m) => meldHtml(m, false)).join('')}</div>`).join('');
+  };
   const dono = (m) => { if (!v.solo) return ''; const ti = v.melds.findIndex((ms, i) => i !== v.myTeam && ms.some((x) => x.id === m.id)); return ti >= 0 ? `<span class="dono" title="${escH(v.players[ti].name)}">${escH(v.players[ti].name.slice(0, 2))}</span>` : ''; };
   const redHtml = (rs) => (rs.length ? `<div class="rd3" title="3 vermelhos">${rs.map((c) => cardHtml(c, 'mini')).join('')}<span class="tag">3♥ ×${rs.length}</span></div>` : '');
   const two = true; // faixa larga do adversário logo abaixo dele, em qualquer tamanho de mesa
@@ -1566,8 +1573,8 @@ function seatZones(v, tap) {
   if (mine.length || rm.length) h += `<div class="sz mine" data-mh="0.38" data-mw="0.9" style="left:50%;bottom:28px;top:auto;transform:translateX(-50%);max-width:72%"><div class="zg"><div class="zl">${v.n > 2 ? 'Jogos do seu time (você e o parceiro 🤝)' : 'Seus jogos'}</div>${redHtml(rm)}${mine.map((m) => meldHtml(m, true, tap)).join('')}</div></div>`;
   if (opp.length || ro.length) {
     h += two
-      ? `<div class="sz opp" data-mh="0.34" data-mw="0.94" style="left:50%;top:3%;transform:translateX(-50%);max-width:80%"><div class="zg"><div class="zl">Jogos dos adversários</div>${redHtml(ro)}${opp.map((m) => dono(m) + meldHtml(m, false)).join('')}</div></div>`
-      : `<div class="sz opp" data-mh="0.33" data-mw="0.28" style="left:19%;top:8%;transform:translateX(-50%);max-width:27%"><div class="zg col"><div class="zl">Jogos dos adversários</div>${redHtml(ro)}${opp.map((m) => dono(m) + meldHtml(m, false)).join('')}</div></div>`;
+      ? `<div class="sz opp" data-mh="0.34" data-mw="0.94" style="left:50%;top:3%;transform:translateX(-50%);max-width:80%"><div class="zg"><div class="zl">Jogos dos adversários</div>${redHtml(ro)}${oppHtml()}</div></div>`
+      : `<div class="sz opp" data-mh="0.33" data-mw="0.28" style="left:19%;top:8%;transform:translateX(-50%);max-width:27%"><div class="zg col"><div class="zl">Jogos dos adversários</div>${redHtml(ro)}${oppHtml()}</div></div>`;
   }
   return h;
 }

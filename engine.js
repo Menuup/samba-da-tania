@@ -91,7 +91,9 @@
   const topUnico = (arr) => { const m = Math.max(...arr); const k = arr.filter((x) => x === m).length; return k === 1 ? arr.indexOf(m) : -1; };
   const outrosTimes = (s, t) => { const r = []; for (let i = 0; i < s.nTeams; i++) if (i !== t) r.push(i); return r; };
   const teamSeats = (s, t) => { const r = []; for (let i = 0; i < s.n; i++) if (teamOf(s, i) === t) r.push(i); return r; };
-  const canBater = (s, t) => s.mortoTaken[t] && s.melds[t].some((m) => m.canastra && m.clean) && s.melds[t].some((m) => m.canastra && !m.clean);
+  const semMortoDisp = (s) => !!s.solo && s.mortos.length === 0; // cada um por si: os 2 mortos já foram
+  const fechavel = (s, t) => s.mortoTaken[t] || semMortoDisp(s); // pode esvaziar a mão para bater (já pegou morto ou não há mais morto)
+  const canBater = (s, t) => fechavel(s, t) && s.melds[t].some((m) => m.canastra && m.clean) && s.melds[t].some((m) => m.canastra && !m.clean);
 
   function startRound(s, rng) {
     rng = rng || Math.random;
@@ -199,13 +201,11 @@
     const t = teamOf(s, seat); const hand = s.hands[seat];
     const msg = 'Para bater o time precisa ter pego o morto, ter uma canastra limpa e uma suja.';
     if (hand.length === 0) {
-      if (!s.mortoTaken[t] && s.solo && !s.mortos.length) return 'Os dois mortos já foram pegos: sem morto você não pode bater.';
-      if (!s.mortoTaken[t]) { takeMorto(s, seat); s.last += ' e pegou o morto'; return null; }
+      if (!s.mortoTaken[t] && !semMortoDisp(s)) { takeMorto(s, seat); s.last += ' e pegou o morto'; return null; }
       if (canBater(s, t)) { endRound(s, seat); s.last += ' e BATEU!'; return null; }
       return msg;
     }
-    if (hand.length === 1 && s.mortoTaken[t] && !canBater(s, t)) return 'Assim você ficaria com uma carta só e sem poder bater. ' + msg;
-    if (hand.length === 1 && !s.mortoTaken[t] && s.solo && !s.mortos.length) return 'Os dois mortos já foram pegos: sem morto você não pode ficar com uma carta só.';
+    if (hand.length === 1 && fechavel(s, t) && !canBater(s, t)) return 'Assim você ficaria com uma carta só e sem poder bater. ' + msg;
     return null;
   }
 
@@ -342,8 +342,7 @@
         if (s.step !== 'play') return E('Primeiro compre uma carta.');
         const c = hand.find((x) => x.id === a.id);
         if (!c) return E('Carta inválida.');
-        if (hand.length === 1 && s.mortoTaken[t] && !canBater(s, t)) return E('Para bater o time precisa de uma canastra limpa e uma suja.');
-        if (hand.length === 1 && !s.mortoTaken[t] && s.solo && !s.mortos.length) return E('Os dois mortos já foram pegos: sem morto você não pode bater.');
+        if (hand.length === 1 && fechavel(s, t) && !canBater(s, t)) return E('Para bater precisa de uma canastra limpa e uma suja.');
         drop([c]); s.discard.push(c);
         if (s.discR) { s.discR[seat].push(c.r); if (s.discR[seat].length > 8) s.discR[seat].shift(); }
         if (s.turnos) s.turnos[seat] = (s.turnos[seat] || 0) + 1;
@@ -353,7 +352,7 @@
         const seguraCoringa = s.lock && s.lock.type === 'wild' && s.lock.owner !== seat;
         s.lock = isBlack3(c) ? { type: 'black', seat: next } : isWild(c) ? { type: 'wild', owner: seat } : seguraCoringa ? s.lock : null;
         if (hand.length === 0) {
-          if (!s.mortoTaken[t]) { takeMorto(s, seat); s.last += ' e pegou o morto.'; }
+          if (!s.mortoTaken[t] && !semMortoDisp(s)) { takeMorto(s, seat); s.last += ' e pegou o morto.'; }
           else { endRound(s, seat); s.last += ' e BATEU!'; return { state: s }; }
         }
         s.turn = next; s.step = 'draw'; s.turnNo = (s.turnNo || 0) + 1; s.tookPile = false;
@@ -544,7 +543,7 @@
     const meuProj = alvo ? proj(t) : 0, opProj = alvo ? Math.max(...os.map(proj)) : 0;
     const cash = !!(P.placar && alvo && meuProj >= alvo && meuProj > opProj);
     const aperto = !!(P.placar && alvo && !cash && opProj >= alvo - P.placarMargem);
-    const oppAmeaca = aperto || os.some((q) => s.mortoTaken[q] && s.melds[q].some((m) => m.canastra && m.clean) && s.hands.some((hh, i) => teamOf(s, i) === q && hh.length <= 4));
+    const oppAmeaca = aperto || os.some((q) => fechavel(s, q) && s.melds[q].some((m) => m.canastra && m.clean) && s.hands.some((hh, i) => teamOf(s, i) === q && hh.length <= 4));
     if (s.step === 'draw') {
       const top = s.discard[s.discard.length - 1];
       if (top && !s.drawn && !s.owed && !lockedFor(s, seat) && s.pileTakes < 30 && !isWild(top) && !isBlack3(top)) {
@@ -583,11 +582,11 @@
       if (wilds.length) {
         const w = wilds.find((c) => c.r === 2) || wilds[0];
         if (!temSuja) { const alvo = melds.filter((m) => !m.canastra && !m.black && m.cards.length >= (temLimpa ? P.limpa4 : P.limpa6) && m.cards.length + wilds.length >= 7).sort((a, b) => b.cards.length - a.cards.length)[0]; if (alvo) return { a: 'addTo', meldId: alvo.id, ids: [w.id] }; }
-        const vaiBater = s.mortoTaken[t] && temLimpa && temSuja;
+        const vaiBater = fechavel(s, t) && temLimpa && temSuja;
         if (oppAmeaca || vaiBater || hand.length > P.wildDump) { const alvo = melds.find((m) => !m.black && (!m.clean || !m.canastra) && !(m.canastra && m.clean)) || melds.find((m) => !m.black && !m.clean); if (alvo) return { a: 'addTo', meldId: alvo.id, ids: [w.id] }; }
       }
       // fechar a rodada: com o morto pego e as duas canastras, joga tudo o que der (par + coringa) para bater logo
-      const fechando = cash || (P.fecha && s.mortoTaken[t] && melds.some((m) => m.canastra && m.clean) && melds.some((m) => m.canastra && !m.clean));
+      const fechando = cash || (P.fecha && fechavel(s, t) && melds.some((m) => m.canastra && m.clean) && melds.some((m) => m.canastra && !m.clean));
       if (oppAmeaca || fechando || hand.length > P.parWild) {
         for (const r in by) if (by[r].length === 2 && !used.has(+r) && wilds.length) return { a: 'meld', groups: [by[r].map((c) => c.id).concat([wilds[0].id])] };
       }
