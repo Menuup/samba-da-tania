@@ -522,10 +522,10 @@
   const projecao = (s, t) => s.melds[t].reduce((a, m) => a + meldPts(m) + canastraBonus(m), 0) + s.reds[t].length * 100 - (s.mortoTaken[t] ? 0 : 100);
   // Parâmetros dos robôs fortes (ajustados por simulação: node sim-ajuste.js). Mestre = os mesmos movimentos com números afinados.
   const PARAMS = {
-    dificil: { minPile: 1, pileWild: 2, wildDump: 14, parWild: 12, limpa4: 4, limpa6: 6, pairKeep: 30, meldKeep: 25, ptsW: 0.25, presBase: 8, presPer: 3, black3: -40, black3Pile: 2, wildCost: 70, jokerExtra: 20, lockPile: 6, lockCusto: 45, presMatch: 0, vivaW: 0, parceiroW: 0, hiper: 0, esconde: 0, escondeMao: 12, perigoMul: 1, aprende: 0, guardaPar: 0, guardaMao: 11, fecha: 0, placar: 0, placarMargem: 400 },
+    dificil: { minPile: 1, pileWild: 2, wildDump: 14, parWild: 12, limpa4: 4, limpa6: 6, pairKeep: 30, meldKeep: 25, ptsW: 0.25, presBase: 8, presPer: 3, black3: -40, black3Pile: 2, wildCost: 70, jokerExtra: 20, lockPile: 6, lockCusto: 45, presMatch: 0, vivaW: 0, parceiroW: 0, hiper: 0, esconde: 0, escondeMao: 12, perigoMul: 1, aprende: 0, guardaPar: 0, guardaMao: 11, fecha: 0, placar: 0, placarMargem: 400, cedoMorto: 0 },
   };
   // Mestre: números afinados por simulação contra o Difícil (sim-ajuste.js). Joga limpo como o Difícil: só usa o que está à vista e na memória da mesa.
-  PARAMS.mestre = Object.assign({}, PARAMS.dificil, {"minPile":1,"pileWild":2,"wildDump":14,"parWild":12,"limpa4":4,"limpa6":4,"pairKeep":30,"meldKeep":25,"ptsW":0.25,"presBase":8,"presPer":9,"black3":-40,"black3Pile":2,"wildCost":70,"jokerExtra":20,"lockPile":10,"lockCusto":40,"presMatch":0,"vivaW":16,"parceiroW":0,"hiper":0,"esconde":0,"escondeMao":12,"perigoMul":1.4,"aprende":0.1,"guardaPar":1,"guardaMao":9,"fecha":1,"placar":1,"placarMargem":800});
+  PARAMS.mestre = Object.assign({}, PARAMS.dificil, {"minPile":1,"pileWild":2,"wildDump":14,"parWild":12,"limpa4":4,"limpa6":5,"pairKeep":6,"meldKeep":25,"ptsW":0.13,"presBase":8,"presPer":7.5,"black3":-40,"black3Pile":2,"wildCost":70,"jokerExtra":20,"lockPile":12,"lockCusto":40,"presMatch":0,"vivaW":8,"parceiroW":0,"hiper":0,"esconde":0,"escondeMao":12,"perigoMul":1.4,"aprende":0.1,"guardaPar":1,"guardaMao":9,"fecha":1,"placar":1,"placarMargem":800,"cedoMorto":6});
   function hardPlan(s, seat, P) {
     P = P || PARAMS.dificil;
     const hand = s.hands[seat]; const t = teamOf(s, seat); const os = outrosTimes(s, t); const o = os[0]; const melds = s.melds[t];
@@ -586,7 +586,7 @@
         if (oppAmeaca || vaiBater || hand.length > P.wildDump) { const alvo = melds.find((m) => !m.black && (!m.clean || !m.canastra) && !(m.canastra && m.clean)) || melds.find((m) => !m.black && !m.clean); if (alvo) return { a: 'addTo', meldId: alvo.id, ids: [w.id] }; }
       }
       // fechar a rodada: com o morto pego e as duas canastras, joga tudo o que der (par + coringa) para bater logo
-      const fechando = cash || (P.fecha && fechavel(s, t) && melds.some((m) => m.canastra && m.clean) && melds.some((m) => m.canastra && !m.clean));
+      const fechando = cash || (P.cedoMorto && !s.mortoTaken[t] && !semMortoDisp(s) && hand.length <= P.cedoMorto) || (P.fecha && fechavel(s, t) && melds.some((m) => m.canastra && m.clean) && melds.some((m) => m.canastra && !m.clean));
       if (oppAmeaca || fechando || hand.length > P.parWild) {
         for (const r in by) if (by[r].length === 2 && !used.has(+r) && wilds.length) return { a: 'meld', groups: [by[r].map((c) => c.id).concat([wilds[0].id])] };
       }
