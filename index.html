@@ -515,18 +515,18 @@ body.verso-dourado .card.back{background:linear-gradient(135deg,#9c7d1e,#f2c14e,
 
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <script src="engine.js?v=20261027a"></script>
-<script src="fx.js?v=20261116a"></script>
-<script src="eco.js?v=20261116a"></script>
-<script src="fases.js?v=20261116a"></script>
-<script src="mapa.js?v=20261116a"></script>
-<script src="torneios.js?v=20261116a"></script>
-<script src="tutorial.js?v=20261116a"></script>
-<script src="missoes.js?v=20261116a"></script>
-<script src="domingos.js?v=20261116a"></script>
-<script src="analise.js?v=20261116a"></script>
-<script src="voz.js?v=20261116a"></script>
+<script src="fx.js?v=20261122a"></script>
+<script src="eco.js?v=20261122a"></script>
+<script src="fases.js?v=20261122a"></script>
+<script src="mapa.js?v=20261122a"></script>
+<script src="torneios.js?v=20261122a"></script>
+<script src="tutorial.js?v=20261122a"></script>
+<script src="missoes.js?v=20261122a"></script>
+<script src="domingos.js?v=20261122a"></script>
+<script src="analise.js?v=20261122a"></script>
+<script src="voz.js?v=20261122a"></script>
 <script src="cloud-config.js?v=20261027a"></script>
-<script src="cloud.js?v=20261116a"></script>
+<script src="cloud.js?v=20261122a"></script>
 <script>
 'use strict';
 const $ = (s) => document.querySelector(s);
@@ -1754,6 +1754,7 @@ function endModal(v) {
   const rr = v.roundResult; const host = v.seat === 0;
   const rows = rr.teams.map((t, i) => `<tr><td>${nomeTime(v, i)}</td><td>${t.meldPts}</td><td>${t.bonus}</td><td>${t.bater}</td><td>${t.redPts}</td><td>−${t.handPts}</td><td>${t.penalty ? '−100' : 0}</td><td><b>${t.total}</b></td><td><b>${v.scores[i]}</b></td></tr>`).join('');
   const head = v.phase === 'gameEnd' ? (v.winner === -1 ? 'Empate!' : v.winner === v.myTeam ? '🏆 Vitória!' : 'Fim de jogo') + (rr.stockOut ? ' · o monte acabou' : '') : (rr.outSeat != null ? v.players[rr.outSeat].name + ' bateu!' : 'Fim da rodada');
+  document.querySelectorAll('#endm').forEach((e) => e.remove()); // só um aviso de fim de rodada por vez
   const m = document.createElement('div'); m.className = 'modal'; m.id = 'endm';
   const loc = !!v.local && host;
   m.innerHTML = `<div><h2>${head}</h2>${v.phase === 'gameEnd' && v.winner >= 0 ? `<p>Ganhou: <b>${teamName(v, v.winner)}</b></p>` : ''}${ecoEndHtml(v)}${campTabelaHtml(v)}${window.FX && !loc ? FX.gainHtml() : ''}
@@ -1765,7 +1766,7 @@ function endModal(v) {
   if (window.FX) FX.countUp(m);
   bindOpts(m);
   if (loc) bindLocalEnd(m, v);
-  else if (host) $('#prox').onclick = () => { m.remove(); send({ a: v.phase !== 'gameEnd' ? 'next' : v.camp && !v.camp.fim ? 'campnext' : 'again' }); };
+  else if (host) m.querySelector('#prox').onclick = () => { m.remove(); send({ a: v.phase !== 'gameEnd' ? 'next' : v.camp && !v.camp.fim ? 'campnext' : 'again' }); }; // do modal novo (com o antigo ainda na tela, $('#prox') pegava o botão do antigo e o novo ficava morto)
   const old = document.querySelectorAll('#endm'); if (old.length > 1) old[0].remove();
 }
 
